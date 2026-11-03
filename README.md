@@ -1,7 +1,7 @@
 # Navegador para tablets viejas (Galaxy Tab 3 Lite SM-T110)
 
 Un navegador mínimo pensado para tablets con **Android 4.2.2 "Jelly Bean"** (como la Samsung
-Galaxy Tab 3 Lite SM-T110), con accesos directos a Google, YouTube y CloudMoon. Versión 0.1.0.
+Galaxy Tab 3 Lite SM-T110), con accesos directos a Google, YouTube y CloudMoon. Versión 0.1.1.
 
 ## Aviso honesto antes de instalarlo
 
@@ -24,6 +24,17 @@ Eso quiere decir que:
   no bloqueen la carga de entrada con un aviso de "actualiza tu navegador" — pero eso no le da al
   WebView capacidades que no tiene, solo evita que algunos sitios corten el paso antes de intentar
   cargar.
+- **Google sí tiene arreglo**: cualquier dirección de `google.com` (por ejemplo, una búsqueda) se
+  carga automáticamente en su "modo básico" en HTML plano (`gbv=1`), pensado para navegadores
+  viejos como este. Así se evita la página de error "actualiza tu navegador" y las búsquedas
+  deberían verse (más simples, sin las animaciones modernas, pero funcionando).
+- **YouTube no tiene un modo básico propio** (lo tuvo hace años, pero Google lo quitó). Por eso se
+  agregó un acceso directo aparte, "YouTube (ligero)", que abre **Invidious** — un front-end
+  alternativo de código abierto para YouTube que arma páginas simples en HTML y tiene más chance de
+  funcionar en este WebView viejo. Importante: no es de YouTube ni de Google, es un proyecto de
+  terceros, y la instancia pública usada puede estar caída en algún momento (en ese caso se puede
+  escribir en la barra de dirección el nombre de otra instancia de Invidious). YouTube "normal" se
+  deja también por si en algún sitio sencillo sí llega a cargar algo.
 
 ## Qué trae
 

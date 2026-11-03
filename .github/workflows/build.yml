@@ -60,8 +60,8 @@ jobs:
       - name: Publicar como Release descargable
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.0
-          name: Navegador Tablet v0.1.0
+          tag_name: v0.1.1
+          name: Navegador Tablet v0.1.1
           body: |
             Descarga navegador-tablet-sm-t110.apk y ábrelo en el tablet para instalar (APK de
             depuración, generado automáticamente desde este cambio en main).

@@ -113,6 +113,14 @@ public class BrowserActivity extends Activity {
         shortcuts.setBackgroundColor(Color.parseColor("#E8F5E9"));
         shortcuts.addView(shortcutButton("Google", "https://www.google.com/"));
         shortcuts.addView(shortcutButton("YouTube", "https://m.youtube.com/"));
+        // YouTube actual carga sus miniaturas y videos con JavaScript que este WebView no puede
+        // ejecutar (se queda en los recuadros grises de "cargando" sin avanzar nunca). YouTube ya
+        // no tiene un modo básico propio como Google, así que en vez de eso se deja un acceso a
+        // Invidious: un front-end alternativo de código abierto para YouTube que arma páginas
+        // simples en HTML, con más chance de funcionar aquí. No es oficial de YouTube y la
+        // instancia pública puede estar caída a veces; si esta no responde, se puede escribir en
+        // la barra de dirección el nombre de otra instancia de Invidious.
+        shortcuts.addView(shortcutButton("YouTube (ligero)", "https://yewtu.be/"));
         shortcuts.addView(shortcutButton("CloudMoon", "https://web.cloudmoonapp.com/"));
         root.addView(shortcuts);
 
@@ -189,8 +197,10 @@ public class BrowserActivity extends Activity {
         wv.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // Todo se queda dentro de esta misma app; no se abre un navegador aparte.
-                view.loadUrl(url);
+                // Todo se queda dentro de esta misma app; no se abre un navegador aparte. Pasa por
+                // loadUrlSafe para que también los enlaces/redirecciones dentro de Google usen el
+                // modo básico (ver comentario en withGoogleBasicMode).
+                loadUrlSafe(url);
                 return true;
             }
 
@@ -274,7 +284,29 @@ public class BrowserActivity extends Activity {
     }
 
     private void loadUrlSafe(String url) {
-        webView.loadUrl(url);
+        webView.loadUrl(withGoogleBasicMode(url));
+    }
+
+    /** Google manda su página normal (pesada en JavaScript) a casi cualquier navegador, y en este
+     *  WebView tan viejo eso termina en una página de error en vez de resultados ("Si tienes
+     *  problemas para acceder a la Búsqueda de Google…"). Google tiene desde hace años un modo
+     *  "básico" en HTML puro pensado justo para navegadores viejos o con poca batería/datos —
+     *  se activa con el parámetro gbv=1 — y si hay resultados reales, mucho más ligeros. Esto se
+     *  aplica a toda URL de google.com que no lo tenga ya, para que también funcione al tocar un
+     *  resultado de búsqueda o seguir un enlace dentro de Google. */
+    private String withGoogleBasicMode(String url) {
+        try {
+            Uri u = Uri.parse(url);
+            String host = u.getHost();
+            boolean isGoogle = host != null && (host.equals("google.com") || host.endsWith(".google.com"));
+            if (isGoogle && u.getQueryParameter("gbv") == null) {
+                String sep = url.contains("?") ? "&" : "?";
+                return url + sep + "gbv=1";
+            }
+        } catch (Exception ignored) {
+            // Si algo de esto falla, se carga la URL tal cual en vez de romper la navegación.
+        }
+        return url;
     }
 
     private void hideKeyboard() {
