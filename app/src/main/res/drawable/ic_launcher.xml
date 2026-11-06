@@ -4,19 +4,34 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Fondo morado vivo, estilo app para niños. -->
     <path
-        android:fillColor="#2E7D32"
+        android:fillColor="#7C4DFF"
         android:pathData="M0,0h108v108h-108z" />
+
+    <!-- "Pantalla" blanca redondeada, como una tele/tablet. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,54m-32,0a32,32 0 1,1 64,0a32,32 0 1,1 -64,0" />
-    <path
-        android:fillColor="#2E7D32"
-        android:pathData="M54,22a32,32 0 0,1 0,64a46,32 0 0,1 0,-64z" />
-    <path
-        android:fillColor="#2E7D32"
-        android:pathData="M22,54h64" />
+        android:pathData="M22,30 a10,10 0 0,1 10,-10 h44 a10,10 0 0,1 10,10 v38 a10,10 0 0,1 -10,10 h-44 a10,10 0 0,1 -10,-10 z" />
+
+    <!-- "Patita" de la tele. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M22,52h64v4h-64z" />
+        android:pathData="M48,78h12v8h-12z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,86h32v6h-32z" />
+
+    <!-- Botón de play grande, naranja, centrado en la pantalla. -->
+    <path
+        android:fillColor="#FF7043"
+        android:pathData="M54,49m-19,0a19,19 0 1,1 38,0a19,19 0 1,1 -38,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M47,38 l20,11 l-20,11 z" />
+
+    <!-- Estrellita amarilla, detalle alegre arriba a la derecha de la pantalla. -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M80,16 l2.6,5.9 l6.4,0.6 l-4.8,4.3 l1.4,6.3 l-5.6,-3.3 l-5.6,3.3 l1.4,-6.3 l-4.8,-4.3 l6.4,-0.6 z" />
 </vector>

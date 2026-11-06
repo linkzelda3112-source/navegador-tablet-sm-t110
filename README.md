@@ -1,51 +1,49 @@
-# Navegador para tablets viejas (Galaxy Tab 3 Lite SM-T110)
+# Videos Kids — reproductor de videos sin Internet (Galaxy Tab 3 Lite SM-T110)
 
-Un navegador mínimo pensado para tablets con **Android 4.2.2 "Jelly Bean"** (como la Samsung
-Galaxy Tab 3 Lite SM-T110), con accesos directos a Google, YouTube y CloudMoon. Versión 0.1.1.
+Una app estilo "YouTube Kids" pero **100% sin conexión**: reproduce los videos que ya tienes
+guardados en la tablet, con una cuadrícula grande y de colores, categorías por carpeta, buscador,
+y "siguiente video" automático con recomendaciones — pensada para una tablet vieja con **Android
+4.2.2 "Jelly Bean"** (como la Samsung Galaxy Tab 3 Lite SM-T110). Versión 1.0.0.
 
-## Aviso honesto antes de instalarlo
+No usa el nombre, el logo ni los colores de la app real de YouTube Kids — es un reproductor
+propio, inspirado en cómo se usa, pero hecho desde cero para esta tablet y sin conexión a
+Internet.
 
-Esta app usa el **WebView del propio sistema operativo** del tablet para mostrar páginas web — no
-trae su propio motor de navegador aparte. En Android 4.2.2 ese WebView es de 2012-2013: no tiene
-WebRTC, le faltan varias funciones modernas de JavaScript, y la propia tablet trae un procesador de
-un solo núcleo con 1 GB de RAM.
+## Cómo poner tus videos
 
-Eso quiere decir que:
+1. Conecta la tablet a una computadora por USB (o usa una memoria/tarjeta que luego pongas en la
+   tablet).
+2. Copia tus videos a la carpeta **`VideosKids`** en el almacenamiento de la tablet (la app la crea
+   sola la primera vez que se abre, si no existe).
+3. Si quieres que aparezcan separados por pestañas (como "Caricaturas", "Música", etc.), crea
+   subcarpetas dentro de `VideosKids` y pon cada video en la subcarpeta que corresponda. Los videos
+   sueltos, directo en `VideosKids`, aparecen en la pestaña "Todos".
+4. Abre la app (o vuelve a la pantalla principal si ya estaba abierta): busca los videos solos y
+   los muestra en la cuadrícula.
 
-- **Sitios sencillos** (páginas de texto, formularios, noticias, Wikipedia, etc.) deberían
-  funcionar razonablemente bien.
-- **YouTube actual** y el **cliente web de CloudMoon** (`web.cloudmoonapp.com`) muy probablemente
-  **no funcionen bien o no carguen del todo**, porque ambos dependen de JavaScript y video que ese
-  WebView viejo no soporta. Esto no es un error de esta app: es un límite del sistema operativo del
-  tablet, y ninguna app puede arreglarlo por sí sola. La única forma real de cambiar esto sería
-  ponerle al tablet una versión de Android más nueva (una ROM no oficial, si existe una compatible
-  con el SM-T110), lo cual tiene su propio riesgo de dejar el tablet sin funcionar si algo sale mal.
-- Se manda un identificador de navegador moderno (como si fuera Chrome actual) para que los sitios
-  no bloqueen la carga de entrada con un aviso de "actualiza tu navegador" — pero eso no le da al
-  WebView capacidades que no tiene, solo evita que algunos sitios corten el paso antes de intentar
-  cargar.
-- **Google sí tiene arreglo**: cualquier dirección de `google.com` (por ejemplo, una búsqueda) se
-  carga automáticamente en su "modo básico" en HTML plano (`gbv=1`), pensado para navegadores
-  viejos como este. Así se evita la página de error "actualiza tu navegador" y las búsquedas
-  deberían verse (más simples, sin las animaciones modernas, pero funcionando).
-- **YouTube no tiene un modo básico propio** (lo tuvo hace años, pero Google lo quitó). Por eso se
-  agregó un acceso directo aparte, "YouTube (ligero)", que abre **Invidious** — un front-end
-  alternativo de código abierto para YouTube que arma páginas simples en HTML y tiene más chance de
-  funcionar en este WebView viejo. Importante: no es de YouTube ni de Google, es un proyecto de
-  terceros, y la instancia pública usada puede estar caída en algún momento (en ese caso se puede
-  escribir en la barra de dirección el nombre de otra instancia de Invidious). YouTube "normal" se
-  deja también por si en algún sitio sencillo sí llega a cargar algo.
+Formatos que funcionan mejor: **MP4** (H.264). Otros formatos (MKV, WEBM, 3GP, AVI, M4V) también se
+detectan, pero si el tablet no trae el códec de video necesario, puede que no se reproduzcan bien;
+MP4 es la apuesta más segura en un dispositivo tan viejo.
 
 ## Qué trae
 
-- Barra de dirección con búsqueda (si no parece una dirección, busca en Google).
-- Botones de atrás, adelante, recargar y "casa".
-- Accesos directos a Google, YouTube (versión móvil) y CloudMoon.
-- Soporte de video en pantalla completa dentro de la página (necesario para que un reproductor de
-  video se vea en toda la pantalla, cuando el sitio sí logra cargar el video).
-- Se dejan pasar errores de certificado HTTPS causados por la fecha/hora o los certificados raíz
-  desactualizados del propio tablet (algo común en dispositivos tan viejos), para no bloquear sitios
-  por eso.
+- Cuadrícula grande con tarjetas de colores y miniatura de cada video, fácil de tocar para un niño.
+- Pestañas de categoría automáticas según las subcarpetas que uses dentro de `VideosKids`.
+- Buscador (ícono de lupa) para encontrar un video por su nombre.
+- Al terminar un video, se muestra una pantalla de "siguiente video" con otros videos recomendados
+  (elegidos al azar de la biblioteca) y una cuenta regresiva: si no se toca nada, pasa solo al
+  siguiente; si se toca otro video de la lista, se reproduce ese en su lugar — igual que el
+  autoplay de YouTube Kids.
+- Todo funciona **sin Internet**: la app nunca se conecta a la red, solo lee archivos que ya están
+  en la tablet.
+
+## Por qué no es exactamente la app real de YouTube Kids
+
+YouTube Kids es una app y una marca de Google — no se puede usar su nombre, su logo ni copiar su
+diseño exacto. Esta app se parece en cómo se usa (cuadrícula de colores, categorías, autoplay con
+recomendaciones), pero es un reproductor local hecho desde cero, con su propio nombre e ícono, y
+sin ninguna conexión con el catálogo real de YouTube: solo reproduce los videos que tú mismo copies
+a la tablet.
 
 ## Cómo compilar el APK
 
