@@ -1,49 +1,42 @@
-# Videos Kids — reproductor de videos sin Internet (Galaxy Tab 3 Lite SM-T110)
+# Lector PDF — tablet vieja (Galaxy Tab 3 Lite SM-T110)
 
-Una app estilo "YouTube Kids" pero **100% sin conexión**: reproduce los videos que ya tienes
-guardados en la tablet, con una cuadrícula grande y de colores, categorías por carpeta, buscador,
-y "siguiente video" automático con recomendaciones — pensada para una tablet vieja con **Android
-4.2.2 "Jelly Bean"** (como la Samsung Galaxy Tab 3 Lite SM-T110). Versión 1.0.0.
+Una app sencilla para leer archivos **PDF** que ya tienes guardados en el tablet, pensada para
+**Android 4.2.2 "Jelly Bean"** (como la Samsung Galaxy Tab 3 Lite SM-T110). Versión 2.0.0.
 
-No usa el nombre, el logo ni los colores de la app real de YouTube Kids — es un reproductor
-propio, inspirado en cómo se usa, pero hecho desde cero para esta tablet y sin conexión a
-Internet.
+No usa Internet para nada: solo lee los PDF que ya están en el almacenamiento del tablet.
 
-## Cómo poner tus videos
+## Cómo poner tus PDF
 
 1. Conecta la tablet a una computadora por USB (o usa una memoria/tarjeta que luego pongas en la
    tablet).
-2. Copia tus videos a la carpeta **`VideosKids`** en el almacenamiento de la tablet (la app la crea
-   sola la primera vez que se abre, si no existe).
-3. Si quieres que aparezcan separados por pestañas (como "Caricaturas", "Música", etc.), crea
-   subcarpetas dentro de `VideosKids` y pon cada video en la subcarpeta que corresponda. Los videos
-   sueltos, directo en `VideosKids`, aparecen en la pestaña "Todos".
-4. Abre la app (o vuelve a la pantalla principal si ya estaba abierta): busca los videos solos y
-   los muestra en la cuadrícula.
-
-Formatos que funcionan mejor: **MP4** (H.264). Otros formatos (MKV, WEBM, 3GP, AVI, M4V) también se
-detectan, pero si el tablet no trae el códec de video necesario, puede que no se reproduzcan bien;
-MP4 es la apuesta más segura en un dispositivo tan viejo.
+2. Copia tus archivos PDF a la carpeta **`MisPDF`** en el almacenamiento de la tablet (la app la
+   crea sola la primera vez que se abre, si no existe). También puedes organizarlos en
+   subcarpetas dentro de `MisPDF` si quieres.
+3. La app también encuentra solos los PDF que ya estén en la carpeta de **Descargas** del tablet
+   (por ejemplo, si los bajaste con el navegador o los recibiste por correo).
+4. Abre la app (o vuelve a la pantalla principal si ya estaba abierta): los PDF encontrados
+   aparecen en una lista, con su nombre y tamaño.
 
 ## Qué trae
 
-- Cuadrícula grande con tarjetas de colores y miniatura de cada video, fácil de tocar para un niño.
-- Pestañas de categoría automáticas según las subcarpetas que uses dentro de `VideosKids`.
-- Buscador (ícono de lupa) para encontrar un video por su nombre.
-- Al terminar un video, se muestra una pantalla de "siguiente video" con otros videos recomendados
-  (elegidos al azar de la biblioteca) y una cuenta regresiva: si no se toca nada, pasa solo al
-  siguiente; si se toca otro video de la lista, se reproduce ese en su lugar — igual que el
-  autoplay de YouTube Kids.
-- Todo funciona **sin Internet**: la app nunca se conecta a la red, solo lee archivos que ya están
-  en la tablet.
+- Lista de todos los PDF encontrados, con una insignia roja "PDF", nombre y tamaño del archivo.
+- Visor de PDF con zoom (pellizcar para acercar/alejar), deslizar para pasar de página, y un
+  indicador de "página X de Y" arriba.
+- **Recuerda dónde te quedaste**: la app guarda sola la última página que leíste de cada PDF, y la
+  próxima vez que abras ese mismo archivo retoma ahí mismo.
+- También se puede abrir un PDF directo desde otra app (un administrador de archivos, un correo)
+  con la opción "Abrir con...".
+- El renderizado de las páginas usa **PDFium** (el mismo motor que usa Chrome para mostrar PDF),
+  en una versión de la librería que sigue siendo compatible con Android tan viejo como este — las
+  versiones más nuevas de esa librería (y de Android en general) ya exigen Android 4.4 o más
+  nuevo, así que se usa a propósito una versión anterior.
 
-## Por qué no es exactamente la app real de YouTube Kids
+## Un aviso honesto
 
-YouTube Kids es una app y una marca de Google — no se puede usar su nombre, su logo ni copiar su
-diseño exacto. Esta app se parece en cómo se usa (cuadrícula de colores, categorías, autoplay con
-recomendaciones), pero es un reproductor local hecho desde cero, con su propio nombre e ícono, y
-sin ninguna conexión con el catálogo real de YouTube: solo reproduce los videos que tú mismo copies
-a la tablet.
+El tablet trae un procesador de un solo núcleo y 1 GB de RAM, así que PDF muy pesados (con muchas
+imágenes de alta resolución, o cientos de páginas) pueden tardar un poco más en cargar o pasar de
+página que en un celular moderno. PDF de texto normal (libros, documentos, formularios) deberían
+andar razonablemente bien.
 
 ## Cómo compilar el APK
 

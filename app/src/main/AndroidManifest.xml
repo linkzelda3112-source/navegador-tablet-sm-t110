@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Esta app es 100% local/sin red: solo necesita leer los videos que ya están en el
-         almacenamiento del tablet. No pide permiso de Internet a propósito. -->
+    <!-- App 100% local/sin red: solo necesita leer los PDF que ya están en el almacenamiento. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
@@ -14,7 +13,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".VideoGridActivity"
+            android:name=".PdfListActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
@@ -24,8 +23,17 @@
         </activity>
 
         <activity
-            android:name=".VideoPlayerActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|keyboardHidden" />
+            android:name=".PdfViewerActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <!-- Para poder abrir un PDF directo desde otra app (un administrador de archivos, un
+                 correo, etc.) con "Abrir con...". -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:mimeType="application/pdf" />
+                <data android:scheme="content" android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

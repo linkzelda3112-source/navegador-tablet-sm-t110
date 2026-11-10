@@ -10,6 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Necesario para la librería del visor de PDF (android-pdf-viewer), que se publica ahí.
+        maven { url 'https://jitpack.io' }
     }
 }
 rootProject.name = "navegador-tablet-sm-t110"

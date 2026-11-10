@@ -4,34 +4,39 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Fondo morado vivo, estilo app para niños. -->
+    <!-- Fondo azul, estilo app de documentos. -->
     <path
-        android:fillColor="#7C4DFF"
+        android:fillColor="#1565C0"
         android:pathData="M0,0h108v108h-108z" />
 
-    <!-- "Pantalla" blanca redondeada, como una tele/tablet. -->
+    <!-- Hoja de documento blanca, con la esquina doblada arriba a la derecha. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M22,30 a10,10 0 0,1 10,-10 h44 a10,10 0 0,1 10,10 v38 a10,10 0 0,1 -10,10 h-44 a10,10 0 0,1 -10,-10 z" />
+        android:pathData="M30,16 h32 l16,16 v60 a4,4 0 0,1 -4,4 h-44 a4,4 0 0,1 -4,-4 v-72 a4,4 0 0,1 4,-4 z" />
+    <path
+        android:fillColor="#BBDEFB"
+        android:pathData="M62,16 l16,16 h-12 a4,4 0 0,1 -4,-4 z" />
 
-    <!-- "Patita" de la tele. -->
+    <!-- Líneas de texto simuladas. -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M48,78h12v8h-12z" />
+        android:fillColor="#90A4AE"
+        android:pathData="M38,74h32v4h-32z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M38,86h32v6h-32z" />
+        android:fillColor="#90A4AE"
+        android:pathData="M38,82h22v4h-22z" />
 
-    <!-- Botón de play grande, naranja, centrado en la pantalla. -->
+    <!-- Insignia roja "PDF" sobre la hoja, con las letras armadas en bloques tipo pixel-art para
+         que se vean nítidas incluso de chiquitas en el ícono de la app. -->
     <path
-        android:fillColor="#FF7043"
-        android:pathData="M54,49m-19,0a19,19 0 1,1 38,0a19,19 0 1,1 -38,0" />
+        android:fillColor="#E53935"
+        android:pathData="M30,46h48v16h-48z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M47,38 l20,11 l-20,11 z" />
-
-    <!-- Estrellita amarilla, detalle alegre arriba a la derecha de la pantalla. -->
+        android:pathData="M36,47h2v2h-2z M38,47h2v2h-2z M40,47h2v2h-2z M42,47h2v2h-2z M36,49h2v2h-2z M44,49h2v2h-2z M36,51h2v2h-2z M44,51h2v2h-2z M36,53h2v2h-2z M38,53h2v2h-2z M40,53h2v2h-2z M42,53h2v2h-2z M36,55h2v2h-2z M36,57h2v2h-2z M36,59h2v2h-2z" />
     <path
-        android:fillColor="#FFC107"
-        android:pathData="M80,16 l2.6,5.9 l6.4,0.6 l-4.8,4.3 l1.4,6.3 l-5.6,-3.3 l-5.6,3.3 l1.4,-6.3 l-4.8,-4.3 l6.4,-0.6 z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M49,47h2v2h-2z M51,47h2v2h-2z M53,47h2v2h-2z M49,49h2v2h-2z M55,49h2v2h-2z M49,51h2v2h-2z M57,51h2v2h-2z M49,53h2v2h-2z M57,53h2v2h-2z M49,55h2v2h-2z M57,55h2v2h-2z M49,57h2v2h-2z M55,57h2v2h-2z M49,59h2v2h-2z M51,59h2v2h-2z M53,59h2v2h-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,47h2v2h-2z M64,47h2v2h-2z M66,47h2v2h-2z M68,47h2v2h-2z M70,47h2v2h-2z M62,49h2v2h-2z M62,51h2v2h-2z M64,51h2v2h-2z M66,51h2v2h-2z M68,51h2v2h-2z M62,53h2v2h-2z M62,55h2v2h-2z M62,57h2v2h-2z M62,59h2v2h-2z" />
 </vector>
