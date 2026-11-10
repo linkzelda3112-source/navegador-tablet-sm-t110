@@ -35,5 +35,5 @@ dependencies {
     // Visor de PDF basado en PDFium (el mismo motor de Chrome), en su última versión que todavía
     // usa la librería de soporte vieja en vez de AndroidX — AndroidX dejó de admitir API 17 hace
     // años, así que esta es la única variante que de verdad corre en esta tablet.
-    implementation 'com.github.barteksc:android-pdf-viewer:2.8.2'
+    implementation 'com.github.barteksc:android-pdf-viewer:2.8.1'
 }
