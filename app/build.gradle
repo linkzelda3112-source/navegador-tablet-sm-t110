@@ -37,5 +37,5 @@ dependencies {
     // dejaron de existir en los repositorios de Maven. Se usa en su lugar este fork mantenido
     // (mismo paquete de Java, com.github.barteksc.pdfviewer.*, así que el código no cambia), que
     // sigue publicado y disponible en Maven Central.
-    implementation 'com.github.mhiew:android-pdf-viewer:3.2.0-beta.3'
+    implementation 'com.github.DImuthuUpe:AndroidPdfViewer:3.0.0-beta.2'
 }
