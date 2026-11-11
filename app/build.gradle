@@ -34,8 +34,10 @@ android {
 dependencies {
     // Visor de PDF basado en PDFium (el mismo motor de Chrome). La librería original
     // (com.github.barteksc:android-pdf-viewer) ya no se puede descargar: sus versiones publicadas
-    // dejaron de existir en los repositorios de Maven. Se usa en su lugar este fork mantenido
-    // (mismo paquete de Java, com.github.barteksc.pdfviewer.*, así que el código no cambia), que
-    // sigue publicado y disponible en Maven Central.
+    // desaparecieron de todos los repositorios de Maven. Se usa en su lugar la continuación
+    // mantenida por un nuevo dueño del repositorio (mismo paquete de Java,
+    // com.github.barteksc.pdfviewer.*, así que el código de la app no cambia), que sí sigue
+    // disponible vía JitPack y que, a diferencia de otros forks más nuevos, no exige subir el
+    // minSdk por encima de 17.
     implementation 'com.github.DImuthuUpe:AndroidPdfViewer:3.0.0-beta.2'
 }
