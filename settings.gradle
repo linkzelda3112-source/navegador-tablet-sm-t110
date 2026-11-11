@@ -10,7 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Necesario para la librería del visor de PDF (android-pdf-viewer), que se publica ahí.
+        // Se deja por si en el futuro hace falta alguna librería que solo se publique en JitPack;
+        // el visor de PDF actual (com.github.mhiew:android-pdf-viewer) ya está en Maven Central.
         maven { url 'https://jitpack.io' }
     }
 }

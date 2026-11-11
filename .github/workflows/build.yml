@@ -60,8 +60,8 @@ jobs:
       - name: Publicar como Release descargable
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.0.1
-          name: Lector PDF v2.0.1
+          tag_name: v2.0.2
+          name: Lector PDF v2.0.2
           body: |
             Descarga lector-pdf.apk y ábrelo en el tablet para instalar (APK de depuración,
             generado automáticamente desde este cambio en main).
