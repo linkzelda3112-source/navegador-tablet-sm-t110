@@ -1,7 +1,7 @@
 # Lector PDF — tablet vieja (Galaxy Tab 3 Lite SM-T110)
 
 Una app sencilla para leer archivos **PDF** que ya tienes guardados en el tablet, pensada para
-**Android 4.2.2 "Jelly Bean"** (como la Samsung Galaxy Tab 3 Lite SM-T110). Versión 2.0.0.
+**Android 4.2.2 "Jelly Bean"** (como la Samsung Galaxy Tab 3 Lite SM-T110). Versión 2.0.1.
 
 No usa Internet para nada: solo lee los PDF que ya están en el almacenamiento del tablet.
 
