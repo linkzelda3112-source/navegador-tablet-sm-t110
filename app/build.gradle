@@ -3,19 +3,15 @@ plugins {
 }
 
 android {
-    namespace 'com.tabwii.game3d'
+    namespace 'com.kiarena'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.tabwii.game3d"
-        // El Honor X8 trae Android moderno (a diferencia de la tablet vieja de los proyectos
-        // anteriores), así que aquí sí podemos pedir una versión mínima razonable en vez de
-        // remontarnos a Android 4.2. minSdk 24 (Android 7) cubre prácticamente cualquier celular
-        // real en uso y ya trae todo lo necesario para OpenGL ES 2.0 sin trucos.
+        applicationId "com.kiarena"
         minSdk 24
         targetSdk 35
-        versionCode 2
-        versionName "1.1.0"
+        versionCode 3
+        versionName "2.0.0"
     }
 
     buildTypes {
@@ -31,7 +27,5 @@ android {
 }
 
 dependencies {
-    // Sin librerías externas: el render 3D (OpenGL ES 2.0) y la lectura de modelos .obj/.zip
-    // están escritos a mano, para no depender de ninguna librería de terceros que pueda
-    // desaparecer de un repositorio de Maven (como ya pasó en el proyecto del lector de PDF).
+    // Sin librerías externas: todo el dibujo (Canvas) y el sonido (AudioTrack) están hechos a mano.
 }

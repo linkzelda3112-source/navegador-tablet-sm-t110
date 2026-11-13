@@ -40,12 +40,12 @@ jobs:
       - name: Subir APK como resultado
         uses: actions/upload-artifact@v4
         with:
-          name: mini-motor-3d-apk
+          name: ki-arena-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
       - name: Renombrar APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk mini-motor-3d.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk ki-arena.apk
 
       - name: Preparar el changelog (mensaje del commit sin las líneas de atribución interna)
         id: changelog
@@ -60,14 +60,14 @@ jobs:
       - name: Publicar como Release descargable
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.1.0
-          name: Mini Motor 3D v1.1.0
+          tag_name: v2.0.0
+          name: Ki Arena v2.0.0
           body: |
-            Descarga mini-motor-3d.apk y ábrelo en el teléfono para instalar (APK de depuración,
+            Descarga ki-arena.apk y ábrelo en el teléfono para instalar (APK de depuración,
             generado automáticamente desde este cambio en main).
 
             ${{ steps.changelog.outputs.message }}
-          files: mini-motor-3d.apk
+          files: ki-arena.apk
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
