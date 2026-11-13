@@ -3,7 +3,7 @@
 Una app sencilla para colocar y mover modelos 3D en una escena, pensada como base para programar
 juegos encima más adelante — no es un editor profesional tipo Unity, es a propósito pequeña y
 fácil de entender (todo el render 3D y la lectura de modelos están escritos a mano, sin librerías
-externas). Versión 1.0.0.
+externas). Versión 1.1.0.
 
 ## Cómo poner tus modelos
 
@@ -12,15 +12,10 @@ externas). Versión 1.0.0.
    Si tiene textura, exporta también su `.mtl` y la imagen (`.png` o `.jpg`).
 2. Mete ese `.obj` (+ `.mtl` + imagen, si aplica) dentro de un archivo **.zip**. No importa si
    quedan sueltos o en una subcarpeta dentro del zip.
-3. Copia ese `.zip` al teléfono, a esta carpeta (no hace falta ningún permiso especial, cualquier
-   administrador de archivos la puede ver):
-
-   ```
-   Android/data/com.tabwii.game3d/files/Modelos3D/
-   ```
-
-4. Abre la app y toca **"+ Modelo"** arriba: ahí aparece la lista de `.zip` que encontró en esa
-   carpeta. Elige uno y se agrega a la escena.
+3. Abre la app y toca **"+ Modelo"** arriba: se abre el selector de archivos normal de Android, y
+   ahí puedes elegir el `.zip` desde donde lo tengas guardado — Descargas, Google Drive, WhatsApp,
+   una memoria USB conectada, etc. No hace falta copiarlo a ninguna carpeta especial ni dar
+   ningún permiso de almacenamiento.
 
 ## Cómo se usa
 

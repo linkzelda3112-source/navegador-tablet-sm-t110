@@ -1,11 +1,11 @@
 package com.tabwii.game3d;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -20,7 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.util.List;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 /**
  * Pantalla única de la app: un visor/editor 3D. Carga modelos desde los .zip que haya en la
@@ -31,6 +32,8 @@ import java.util.List;
 public class EditorActivity extends Activity {
 
     private static final int ACCENT = Color.parseColor("#4FC3F7");
+    private static final int REQUEST_PICK_ZIP = 1001;
+    private int modelsAdded = 0;
 
     private GLSurfaceView glView;
     private GameRenderer renderer;
@@ -55,14 +58,12 @@ public class EditorActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         renderer = new GameRenderer();
         buildUi();
-        refreshEmptyState();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         glView.onResume();
-        refreshEmptyState();
     }
 
     @Override
@@ -101,7 +102,7 @@ public class EditorActivity extends Activity {
 
         TextView addButton = pillButton("+ Modelo", ACCENT, Color.BLACK);
         addButton.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { showAddModelDialog(); }
+            @Override public void onClick(View v) { pickZipFromDevice(); }
         });
         headerRow.addView(addButton);
         topBar.addView(headerRow);
@@ -164,16 +165,16 @@ public class EditorActivity extends Activity {
         root.addView(bottomBar, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
 
-        // --- Mensaje de estado vacío (cuando no hay ningún .zip en la carpeta todavía). ---
+        // --- Mensaje de estado vacío (hasta que se agregue el primer modelo). ---
         emptyStateText = new TextView(this);
         emptyStateText.setTextColor(Color.WHITE);
         emptyStateText.setTextSize(15);
         emptyStateText.setGravity(Gravity.CENTER);
         emptyStateText.setPadding(dp(30), dp(30), dp(30), dp(30));
         emptyStateText.setText("Todavía no hay modelos.\n\n"
-                + "Copia un .zip con tu modelo (un archivo .obj adentro, y su .mtl + imagen si "
-                + "tiene textura) a esta carpeta:\n\n" + ModelLibrary.folder(this).getPath()
-                + "\n\nLuego toca \"+ Modelo\" arriba.");
+                + "Toca \"+ Modelo\" arriba y elige un archivo .zip con tu modelo 3D (un .obj "
+                + "adentro, y su .mtl + imagen si tiene textura) desde donde lo tengas guardado "
+                + "en el teléfono: Descargas, Drive, WhatsApp, etc.");
         root.addView(emptyStateText, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
 
@@ -211,62 +212,96 @@ public class EditorActivity extends Activity {
         modeButton.setText(cameraMode ? "Modo: Cámara 🎥" : "Modo: Objeto ✋");
     }
 
-    private void refreshEmptyState() {
-        boolean hasModels = !ModelLibrary.listZips(this).isEmpty();
-        emptyStateText.setVisibility(hasModels ? View.GONE : View.VISIBLE);
+    /** Abre el selector de archivos del propio Android para elegir un .zip desde cualquier
+     *  carpeta del teléfono (Descargas, Drive, WhatsApp...) — así no hace falta ningún permiso de
+     *  almacenamiento ni navegar a una carpeta especial de la app. */
+    private void pickZipFromDevice() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                "application/zip", "application/x-zip-compressed", "application/octet-stream"});
+        try {
+            startActivityForResult(Intent.createChooser(intent, "Elige un .zip con tu modelo"), REQUEST_PICK_ZIP);
+        } catch (Exception e) {
+            Toast.makeText(this, "No se encontró ningún selector de archivos en este teléfono.", Toast.LENGTH_LONG).show();
+        }
     }
 
-    private void showAddModelDialog() {
-        final List<File> zips = ModelLibrary.listZips(this);
-        if (zips.isEmpty()) {
-            Toast.makeText(this, "No hay ningún .zip en " + ModelLibrary.folder(this).getPath(), Toast.LENGTH_LONG).show();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_PICK_ZIP) return;
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            Toast.makeText(this, "No se eligió ningún archivo.", Toast.LENGTH_SHORT).show();
             return;
         }
-        CharSequence[] names = new CharSequence[zips.size()];
-        for (int i = 0; i < zips.size(); i++) names[i] = zips.get(i).getName();
-
-        new AlertDialog.Builder(this)
-                .setTitle("Elige un modelo")
-                .setItems(names, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        loadModelInBackground(zips.get(which));
-                    }
-                })
-                .show();
+        copyPickedZipAndLoad(data.getData());
     }
 
-    private void loadModelInBackground(final File zipFile) {
-        Toast.makeText(this, "Cargando " + zipFile.getName() + "...", Toast.LENGTH_SHORT).show();
+    /** El selector de archivos entrega un "content://" que no es un File normal; primero se
+     *  copia a la carpeta privada de la app y de ahí sigue el mismo camino de siempre. */
+    private void copyPickedZipAndLoad(final Uri uri) {
+        Toast.makeText(this, "Cargando modelo...", Toast.LENGTH_SHORT).show();
         new Thread(new Runnable() {
             @Override
             public void run() {
+                final File localCopy = new File(getCacheDir(), "modelo_elegido_" + System.currentTimeMillis() + ".zip");
                 try {
-                    final RawMesh mesh = ModelLibrary.load(EditorActivity.this, zipFile);
-                    final String label = mesh.sourceName + " #" + (renderer.getSceneObjectsSnapshot().size() + 1);
-                    renderer.requestAddModel(mesh, label, new GameRenderer.ModelLoadCallback() {
-                        @Override
-                        public void onLoaded(SceneObject object) {
-                            addChip(object);
-                            selectObject(object);
-                            emptyStateText.setVisibility(View.GONE);
+                    InputStream in = getContentResolver().openInputStream(uri);
+                    if (in == null) throw new Exception("no se pudo abrir el archivo elegido");
+                    try {
+                        FileOutputStream out = new FileOutputStream(localCopy);
+                        try {
+                            byte[] buffer = new byte[8192];
+                            int read;
+                            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+                        } finally {
+                            out.close();
                         }
-
-                        @Override
-                        public void onError(Exception e) {
-                            Toast.makeText(EditorActivity.this, "No se pudo mostrar el modelo: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
+                    } finally {
+                        in.close();
+                    }
                 } catch (final Exception e) {
                     runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(EditorActivity.this, "Error leyendo \"" + zipFile.getName() + "\": " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        @Override public void run() {
+                            Toast.makeText(EditorActivity.this, "No se pudo leer el archivo elegido: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
+                    return;
                 }
+                loadModelInBackground(localCopy);
             }
         }).start();
+    }
+
+    /** A partir de aquí ya se trabaja con un File normal; se llama desde un hilo que ya no es el
+     *  principal (por eso no vuelve a mostrar el Toast de "Cargando..."). */
+    private void loadModelInBackground(final File zipFile) {
+        try {
+            final RawMesh mesh = ModelLibrary.load(EditorActivity.this, zipFile);
+            modelsAdded++;
+            final String label = "Modelo #" + modelsAdded;
+            renderer.requestAddModel(mesh, label, new GameRenderer.ModelLoadCallback() {
+                @Override
+                public void onLoaded(SceneObject object) {
+                    addChip(object);
+                    selectObject(object);
+                    emptyStateText.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(EditorActivity.this, "No se pudo mostrar el modelo: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (final Exception e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(EditorActivity.this, "Error leyendo el .zip: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        }
     }
 
     private void addChip(final SceneObject obj) {

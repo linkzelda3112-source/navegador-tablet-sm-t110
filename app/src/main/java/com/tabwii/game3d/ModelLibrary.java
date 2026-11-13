@@ -6,39 +6,17 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * Busca los archivos .zip con modelos 3D que el usuario copió a la carpeta de la app, y sabe
- * descomprimirlos y convertirlos en un {@link RawMesh} usable. Cada .zip debe traer, sueltos o en
- * una subcarpeta, un archivo .obj y, si el modelo tiene textura, su .mtl y la imagen (.png/.jpg).
+ * Sabe descomprimir un .zip con un modelo 3D adentro y convertirlo en un {@link RawMesh} usable.
+ * El .zip puede venir de cualquier parte (el usuario lo elige con el selector de archivos del
+ * propio Android, ver {@code EditorActivity.pickZipFromDevice}) — aquí solo llega ya copiado a un
+ * archivo normal. Debe traer, suelto o en una subcarpeta, un archivo .obj y, si el modelo tiene
+ * textura, su .mtl y la imagen (.png/.jpg).
  */
 public class ModelLibrary {
-
-    private static final String FOLDER_NAME = "Modelos3D";
-
-    /** Carpeta donde el usuario copia sus .zip de modelos. Visible en un administrador de
-     *  archivos dentro de Android/data/com.tabwii.game3d/files/Modelos3D — no requiere ningún
-     *  permiso de almacenamiento. */
-    public static File folder(Context context) {
-        File dir = new File(context.getExternalFilesDir(null), FOLDER_NAME);
-        if (!dir.exists()) dir.mkdirs();
-        return dir;
-    }
-
-    public static List<File> listZips(Context context) {
-        List<File> result = new ArrayList<>();
-        File[] files = folder(context).listFiles();
-        if (files != null) {
-            for (File f : files) {
-                if (f.isFile() && f.getName().toLowerCase().endsWith(".zip")) result.add(f);
-            }
-        }
-        return result;
-    }
 
     /** Extrae (si hace falta) y carga el modelo de un .zip. Tarda, así que hay que llamarlo fuera
      *  del hilo principal. */
