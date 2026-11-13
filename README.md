@@ -1,41 +1,50 @@
-# Lector PDF — tablet vieja (Galaxy Tab 3 Lite SM-T110)
+# Mini Motor 3D — visor/editor de escenas 3D para Android (Honor X8)
 
-Una app sencilla para leer archivos **PDF** que ya tienes guardados en el tablet, pensada para
-**Android 4.2.2 "Jelly Bean"** (como la Samsung Galaxy Tab 3 Lite SM-T110). Versión 2.0.2.
+Una app sencilla para colocar y mover modelos 3D en una escena, pensada como base para programar
+juegos encima más adelante — no es un editor profesional tipo Unity, es a propósito pequeña y
+fácil de entender (todo el render 3D y la lectura de modelos están escritos a mano, sin librerías
+externas). Versión 1.0.0.
 
-No usa Internet para nada: solo lee los PDF que ya están en el almacenamiento del tablet.
+## Cómo poner tus modelos
 
-## Cómo poner tus PDF
+1. Consigue un modelo 3D en formato **.obj** (el formato de texto más simple; Blender, y
+   prácticamente cualquier programa de modelado o banco de modelos gratis, lo puede exportar).
+   Si tiene textura, exporta también su `.mtl` y la imagen (`.png` o `.jpg`).
+2. Mete ese `.obj` (+ `.mtl` + imagen, si aplica) dentro de un archivo **.zip**. No importa si
+   quedan sueltos o en una subcarpeta dentro del zip.
+3. Copia ese `.zip` al teléfono, a esta carpeta (no hace falta ningún permiso especial, cualquier
+   administrador de archivos la puede ver):
 
-1. Conecta la tablet a una computadora por USB (o usa una memoria/tarjeta que luego pongas en la
-   tablet).
-2. Copia tus archivos PDF a la carpeta **`MisPDF`** en el almacenamiento de la tablet (la app la
-   crea sola la primera vez que se abre, si no existe). También puedes organizarlos en
-   subcarpetas dentro de `MisPDF` si quieres.
-3. La app también encuentra solos los PDF que ya estén en la carpeta de **Descargas** del tablet
-   (por ejemplo, si los bajaste con el navegador o los recibiste por correo).
-4. Abre la app (o vuelve a la pantalla principal si ya estaba abierta): los PDF encontrados
-   aparecen en una lista, con su nombre y tamaño.
+   ```
+   Android/data/com.tabwii.game3d/files/Modelos3D/
+   ```
 
-## Qué trae
+4. Abre la app y toca **"+ Modelo"** arriba: ahí aparece la lista de `.zip` que encontró en esa
+   carpeta. Elige uno y se agrega a la escena.
 
-- Lista de todos los PDF encontrados, con una insignia roja "PDF", nombre y tamaño del archivo.
-- Visor de PDF con zoom (pellizcar para acercar/alejar), deslizar para pasar de página, y un
-  indicador de "página X de Y" arriba.
-- **Recuerda dónde te quedaste**: la app guarda sola la última página que leíste de cada PDF, y la
-  próxima vez que abras ese mismo archivo retoma ahí mismo.
-- También se puede abrir un PDF directo desde otra app (un administrador de archivos, un correo)
-  con la opción "Abrir con...".
-- El renderizado de las páginas usa **PDFium** (el mismo motor que usa Chrome para mostrar PDF), a
-  través de una librería de código abierto (un fork mantenido de "android-pdf-viewer", ya que la
-  librería original dejó de estar disponible para descargar).
+## Cómo se usa
 
-## Un aviso honesto
+- **Modo Cámara** (el que empieza activo): arrastra un dedo para girar la vista alrededor de la
+  escena; junta o separa dos dedos para acercar/alejar.
+- **Modo Objeto** (botón "Modo" arriba): toca primero el objeto en la fila de arriba para
+  seleccionarlo, y arrastra un dedo sobre la pantalla para moverlo por el suelo (eje X/Z).
+- Botones de abajo, con el objeto seleccionado: subir/bajar (eje Y), rotar, y agrandar/achicar.
+- Puedes agregar el mismo modelo varias veces (cada uno es un objeto independiente que se puede
+  mover por separado), o varios modelos distintos a la vez.
 
-El tablet trae un procesador de un solo núcleo y 1 GB de RAM, así que PDF muy pesados (con muchas
-imágenes de alta resolución, o cientos de páginas) pueden tardar un poco más en cargar o pasar de
-página que en un celular moderno. PDF de texto normal (libros, documentos, formularios) deberían
-andar razonablemente bien.
+## Por qué está hecho así (sin librerías externas)
+
+El proyecto anterior en este mismo repositorio (un lector de PDF) tuvo problemas porque la
+librería externa que usaba dejó de estar disponible en los repositorios de Maven de un día para
+otro. Para no repetir ese problema, este motor 3D no depende de ninguna librería de terceros: lee
+los `.obj` con un parser de texto propio, y dibuja todo con OpenGL ES 2.0 (incluido en cualquier
+Android desde hace más de una década) escrito directamente con sus funciones básicas.
+
+## Requisitos
+
+- Android 7.0 (API 24) o más nuevo — el Honor X8 cumple de sobra.
+- Un procesador con OpenGL ES 2.0, que prácticamente cualquier teléfono de los últimos 10 años
+  tiene (incluido el Adreno 610 del Honor X8).
 
 ## Cómo compilar el APK
 
@@ -43,8 +52,6 @@ El repositorio compila el APK automáticamente en GitHub Actions y lo publica co
 cambio a `main`; no hace falta una PC para conseguirlo. También se puede compilar a mano con
 Android Studio o `gradle assembleDebug` (Gradle 8.9+, `ANDROID_HOME` apuntando al SDK).
 
-El APK queda en `app/build/outputs/apk/debug/app-debug.apk`. Cópialo al tablet (por USB, por
-correo, o descargándolo directo desde el Release de GitHub en el propio tablet) e instálalo
+El APK queda en `app/build/outputs/apk/debug/app-debug.apk`. Cópialo al teléfono (por USB, por
+correo, o descargándolo directo desde el Release de GitHub en el propio teléfono) e instálalo
 permitiendo "instalar apps de orígenes desconocidos".
-
-Requiere Android 4.2 (API 17) o superior.

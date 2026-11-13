@@ -10,9 +10,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Se deja por si en el futuro hace falta alguna librería que solo se publique en JitPack;
-        // el visor de PDF actual (com.github.mhiew:android-pdf-viewer) ya está en Maven Central.
-        maven { url 'https://jitpack.io' }
     }
 }
 rootProject.name = "navegador-tablet-sm-t110"

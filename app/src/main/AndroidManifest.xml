@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- App 100% local/sin red: solo necesita leer los PDF que ya están en el almacenamiento. -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- No pide ningún permiso de almacenamiento: los modelos .zip se leen de la propia carpeta
+         de la app (Android/data/com.tabwii.game3d/files/Modelos3D), que cualquier app puede usar
+         sin permisos especiales desde hace muchas versiones de Android. -->
+
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -13,26 +15,12 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".PdfListActivity"
+            android:name=".EditorActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".PdfViewerActivity"
-            android:exported="true"
-            android:configChanges="orientation|screenSize|keyboardHidden">
-            <!-- Para poder abrir un PDF directo desde otra app (un administrador de archivos, un
-                 correo, etc.) con "Abrir con...". -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="file" android:mimeType="application/pdf" />
-                <data android:scheme="content" android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
     </application>

@@ -4,39 +4,38 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Fondo azul, estilo app de documentos. -->
+    <!-- Fondo gris oscuro, estilo herramienta de desarrollo. -->
     <path
-        android:fillColor="#1565C0"
+        android:fillColor="#263238"
         android:pathData="M0,0h108v108h-108z" />
 
-    <!-- Hoja de documento blanca, con la esquina doblada arriba a la derecha. -->
+    <!-- Cubo isométrico: cara superior (más clara), cara izquierda e inferior-derecha (más
+         oscuras), para dar sensación de volumen 3D. -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M30,16 h32 l16,16 v60 a4,4 0 0,1 -4,4 h-44 a4,4 0 0,1 -4,-4 v-72 a4,4 0 0,1 4,-4 z" />
+        android:fillColor="#4FC3F7"
+        android:pathData="M54,20 L84,36 L54,52 L24,36 Z" />
     <path
-        android:fillColor="#BBDEFB"
-        android:pathData="M62,16 l16,16 h-12 a4,4 0 0,1 -4,-4 z" />
+        android:fillColor="#0288D1"
+        android:pathData="M24,36 L54,52 L54,86 L24,70 Z" />
+    <path
+        android:fillColor="#01579B"
+        android:pathData="M84,36 L54,52 L54,86 L84,70 Z" />
 
-    <!-- Líneas de texto simuladas. -->
-    <path
-        android:fillColor="#90A4AE"
-        android:pathData="M38,74h32v4h-32z" />
-    <path
-        android:fillColor="#90A4AE"
-        android:pathData="M38,82h22v4h-22z" />
-
-    <!-- Insignia roja "PDF" sobre la hoja, con las letras armadas en bloques tipo pixel-art para
-         que se vean nítidas incluso de chiquitas en el ícono de la app. -->
-    <path
-        android:fillColor="#E53935"
-        android:pathData="M30,46h48v16h-48z" />
+    <!-- Aristas del cubo en blanco, para que se note el estilo "wireframe" de editor 3D. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M36,47h2v2h-2z M38,47h2v2h-2z M40,47h2v2h-2z M42,47h2v2h-2z M36,49h2v2h-2z M44,49h2v2h-2z M36,51h2v2h-2z M44,51h2v2h-2z M36,53h2v2h-2z M38,53h2v2h-2z M40,53h2v2h-2z M42,53h2v2h-2z M36,55h2v2h-2z M36,57h2v2h-2z M36,59h2v2h-2z" />
+        android:pathData="M53,19 L55,19 L85,35.5 L85,37.5 L55,54 L53,54 L23,37.5 L23,35.5 Z
+                           M54,23.3 L27,37.5 L54,52 L81,37.5 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M49,47h2v2h-2z M51,47h2v2h-2z M53,47h2v2h-2z M49,49h2v2h-2z M55,49h2v2h-2z M49,51h2v2h-2z M57,51h2v2h-2z M49,53h2v2h-2z M57,53h2v2h-2z M49,55h2v2h-2z M57,55h2v2h-2z M49,57h2v2h-2z M55,57h2v2h-2z M49,59h2v2h-2z M51,59h2v2h-2z M53,59h2v2h-2z" />
+        android:pathData="M23,35 h2v36h-2z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M62,47h2v2h-2z M64,47h2v2h-2z M66,47h2v2h-2z M68,47h2v2h-2z M70,47h2v2h-2z M62,49h2v2h-2z M62,51h2v2h-2z M64,51h2v2h-2z M66,51h2v2h-2z M68,51h2v2h-2z M62,53h2v2h-2z M62,55h2v2h-2z M62,57h2v2h-2z M62,59h2v2h-2z" />
+        android:pathData="M83,35 h2v36h-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M53,51 h2v36h-2z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23,69 l31,17.5 l31,-17.5 l1,1.8 l-32,18 l-32,-18 z" />
 </vector>
