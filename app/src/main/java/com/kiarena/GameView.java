@@ -21,11 +21,11 @@ import java.util.Random;
  * Se trabaja en coordenadas virtuales de 1280x720 que se escalan a la pantalla.
  */
 public class GameView extends View {
-    private static final int W = 1280, H = 720;
+    private static final int W = 720, H = 1280;
     private static final int S_MENU = 0, S_SELECT = 1, S_BATTLE = 2;
     private static final int PH_INTRO = 0, PH_INPUT = 1, PH_ANIM = 2, PH_END = 3, PH_RESULT = 4;
-    private static final float GROUND = 462f, FSCALE = 2.5f;
-    private static final float[] PX = {340f, 940f};
+    private static final float GROUND = 600f, FSCALE = 2.1f;
+    private static final float[] PX = {190f, 530f};
 
     private final Save save;
     private final Sfx sfx;
@@ -46,14 +46,14 @@ public class GameView extends View {
     private int focus = 0;
 
     // botones fijos
-    private final RectF bCampaign = new RectF(440, 372, 840, 452);
-    private final RectF bFree = new RectF(440, 468, 840, 548);
-    private final RectF bSound = new RectF(440, 564, 840, 628);
+    private final RectF bCampaign = new RectF(110, 830, 610, 920);
+    private final RectF bFree = new RectF(110, 936, 610, 1026);
+    private final RectF bSound = new RectF(110, 1042, 610, 1112);
     private final RectF bBack = new RectF(20, 20, 160, 74);
-    private final RectF bFight = new RectF(940, 596, 1250, 696);
-    private final RectF bRes1 = new RectF(370, 452, 630, 530);
-    private final RectF bRes2 = new RectF(650, 452, 910, 530);
-    private final RectF bQuit = new RectF(606, 10, 674, 56);
+    private final RectF bFight = new RectF(460, 985, 700, 1115);
+    private final RectF bRes1 = new RectF(80, 740, 355, 824);
+    private final RectF bRes2 = new RectF(365, 740, 640, 824);
+    private final RectF bQuit = new RectF(650, 14, 706, 52);
 
     // combate
     private Battle b;
@@ -180,8 +180,8 @@ public class GameView extends View {
     }
 
     private RectF selRect(int i) {
-        float x = 40 + (i % 4) * 206, y = 110 + (i / 4) * 231;
-        return new RectF(x, y, x + 190, y + 215);
+        float x = 20 + (i % 4) * 175, y = 110 + (i / 4) * 244;
+        return new RectF(x, y, x + 160, y + 230);
     }
 
     private void tapSelect(float x, float y) {
@@ -223,7 +223,7 @@ public class GameView extends View {
             if (cardRect(i).contains(x, y)) {
                 int ci = uiHand[i];
                 if (b.card(0, ci).cost <= uiKi[0]) playerAct(ci);
-                else { sfx.play(Sfx.GUARD); addFloater("Ki insuficiente", 640, 520, 0xFFFFCA28, 34); }
+                else { sfx.play(Sfx.GUARD); addFloater("Ki insuficiente", 360, 840, 0xFFFFCA28, 34); }
                 return;
             }
         }
@@ -423,7 +423,7 @@ public class GameView extends View {
         float dir = a == 0 ? 1 : -1;
         switch (cur.type) {
             case Battle.E_STRIKE: {
-                float dist = (PX[t] - PX[a]) - dir * 135f;
+                float dist = (PX[t] - PX[a]) - dir * 115f;
                 float o;
                 if (evT < 0.25f) o = ease(evT / 0.25f) * dist;
                 else if (evT < 0.5f) o = dist;
@@ -450,7 +450,7 @@ public class GameView extends View {
                 if (!hitDone && evT >= 0.4f) {
                     hitDone = true;
                     hpTgt[a][cur.tIdx] = cur.hpAfter;
-                    addFloater("+" + cur.value, PX[a], GROUND - 260, 0xFF69F0AE, 52);
+                    addFloater("+" + cur.value, PX[a], GROUND - 230, 0xFF69F0AE, 52);
                     for (int i = 0; i < 20; i++) {
                         spawn(PX[a] + rnd.nextInt(100) - 50, GROUND - rnd.nextInt(180), 0,
                                 -80 - rnd.nextInt(80), 0.9f, 9, 0xFF69F0AE);
@@ -460,13 +460,13 @@ public class GameView extends View {
             case Battle.E_BUFF:
                 if (!subDone && evT >= 0.3f) {
                     subDone = true;
-                    addFloater("¡ATQ +40%!", PX[a], GROUND - 270, 0xFFFFD54F, 42);
+                    addFloater("¡ATQ +40%!", PX[a], GROUND - 240, 0xFFFFD54F, 42);
                 }
                 break;
             case Battle.E_CHARGE:
                 if (!subDone && evT >= 0.3f) {
                     subDone = true;
-                    addFloater("+" + cur.value + " KI", PX[a], GROUND - 270, 0xFF4FC3F7, 46);
+                    addFloater("+" + cur.value + " KI", PX[a], GROUND - 240, 0xFF4FC3F7, 46);
                 }
                 break;
             case Battle.E_SWAP: {
@@ -495,7 +495,7 @@ public class GameView extends View {
         int a = cur.actor, t = 1 - a;
         hpTgt[t][cur.tIdx] = cur.hpAfter;
         hitUntil[t] = time + 0.4f;
-        float tx = PX[t], ty = GROUND - 250;
+        float tx = PX[t], ty = GROUND - 215;
         int col = cur.crit ? 0xFFFFD600 : (cur.guarded ? 0xFFB0BEC5 : 0xFFFFFFFF);
         addFloater(String.valueOf(cur.value), tx, ty, col, cur.crit ? 66 : 50);
         float yy = ty - 52;
@@ -508,7 +508,7 @@ public class GameView extends View {
         for (int i = 0; i < n; i++) {
             double ang = rnd.nextDouble() * Math.PI * 2;
             float sp = 120 + rnd.nextInt(380);
-            spawn(tx, GROUND - 140, (float) Math.cos(ang) * sp, (float) Math.sin(ang) * sp - 80,
+            spawn(tx, GROUND - 120, (float) Math.cos(ang) * sp, (float) Math.sin(ang) * sp - 80,
                     0.5f + rnd.nextFloat() * 0.4f, 6 + rnd.nextInt(8), rnd.nextBoolean() ? af.aura : 0xFFFFFFFF);
         }
         shake = Math.max(shake, cur.type == Battle.E_ULTI ? 24 : (cur.type == Battle.E_BLAST ? 13 : 9));
@@ -662,15 +662,15 @@ public class GameView extends View {
             for (int i = 0; i < 90; i++) c.drawCircle(r.nextInt(W), r.nextInt(300), 0.8f + r.nextFloat() * 1.6f, q);
         }
         q.setColor(k[2]);
-        c.drawCircle(pal == 2 ? 960 : 900, 150, pal == 2 ? 52 : 70, q);
+        c.drawCircle(560, 150, pal == 2 ? 52 : 70, q);
         q.setColor((k[2] & 0xFFFFFF) | 0x33000000);
-        c.drawCircle(pal == 2 ? 960 : 900, 150, 110, q);
+        c.drawCircle(560, 150, 110, q);
         for (int layer = 0; layer < 2; layer++) {
             q.setColor(k[3 + layer]);
             Path mt = new Path();
             mt.moveTo(0, GROUND);
             float x = 0;
-            float base = 330 + layer * 50;
+            float base = GROUND - 150 + layer * 40;
             while (x < W + 120) {
                 float peak = base - 40 - r.nextInt(130);
                 mt.lineTo(x + 60 + r.nextInt(50), peak);
@@ -703,26 +703,26 @@ public class GameView extends View {
 
     private void drawMenu(Canvas c) {
         drawBg(c, 0);
-        FighterArt.draw(c, p, Roster.ALL[0], 250, 650, 3.6f, true, FighterArt.P_IDLE, time, false, 255);
-        FighterArt.draw(c, p, Roster.ALL[6], 1030, 650, 3.6f, false, FighterArt.P_IDLE, time + 1f, false, 255);
+        FighterArt.draw(c, p, Roster.ALL[0], 190, 760, 3.0f, true, FighterArt.P_IDLE, time, false, 255);
+        FighterArt.draw(c, p, Roster.ALL[6], 530, 760, 3.0f, false, FighterArt.P_IDLE, time + 1f, false, 255);
 
         float pulse = 1f + 0.03f * (float) Math.sin(time * 3f);
         c.save();
-        c.scale(pulse, pulse, 640, 190);
+        c.scale(pulse, pulse, 360, 200);
         p.setTypeface(Typeface.DEFAULT_BOLD);
         p.setTextAlign(Paint.Align.CENTER);
-        p.setTextSize(132);
+        p.setTextSize(110);
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(14);
+        p.setStrokeWidth(12);
         p.setColor(0xFF1B1B3A);
-        c.drawText("KI ARENA", 640, 205, p);
+        c.drawText("KI ARENA", 360, 215, p);
         p.setStyle(Paint.Style.FILL);
         p.setColor(0xFFFFA000);
-        c.drawText("KI ARENA", 640, 205, p);
+        c.drawText("KI ARENA", 360, 215, p);
         p.setColor(0xFFFFE082);
-        c.drawText("KI ARENA", 640, 195, p);
+        c.drawText("KI ARENA", 360, 207, p);
         c.restore();
-        text(c, "Combates épicos por cartas 3 contra 3", 640, 262, 34, 0xFFFFFFFF, Paint.Align.CENTER);
+        text(c, "Combates por cartas 3 contra 3", 360, 275, 30, 0xFFFFFFFF, Paint.Align.CENTER);
 
         int cl = save.cleared();
         String sub = cl >= Roster.STAGES ? "CAMPAÑA  (¡completada!)" : "CAMPAÑA  (combate " + (cl + 1) + "/" + Roster.STAGES + ")";
@@ -730,7 +730,7 @@ public class GameView extends View {
         button(c, bFree, "COMBATE LIBRE", 0xFF1565C0, true);
         button(c, bSound, sfx.enabled ? "Sonido: SÍ" : "Sonido: NO", 0xFF455A64, true);
         text(c, "Guerreros desbloqueados: " + Roster.unlockedCount(cl) + "/" + Roster.ALL.length,
-                640, 668, 26, 0xFFFFFFFF, Paint.Align.CENTER);
+                360, 1170, 26, 0xFFFFFFFF, Paint.Align.CENTER);
     }
 
     // ======================================================================= SELECCIÓN
@@ -742,8 +742,8 @@ public class GameView extends View {
         c.drawRect(0, 0, W, H, p);
         button(c, bBack, "‹ Atrás", 0xFF455A64, true);
         String title = campaign ? "CAMPAÑA · Combate " + stage + "/" + Roster.STAGES : "COMBATE LIBRE";
-        text(c, title, 640, 52, 40, 0xFFFFD54F, Paint.Align.CENTER);
-        text(c, "Elige 3 guerreros (el primero sale a pelear)", 640, 90, 26, 0xFFFFFFFF, Paint.Align.CENTER);
+        text(c, title, 440, 56, 32, 0xFFFFD54F, Paint.Align.CENTER);
+        text(c, "Elige 3 guerreros (el primero sale a pelear)", 360, 98, 24, 0xFFFFFFFF, Paint.Align.CENTER);
 
         int unlocked = Roster.unlockedCount(save.cleared());
         for (int i = 0; i < Roster.ALL.length; i++) {
@@ -754,78 +754,76 @@ public class GameView extends View {
             int at = team.indexOf(i);
             panel(c, r, locked ? 0xFF20242B : 0xFF2B3340, at >= 0 ? 0xFFFFD54F : (i == focus ? 0xFFFFFFFF : 0xFF566170), 16);
             if (locked) {
-                text(c, "?", x + 95, y + 125, 100, 0xFF59616D, Paint.Align.CENTER);
-                text(c, "BLOQUEADO", x + 95, y + 190, 22, 0xFF8892A0, Paint.Align.CENTER);
+                text(c, "?", x + 80, y + 140, 90, 0xFF59616D, Paint.Align.CENTER);
+                text(c, "BLOQUEADO", x + 80, y + 212, 18, 0xFF8892A0, Paint.Align.CENTER);
             } else {
                 p.setStyle(Paint.Style.FILL);
                 p.setColor(shadeA(Fighter.TYPE_COLORS[f.type], 0.35f));
-                rf.set(x + 10, y + 10, x + 180, y + 140);
+                rf.set(x + 8, y + 8, x + 152, y + 150);
                 c.drawRoundRect(rf, 12, 12, p);
                 c.save();
-                c.clipRect(x + 10, y + 10, x + 180, y + 140);
-                FighterArt.portrait(c, p, f, x + 95, y + 78, 96, false);
+                c.clipRect(x + 8, y + 8, x + 152, y + 150);
+                FighterArt.portrait(c, p, f, x + 80, y + 80, 100, false);
                 c.restore();
-                fitText(c, f.name, x + 95, y + 172, 28, 170, 0xFFFFFFFF);
+                fitText(c, f.name, x + 80, y + 184, 26, 148, 0xFFFFFFFF);
                 p.setStyle(Paint.Style.FILL);
                 p.setColor(Fighter.TYPE_COLORS[f.type]);
-                rf.set(x + 40, y + 184, x + 150, y + 204);
-                c.drawRoundRect(rf, 10, 10, p);
-                text(c, Fighter.TYPE_NAMES[f.type], x + 95, y + 200, 16, 0xFFFFFFFF, Paint.Align.CENTER);
+                rf.set(x + 25, y + 196, x + 135, y + 218);
+                c.drawRoundRect(rf, 11, 11, p);
+                text(c, Fighter.TYPE_NAMES[f.type], x + 80, y + 213, 15, 0xFFFFFFFF, Paint.Align.CENTER);
                 if (at >= 0) {
                     p.setColor(0xFFFFD54F);
-                    c.drawCircle(x + 26, y + 26, 20, p);
-                    text(c, String.valueOf(at + 1), x + 26, y + 36, 28, 0xFF000000, Paint.Align.CENTER);
+                    c.drawCircle(x + 24, y + 24, 17, p);
+                    text(c, String.valueOf(at + 1), x + 24, y + 34, 24, 0xFF000000, Paint.Align.CENTER);
                 }
             }
         }
 
         // panel de detalle
-        RectF d = new RectF(880, 110, 1250, 570);
+        RectF d = new RectF(20, 600, 700, 930);
         panel(c, d, 0xDD1B2129, 0xFF566170, 16);
         if (focus < unlocked) {
             Fighter f = Roster.ALL[focus];
-            text(c, f.name, 900, 152, 38, 0xFFFFFFFF, Paint.Align.LEFT);
-            text(c, f.title, 900, 182, 22, 0xFFBDBDBD, Paint.Align.LEFT);
+            text(c, f.name, 40, 648, 38, 0xFFFFFFFF, Paint.Align.LEFT);
+            text(c, f.title, 40, 680, 22, 0xFFBDBDBD, Paint.Align.LEFT);
             p.setStyle(Paint.Style.FILL);
             p.setColor(Fighter.TYPE_COLORS[f.type]);
-            rf.set(1120, 126, 1234, 152);
-            c.drawRoundRect(rf, 13, 13, p);
-            text(c, Fighter.TYPE_NAMES[f.type], 1177, 146, 19, 0xFFFFFFFF, Paint.Align.CENTER);
-            statRow(c, "VIDA", f.hp / 1300f, 222, 0xFF66BB6A);
-            statRow(c, "ATQ", f.atk / 135f, 248, 0xFFEF5350);
-            statRow(c, "DEF", f.def / 110f, 274, 0xFF42A5F5);
-            statRow(c, "VEL", f.spd / 130f, 300, 0xFFFFCA28);
-            text(c, "MOVIMIENTOS", 900, 340, 20, 0xFFFFD54F, Paint.Align.LEFT);
+            rf.set(556, 624, 684, 652);
+            c.drawRoundRect(rf, 14, 14, p);
+            text(c, Fighter.TYPE_NAMES[f.type], 620, 645, 19, 0xFFFFFFFF, Paint.Align.CENTER);
+            statRow(c, "VIDA", f.hp / 1300f, 744, 0xFF66BB6A);
+            statRow(c, "ATQ", f.atk / 135f, 780, 0xFFEF5350);
+            statRow(c, "DEF", f.def / 110f, 816, 0xFF42A5F5);
+            statRow(c, "VEL", f.spd / 130f, 852, 0xFFFFCA28);
+            text(c, "MOVIMIENTOS", 370, 722, 20, 0xFFFFD54F, Paint.Align.LEFT);
             for (int i = 0; i < 6; i++) {
                 Card cd = f.deck[i];
-                float yy = 368 + i * 30;
+                float yy = 756 + i * 30;
                 p.setStyle(Paint.Style.FILL);
                 p.setColor(0xFF263238);
-                c.drawCircle(914, yy - 7, 12, p);
-                text(c, String.valueOf(cd.cost), 914, yy - 1, 17, 0xFF4FC3F7, Paint.Align.CENTER);
-                p.setTextSize(18);
-                float maxW = 300;
-                fitLeft(c, cd.name + " — " + cd.desc(), 936, yy, 18, maxW, 0xFFFFFFFF);
+                c.drawCircle(384, yy - 7, 12, p);
+                text(c, String.valueOf(cd.cost), 384, yy - 1, 17, 0xFF4FC3F7, Paint.Align.CENTER);
+                fitLeft(c, cd.name + " — " + cd.desc(), 406, yy, 18, 285, 0xFFFFFFFF);
             }
         } else {
-            text(c, "???", 1065, 300, 60, 0xFF59616D, Paint.Align.CENTER);
-            text(c, "Gana combates de la", 1065, 350, 24, 0xFFBDBDBD, Paint.Align.CENTER);
-            text(c, "campaña para desbloquearlo", 1065, 380, 24, 0xFFBDBDBD, Paint.Align.CENTER);
+            text(c, "???", 360, 760, 60, 0xFF59616D, Paint.Align.CENTER);
+            text(c, "Gana combates de la", 360, 820, 24, 0xFFBDBDBD, Paint.Align.CENTER);
+            text(c, "campaña para desbloquearlo", 360, 852, 24, 0xFFBDBDBD, Paint.Align.CENTER);
         }
 
         // equipo elegido
-        text(c, "TU EQUIPO", 40, 600, 24, 0xFFFFD54F, Paint.Align.LEFT);
+        text(c, "TU EQUIPO", 20, 968, 24, 0xFFFFD54F, Paint.Align.LEFT);
         for (int i = 0; i < 3; i++) {
-            float x = 40 + i * 130;
-            rf.set(x, 612, x + 118, 710);
+            float x = 20 + i * 146;
+            rf.set(x, 985, x + 130, 1115);
             panel(c, rf, 0xFF2B3340, i < team.size() ? 0xFFFFD54F : 0xFF566170, 12);
             if (i < team.size()) {
                 c.save();
                 c.clipRect(rf);
-                FighterArt.portrait(c, p, Roster.ALL[team.get(i)], x + 59, 654, 66, false);
+                FighterArt.portrait(c, p, Roster.ALL[team.get(i)], x + 65, 1048, 86, false);
                 c.restore();
             } else {
-                text(c, String.valueOf(i + 1), x + 59, 674, 44, 0xFF59616D, Paint.Align.CENTER);
+                text(c, String.valueOf(i + 1), x + 65, 1066, 48, 0xFF59616D, Paint.Align.CENTER);
             }
         }
         button(c, bFight, "¡A PELEAR!", 0xFFE65100, team.size() == 3);
@@ -842,20 +840,20 @@ public class GameView extends View {
     }
 
     private void statRow(Canvas c, String label, float ratio, float y, int color) {
-        text(c, label, 900, y, 20, 0xFFFFFFFF, Paint.Align.LEFT);
-        bar(c, 970, y - 17, 260, 18, ratio, color, false);
+        text(c, label, 40, y, 20, 0xFFFFFFFF, Paint.Align.LEFT);
+        bar(c, 105, y - 17, 230, 18, ratio, color, false);
     }
 
     // ======================================================================= COMBATE: dibujo
 
     private RectF cardRect(int i) {
-        float x = 270 + i * 248;
-        return new RectF(x, 568, x + 236, 710);
+        float x = 20 + (i % 2) * 350, y = 896 + (i / 2) * 152;
+        return new RectF(x, y, x + 340, y + 142);
     }
 
     private RectF swapRect(int j) {
-        float x = 20 + j * 124;
-        return new RectF(x, 568, x + 116, 710);
+        float x = 20 + j * 350;
+        return new RectF(x, 1204, x + 340, 1270);
     }
 
     private int[] swapMembers() {
@@ -903,13 +901,13 @@ public class GameView extends View {
         c.restore();
 
         drawHud(c);
-        if (phase == PH_INPUT || phase == PH_ANIM || phase == PH_INTRO) drawHand(c);
+        drawHand(c);
 
         // anuncio del movimiento
         if (bannerT > 0 && phase != PH_INTRO) {
             float k = Math.min(1f, (bannerTotal - bannerT) / 0.12f);
-            float sz = 46 + 14 * (1f - k);
-            text(c, banner, 640, 205, sz, bannerColor, Paint.Align.CENTER);
+            float sz = 40 + 14 * (1f - k);
+            fitText(c, banner, 360, 300, sz, 680, bannerColor);
         }
         // números flotantes
         for (Floater f : floaters) {
@@ -928,11 +926,11 @@ public class GameView extends View {
         if (phase == PH_INTRO) drawIntro(c);
         if (phase == PH_END) {
             float k = Math.min(1f, endT / 0.4f);
-            text(c, b.winner == 0 ? "¡VICTORIA!" : "DERROTA", 640, 300, 56 + 40 * k,
+            text(c, b.winner == 0 ? "¡VICTORIA!" : "DERROTA", 360, 420, 50 + 34 * k,
                     b.winner == 0 ? 0xFFFFD54F : 0xFFEF5350, Paint.Align.CENTER);
         }
         if (phase == PH_RESULT) drawResult(c);
-        if (time < quitArm) text(c, "Toca la X otra vez para salir", 640, 108, 24, 0xFFFFCA28, Paint.Align.CENTER);
+        if (time < quitArm) text(c, "Toca la X otra vez para salir", 360, 224, 24, 0xFFFFCA28, Paint.Align.CENTER);
     }
 
     private void drawEffects(Canvas c) {
@@ -941,18 +939,18 @@ public class GameView extends View {
         float dir = a == 0 ? 1 : -1;
         Fighter f = b.team[a][dispActive[a]].f;
         int rgb = f.aura & 0xFFFFFF;
-        float hx = PX[a] + offX[a] + dir * 70, hy = GROUND - 150;
-        float tx = PX[t] - dir * 30, ty = GROUND - 135;
+        float hx = PX[a] + offX[a] + dir * 60, hy = GROUND - 125;
+        float tx = PX[t] - dir * 25, ty = GROUND - 112;
         p.setStyle(Paint.Style.FILL);
         if (cur.type == Battle.E_BLAST) {
             float r;
             float bx, by;
             if (evT < 0.25f) {
-                r = 8 + 24 * (evT / 0.25f);
+                r = 7 + 20 * (evT / 0.25f);
                 bx = hx; by = hy;
             } else if (evT < 0.7f) {
                 float k = (evT - 0.25f) / 0.45f;
-                r = 32;
+                r = 27;
                 bx = hx + (tx - hx) * k;
                 by = hy + (ty - hy) * k;
             } else {
@@ -962,10 +960,10 @@ public class GameView extends View {
         } else if (cur.type == Battle.E_ULTI) {
             if (evT < 0.8f) {
                 float k = ease(evT / 0.8f);
-                orb(c, hx, hy, 12 + 70 * k, rgb);
+                orb(c, hx, hy, 10 + 58 * k, rgb);
             } else if (evT < 1.6f) {
                 float k = (evT - 0.8f) / 0.8f;
-                float w = 90 * (1f - 0.6f * k) * (0.9f + 0.1f * (float) Math.sin(time * 40f));
+                float w = 70 * (1f - 0.6f * k) * (0.9f + 0.1f * (float) Math.sin(time * 40f));
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeCap(Paint.Cap.ROUND);
                 p.setStrokeWidth(w * 1.6f);
@@ -978,8 +976,8 @@ public class GameView extends View {
                 p.setColor(0xFFFFFFFF);
                 c.drawLine(hx, hy, tx, ty, p);
                 p.setStyle(Paint.Style.FILL);
-                orb(c, hx, hy, 60, rgb);
-                orb(c, tx, ty, 70, rgb);
+                orb(c, hx, hy, 50, rgb);
+                orb(c, tx, ty, 58, rgb);
             }
         }
     }
@@ -998,44 +996,35 @@ public class GameView extends View {
 
     private void drawHud(Canvas c) {
         for (int s = 0; s < 2; s++) {
-            boolean left = s == 0;
             int ai = dispActive[s];
             Battle.Unit u = b.team[s][ai];
-            float x0 = left ? 20 : W - 20 - 470;
-            Paint.Align al = left ? Paint.Align.LEFT : Paint.Align.RIGHT;
-            float tx = left ? x0 : x0 + 470;
-            // fondo
-            rf.set(x0 - 8, 8, x0 + 478, 156);
+            float py = s == 1 ? 8 : 690;
+            rf.set(10, py, 710, py + 148);
             panel(c, rf, 0x99000000, 0, 14);
-            // tipo + nombre
             p.setStyle(Paint.Style.FILL);
             p.setColor(Fighter.TYPE_COLORS[u.f.type]);
-            float dotX = left ? x0 + 12 : x0 + 458;
-            c.drawCircle(dotX, 30, 11, p);
-            float nameX = left ? x0 + 32 : x0 + 438;
-            text(c, u.f.name + (s == 1 ? "  (rival)" : ""), nameX, 40, 28, 0xFFFFFFFF, al);
-            if (u.buff > 0) text(c, "ATQ↑", left ? x0 + 470 : x0, 40, 22, 0xFFFFD54F, left ? Paint.Align.RIGHT : Paint.Align.LEFT);
+            c.drawCircle(34, py + 28, 11, p);
+            text(c, u.f.name + (s == 1 ? "  (rival)" : ""), 54, py + 38, 28, 0xFFFFFFFF, Paint.Align.LEFT);
+            if (u.buff > 0) text(c, "ATQ↑", 490, py + 38, 22, 0xFFFFD54F, Paint.Align.RIGHT);
             float ratio = hpShow[s][ai] / u.maxHp;
-            bar(c, x0, 50, 470, 26, ratio, hpColor(ratio), !left);
-            text(c, Math.round(hpShow[s][ai]) + " / " + u.maxHp, x0 + 235, 71, 20, 0xFFFFFFFF, Paint.Align.CENTER);
-            kiPips(c, left ? x0 + 9 : x0 + 461, 92, uiKi[s], !left, 8);
-            // miniaturas del equipo
+            bar(c, 20, py + 48, 470, 26, ratio, hpColor(ratio), false);
+            text(c, Math.round(hpShow[s][ai]) + " / " + u.maxHp, 255, py + 69, 20, 0xFFFFFFFF, Paint.Align.CENTER);
+            kiPips(c, 30, py + 108, uiKi[s], false, 8);
             for (int i = 0; i < 3; i++) {
-                float ix = left ? x0 + i * 62 : x0 + 470 - 52 - i * 62;
-                float iy = 106;
-                rf.set(ix, iy, ix + 52, iy + 46);
+                float ix = 515 + i * 64;
+                float iy = py + 56;
+                rf.set(ix, iy, ix + 56, iy + 50);
                 panel(c, rf, 0xFF2B3340, i == ai ? 0xFFFFD54F : 0xFF566170, 8);
                 c.save();
                 c.clipRect(rf);
-                FighterArt.portrait(c, p, b.team[s][i].f, ix + 26, iy + 24, 34, !b.team[s][i].alive() || hpTgt[s][i] <= 0);
+                FighterArt.portrait(c, p, b.team[s][i].f, ix + 28, iy + 26, 38, !b.team[s][i].alive() || hpTgt[s][i] <= 0);
                 c.restore();
                 float hr = hpShow[s][i] / b.team[s][i].maxHp;
-                bar(c, ix + 2, iy + 38, 48, 6, hr, hpColor(hr), false);
+                bar(c, ix + 2, iy + 42, 52, 6, hr, hpColor(hr), false);
             }
         }
-        // salir + turno
         button(c, bQuit, "X", 0xFF8E2424, true);
-        text(c, "Turno " + b.turn, 640, 84, 22, 0xFFFFFFFF, Paint.Align.CENTER);
+        text(c, "Turno " + b.turn, 360, 192, 22, 0xFFFFFFFF, Paint.Align.CENTER);
     }
 
     private static int cardColor(int kind) {
@@ -1052,34 +1041,12 @@ public class GameView extends View {
 
     private void drawHand(Canvas c) {
         p.setStyle(Paint.Style.FILL);
-        p.setColor(0xAA000000);
-        c.drawRect(0, 538, W, H, p);
-        kiPips(c, 292, 552, uiKi[0], false, 7);
-        text(c, "KI " + uiKi[0] + "/" + Battle.MAX_KI, 520, 558, 22, 0xFF4FC3F7, Paint.Align.LEFT);
+        p.setColor(0xCC000000);
+        c.drawRect(0, 850, W, H, p);
+        kiPips(c, 34, 876, uiKi[0], false, 7);
+        text(c, "KI " + uiKi[0] + "/" + Battle.MAX_KI, 200, 884, 22, 0xFF4FC3F7, Paint.Align.LEFT);
 
         boolean can = phase == PH_INPUT;
-        // cambios
-        int[] sw = swapMembers();
-        for (int j = 0; j < 2; j++) {
-            RectF r = swapRect(j);
-            float x = r.left, y = r.top;
-            Battle.Unit u = b.team[0][sw[j]];
-            boolean dead = !u.alive();
-            panel(c, r, 0xFF2B3340, 0xFF8895A7, 14);
-            c.save();
-            c.clipRect(x + 4, y + 4, x + 112, y + 70);
-            FighterArt.portrait(c, p, u.f, x + 58, y + 40, 60, dead);
-            c.restore();
-            fitText(c, u.f.name, x + 58, y + 92, 22, 106, 0xFFFFFFFF);
-            float hr = hpShow[0][sw[j]] / u.maxHp;
-            bar(c, x + 10, y + 100, 96, 10, hr, hpColor(hr), false);
-            text(c, dead ? "K.O." : "CAMBIAR", x + 58, y + 132, 18, dead ? 0xFFEF5350 : 0xFFFFD54F, Paint.Align.CENTER);
-            if (!can || dead) {
-                p.setStyle(Paint.Style.FILL);
-                p.setColor(0x77000000);
-                c.drawRoundRect(r, 14, 14, p);
-            }
-        }
         // cartas
         Battle.Unit me = b.team[0][dispActive[0]];
         for (int i = 0; i < 4; i++) {
@@ -1090,7 +1057,7 @@ public class GameView extends View {
             panel(c, r, col, cd.kind == Card.ULTI ? 0xFFFFD54F : 0xFFFFFFFF, 16);
             p.setStyle(Paint.Style.FILL);
             p.setColor(0x33000000);
-            rf.set(x + 6, y + 70, x + 230, y + 136);
+            rf.set(x + 6, y + 70, x + 334, y + 136);
             c.drawRoundRect(rf, 10, 10, p);
             p.setColor(0xFF10151B);
             c.drawCircle(x + 32, y + 32, 24, p);
@@ -1101,13 +1068,35 @@ public class GameView extends View {
             text(c, String.valueOf(cd.cost), x + 32, y + 44, 34, 0xFFFFFFFF, Paint.Align.CENTER);
             String tag = cd.kind == Card.STRIKE ? "GOLPE" : cd.kind == Card.BLAST ? "KI" : cd.kind == Card.GUARD ? "DEFENSA"
                     : cd.kind == Card.HEAL ? "CURA" : cd.kind == Card.BUFF ? "MEJORA" : cd.kind == Card.CHARGE ? "CARGA" : "DEFINITIVO";
-            text(c, tag, x + 140, y + 42, 22, 0xFFFFFFFF, Paint.Align.CENTER);
-            fitText(c, cd.name, x + 118, y + 100, 26, 216, 0xFFFFFFFF);
-            fitText(c, cd.desc(), x + 118, y + 126, 20, 216, 0xFFFFF3E0);
+            text(c, tag, x + 200, y + 42, 22, 0xFFFFFFFF, Paint.Align.CENTER);
+            fitText(c, cd.name, x + 170, y + 100, 28, 310, 0xFFFFFFFF);
+            fitText(c, cd.desc(), x + 170, y + 126, 20, 310, 0xFFFFF3E0);
             if (!can || cd.cost > uiKi[0]) {
                 p.setStyle(Paint.Style.FILL);
                 p.setColor(0x99000000);
                 c.drawRoundRect(r, 16, 16, p);
+            }
+        }
+        // cambios de guerrero
+        int[] sw = swapMembers();
+        for (int j = 0; j < 2; j++) {
+            RectF r = swapRect(j);
+            float x = r.left, y = r.top;
+            Battle.Unit u = b.team[0][sw[j]];
+            boolean dead = !u.alive();
+            panel(c, r, 0xFF2B3340, 0xFF8895A7, 14);
+            c.save();
+            c.clipRect(x + 4, y + 4, x + 66, y + 62);
+            FighterArt.portrait(c, p, u.f, x + 35, y + 34, 54, dead);
+            c.restore();
+            text(c, u.f.name, x + 76, y + 28, 24, 0xFFFFFFFF, Paint.Align.LEFT);
+            float hr = hpShow[0][sw[j]] / u.maxHp;
+            bar(c, x + 76, y + 40, 150, 12, hr, hpColor(hr), false);
+            text(c, dead ? "K.O." : "CAMBIAR", x + 330, y + 42, 20, dead ? 0xFFEF5350 : 0xFFFFD54F, Paint.Align.RIGHT);
+            if (!can || dead) {
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0x77000000);
+                c.drawRoundRect(r, 14, 14, p);
             }
         }
     }
@@ -1116,31 +1105,31 @@ public class GameView extends View {
         float k = Math.min(1f, introT / 0.35f);
         p.setStyle(Paint.Style.FILL);
         p.setColor(0x99000000);
-        c.drawRect(0, 230, W, 450, p);
+        c.drawRect(0, 500, W, 760, p);
         String head = campaign ? "COMBATE " + stage : "COMBATE LIBRE";
-        text(c, head, 640 - (1f - k) * 500, 310, 64, 0xFFFFD54F, Paint.Align.CENTER);
-        text(c, "VS", 640, 372, 50, 0xFFFFFFFF, Paint.Align.CENTER);
+        text(c, head, 360 - (1f - k) * 500, 585, 60, 0xFFFFD54F, Paint.Align.CENTER);
+        text(c, "VS", 360, 650, 48, 0xFFFFFFFF, Paint.Align.CENTER);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 3; i++) {
             if (i > 0) sb.append(" · ");
             sb.append(b.team[1][i].f.name);
         }
-        text(c, sb.toString(), 640 + (1f - k) * 500, 424, 34, 0xFFFF8A65, Paint.Align.CENTER);
+        fitText(c, sb.toString(), 360 + (1f - k) * 500, 714, 32, 680, 0xFFFF8A65);
     }
 
     private void drawResult(Canvas c) {
         p.setStyle(Paint.Style.FILL);
         p.setColor(0xAA000000);
         c.drawRect(0, 0, W, H, p);
-        rf.set(320, 150, 960, 560);
+        rf.set(40, 380, 680, 880);
         panel(c, rf, 0xFF1B2129, won ? 0xFFFFD54F : 0xFFEF5350, 24);
-        text(c, won ? "¡VICTORIA!" : "DERROTA", 640, 250, 72, won ? 0xFFFFD54F : 0xFFEF5350, Paint.Align.CENTER);
-        text(c, "Turnos: " + b.turn, 640, 305, 30, 0xFFFFFFFF, Paint.Align.CENTER);
+        text(c, won ? "¡VICTORIA!" : "DERROTA", 360, 490, 64, won ? 0xFFFFD54F : 0xFFEF5350, Paint.Align.CENTER);
+        text(c, "Turnos: " + b.turn, 360, 550, 30, 0xFFFFFFFF, Paint.Align.CENTER);
         int alive = 0;
         for (Battle.Unit u : b.team[0]) if (u.alive()) alive++;
-        if (won) text(c, "Guerreros en pie: " + alive + "/3", 640, 345, 30, 0xFFFFFFFF, Paint.Align.CENTER);
-        else text(c, "Cambia de equipo o aprovecha las ventajas de tipo", 640, 345, 24, 0xFFBDBDBD, Paint.Align.CENTER);
-        if (!resultMsg.isEmpty()) fitText(c, resultMsg, 640, 410, 30, 600, 0xFF69F0AE);
+        if (won) text(c, "Guerreros en pie: " + alive + "/3", 360, 595, 30, 0xFFFFFFFF, Paint.Align.CENTER);
+        else fitText(c, "Cambia de equipo o aprovecha las ventajas de tipo", 360, 595, 24, 600, 0xFFBDBDBD);
+        if (!resultMsg.isEmpty()) fitText(c, resultMsg, 360, 665, 30, 580, 0xFF69F0AE);
         boolean next = won && campaign && stage < Roster.STAGES;
         button(c, bRes1, next ? "Siguiente" : "Reintentar", next ? 0xFF2E7D32 : 0xFFE65100, true);
         button(c, bRes2, "Menú", 0xFF455A64, true);

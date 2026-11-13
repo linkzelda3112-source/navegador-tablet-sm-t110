@@ -2,7 +2,7 @@
 
 Juego de peleas por turnos y cartas **3 contra 3**, inspirado en el estilo de los "legends" de
 anime de combate. Personajes, movimientos y arte son **originales** (dibujados por código con
-Canvas), sin imágenes ni librerías externas. Versión 2.0.0 · Android 7+ · se juega en horizontal.
+Canvas), sin imágenes ni librerías externas. Versión 2.0.1 · Android 7+ · se juega en vertical.
 
 ## Cómo se juega
 

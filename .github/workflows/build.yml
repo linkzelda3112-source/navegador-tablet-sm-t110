@@ -60,8 +60,8 @@ jobs:
       - name: Publicar como Release descargable
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.0.0
-          name: Ki Arena v2.0.0
+          tag_name: v2.0.1
+          name: Ki Arena v2.0.1
           body: |
             Descarga ki-arena.apk y ábrelo en el teléfono para instalar (APK de depuración,
             generado automáticamente desde este cambio en main).
