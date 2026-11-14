@@ -4,12 +4,13 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#1B1B3A" android:pathData="M0,0h108v108h-108z" />
-    <!-- Aura de ki -->
-    <path android:fillColor="#FF8F00"
-        android:pathData="M54,12 L66,34 L90,30 L78,52 L96,70 L72,72 L64,96 L54,78 L44,96 L36,72 L12,70 L30,52 L18,30 L42,34 Z" />
-    <path android:fillColor="#FFD54F"
-        android:pathData="M54,26 L61,40 L76,38 L69,52 L80,63 L65,64 L59,80 L54,69 L49,80 L43,64 L28,63 L39,52 L32,38 L47,40 Z" />
-    <path android:fillColor="#FFFFFF"
-        android:pathData="M54,42 m-10,0 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#0B0C10" android:pathData="M0,0h108v108h-108z" />
+    <!-- halo dorado -->
+    <path android:fillColor="#33E6C07B"
+        android:pathData="M54,54 m-34,0 a34,34 0 1,0 68,0 a34,34 0 1,0 -68,0" />
+    <path android:fillColor="#E6C07B"
+        android:pathData="M54,54 m-22,0 a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0" />
+    <!-- nota musical -->
+    <path android:fillColor="#0B0C10"
+        android:pathData="M49,66 m-6,0 a6,5 0 1,0 12,0 a6,5 0 1,0 -12,0 M54,66 L54,40 L65,46 L65,51 L58,48 L58,66 Z" />
 </vector>

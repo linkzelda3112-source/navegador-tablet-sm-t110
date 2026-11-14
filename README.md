@@ -1,34 +1,31 @@
-# KI ARENA — juego de combate por cartas para Android
+# Lumina — reproductor de música para Android
 
-Juego de peleas por turnos y cartas **3 contra 3**, inspirado en el estilo de los "legends" de
-anime de combate. Personajes, movimientos y arte son **originales** (dibujados por código con
-Canvas), sin imágenes ni librerías externas. Versión 2.0.1 · Android 7+ · se juega en vertical.
+Reproductor elegante para tus archivos de música locales (mp3, m4a, flac, ogg, opus, wav…).
+Sin internet, sin cuentas, sin librerías externas: todo el dibujo (íconos, listas, barra de
+progreso) está hecho a mano con Canvas. Versión 1.0.0 · Android 7+ · vertical.
 
-## Cómo se juega
+## Dónde busca la música
 
-1. **Elige 3 guerreros** (el primero sale a pelear). Empiezas con 4; los otros 4 se desbloquean
-   ganando combates de la **Campaña** (5 combates, cada vez más difíciles). También hay
-   **Combate libre** contra un equipo al azar.
-2. Cada turno ves **4 cartas** de tu guerrero activo. Tocas una y tu rival elige la suya a la vez:
-   - **Golpe** (cuesta 0, siempre disponible), **Combo**, **Onda de Ki**, **Guardia**,
-     un **especial** propio (curar, subir ataque, cargar ki, o un golpe/rayo fuerte) y el
-     **Definitivo** (cuesta 6 de Ki, daño enorme con animación de rayo).
-   - Tocando uno de los dos compañeros de la izquierda **cambias de guerrero** (gastas el turno).
-3. **Ki**: empiezas con 3 y ganas +2 por turno (+1 extra si te guardas). Máximo 8.
-4. **Ventaja de tipo**: FUERZA (rojo) > TÉCNICA (verde) > KI (azul) > FUERZA. Ventaja = +25% de
-   daño, desventaja = −20%.
-5. Va primero el más veloz (los golpes tienen prioridad; los definitivos van más lentos).
-   Hay golpes críticos (12%). Si tu guerrero cae, entra el siguiente solo. Gana quien deje sin
-   vida a los 3 rivales.
+Tú decides, en la pantalla de fuentes (botón de carpeta arriba a la derecha):
 
-El progreso (campaña y desbloqueos) se guarda en el teléfono. El botón "X" de arriba sale del
-combate (toca dos veces).
+- **Buscar en todo el teléfono**: usa el índice de música de Android (pide permiso de audio).
+- **Elegir una carpeta**: abre el selector del sistema y solo lee esa carpeta (y sus subcarpetas).
+  Puedes agregar varias. No requiere permiso de almacenamiento.
+
+La biblioteca se guarda en caché, así que la app abre al instante y se actualiza en segundo plano.
+
+## Qué incluye
+
+- Pestañas **Canciones / Álbumes / Artistas**, búsqueda instantánea y "reproducir en aleatorio".
+- Mini reproductor flotante y pantalla **Reproduciendo** con portada grande, fondo que toma el
+  color de la portada, barra para adelantar, aleatorio y repetir (lista / una canción).
+- Reproducción en segundo plano con notificación, controles en pantalla de bloqueo y auriculares,
+  pausa automática al desconectar audífonos o recibir una llamada.
 
 ## Estructura
 
-- `Battle.java`, `Roster.java`, `Fighter.java`, `Card.java` — reglas y datos, Java puro (sin Android).
-- `GameView.java` — pantallas (menú, selección, combate), animaciones y toques.
-- `FighterArt.java` — dibujo de los personajes por código. `Sfx.java` — sonidos sintetizados.
-- `Save.java` — guardado. `MainActivity.java` — pantalla completa.
+`Library` (fuentes, escaneo, caché) · `ArtCache` (portadas) · `MusicService` (reproducción) ·
+`MainActivity` (pantallas) · vistas propias: `NowPlayingView`, `MiniPlayerView`, `SourcesView`,
+`RowView`, `SeekView`, `TabsView`, `IconView` · `Icons` (íconos por código) · `Ui` (estilo).
 
 Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
