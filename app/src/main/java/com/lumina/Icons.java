@@ -11,7 +11,7 @@ final class Icons {
 
     static final int PLAY = 0, PAUSE = 1, NEXT = 2, PREV = 3, SHUFFLE = 4, REPEAT = 5, REPEAT_ONE = 6,
             SEARCH = 7, FOLDER = 8, CLOSE = 9, CHEVRON_DOWN = 10, NOTE = 11, PLUS = 12, TRASH = 13,
-            PHONE = 14, CHECK = 15, BACK = 16, REFRESH = 17;
+            PHONE = 14, CHECK = 15, BACK = 16, REFRESH = 17, IMAGE = 18, PALETTE = 19;
 
     private static final Path path = new Path();
     private static final RectF rf = new RectF();
@@ -221,6 +221,32 @@ final class Icons {
                 rf.set(-0.3f * s, -0.3f * s, 0.3f * s, 0.3f * s);
                 c.drawArc(rf, -40, 280, false, p);
                 arrowHead(c, p, 0.24f * s, -0.22f * s, 1, s * 1.2f, color);
+                break;
+            }
+            case IMAGE: {
+                stroke(p, color, sw);
+                rf.set(-0.38f * s, -0.3f * s, 0.38f * s, 0.3f * s);
+                c.drawRoundRect(rf, s * 0.08f, s * 0.08f, p);
+                fill(p, color);
+                c.drawCircle(-0.16f * s, -0.1f * s, 0.07f * s, p);
+                stroke(p, color, sw);
+                path.reset();
+                path.moveTo(-0.38f * s, 0.2f * s);
+                path.lineTo(-0.1f * s, -0.02f * s);
+                path.lineTo(0.1f * s, 0.14f * s);
+                path.lineTo(0.2f * s, 0.06f * s);
+                path.lineTo(0.38f * s, 0.22f * s);
+                c.drawPath(path, p);
+                break;
+            }
+            case PALETTE: {
+                stroke(p, color, sw);
+                c.drawCircle(0f, 0f, 0.36f * s, p);
+                fill(p, color);
+                c.drawCircle(-0.14f * s, -0.14f * s, 0.06f * s, p);
+                c.drawCircle(0.12f * s, -0.17f * s, 0.06f * s, p);
+                c.drawCircle(0.2f * s, 0.06f * s, 0.06f * s, p);
+                c.drawCircle(-0.2f * s, 0.08f * s, 0.06f * s, p);
                 break;
             }
             default:

@@ -423,6 +423,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     // ------------------------------------------------- sesión multimedia y notificación
 
+    /** Vuelve a cargar la portada (por ejemplo si el usuario cambió la carátula). */
+    void refreshArt() {
+        artKey = "";
+        notifArt = null;
+        changed();
+    }
+
     private void ensureArt(Track t) {
         if (t == null) return;
         if (!t.key.equals(artKey)) {

@@ -20,15 +20,28 @@ import java.util.concurrent.Executors;
 /** Carga portadas en segundo plano (la incrustada en el archivo o la del álbum) y las guarda en memoria. */
 final class ArtCache {
     private final Context ctx;
+    private final CoverStore covers;
+    private int ver;
     private final LruCache<String, Bitmap> cache = new LruCache<>(80);
     private final Set<String> pending = new HashSet<>();
     private final Set<String> failed = new HashSet<>();
     private final ExecutorService exec = Executors.newFixedThreadPool(2);
     private final Handler main = new Handler(Looper.getMainLooper());
 
-    ArtCache(Context ctx) { this.ctx = ctx.getApplicationContext(); }
+    ArtCache(Context ctx, CoverStore covers) {
+        this.ctx = ctx.getApplicationContext();
+        this.covers = covers;
+    }
 
-    private static String k(Track t, int px) { return t.key + "@" + px; }
+    private String k(Track t, int px) { return t.key + "@" + px + "#" + ver; }
+
+    /** Invalida las portadas en memoria (cuando el usuario cambia una carátula). */
+    void bump() {
+        synchronized (this) {
+            ver++;
+            failed.clear();
+        }
+    }
 
     /** Devuelve la portada si ya está en memoria; si no, la pide y avisa con 'done' cuando llegue. */
     Bitmap get(Track t, int px, Runnable done) {
@@ -53,6 +66,11 @@ final class ArtCache {
     }
 
     private Bitmap load(Track t, int px) {
+        java.io.File custom = covers.get(t);
+        if (custom != null) {
+            Bitmap cb = CoverStore.decodeFile(custom, px);
+            if (cb != null) return cb;
+        }
         Bitmap bm = null;
         if (t.store && Build.VERSION.SDK_INT >= 29) {
             try {

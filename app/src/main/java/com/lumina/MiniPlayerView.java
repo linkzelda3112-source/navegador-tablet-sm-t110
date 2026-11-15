@@ -24,7 +24,7 @@ final class MiniPlayerView extends View {
     private Bitmap art;
     private boolean playing;
     private float progress;
-    private int tint = Ui.SURFACE2;
+    private int tint = Ui.DK_SURFACE2;
     private boolean down;
 
     MiniPlayerView(Context c, Callbacks cb) {
@@ -42,7 +42,7 @@ final class MiniPlayerView extends View {
         this.track = t;
         this.art = art;
         this.playing = playing;
-        this.tint = Ui.blend(Ui.SURFACE2, tint, 0.38f);
+        this.tint = Ui.blend(Ui.DK_SURFACE2, tint, 0.38f);
         invalidate();
     }
 
@@ -77,15 +77,15 @@ final class MiniPlayerView extends View {
         float maxW = w - tx - Ui.dp(108);
         tp.setTypeface(Ui.MEDIUM);
         tp.setTextSize(Ui.dp(15.5f));
-        tp.setColor(Ui.TEXT);
+        tp.setColor(Ui.DK_TEXT);
         c.drawText(TextUtils.ellipsize(track.title, tp, maxW, TextUtils.TruncateAt.END).toString(), tx, h / 2f - Ui.dp(2), tp);
         tp.setTypeface(Ui.REGULAR);
         tp.setTextSize(Ui.dp(13));
-        tp.setColor(Ui.withAlpha(Ui.TEXT, 170));
+        tp.setColor(Ui.withAlpha(Ui.DK_TEXT, 170));
         c.drawText(TextUtils.ellipsize(track.artist, tp, maxW, TextUtils.TruncateAt.END).toString(), tx, h / 2f + Ui.dp(16), tp);
 
-        Icons.draw(c, p, playing ? Icons.PAUSE : Icons.PLAY, w - Ui.dp(76), h / 2f, Ui.dp(34), Ui.TEXT);
-        Icons.draw(c, p, Icons.NEXT, w - Ui.dp(32), h / 2f, Ui.dp(30), Ui.TEXT);
+        Icons.draw(c, p, playing ? Icons.PAUSE : Icons.PLAY, w - Ui.dp(76), h / 2f, Ui.dp(34), Ui.DK_TEXT);
+        Icons.draw(c, p, Icons.NEXT, w - Ui.dp(32), h / 2f, Ui.dp(30), Ui.DK_TEXT);
 
         // progreso
         float px0 = Ui.dp(22), px1 = w - Ui.dp(22), py = h - Ui.dp(5);

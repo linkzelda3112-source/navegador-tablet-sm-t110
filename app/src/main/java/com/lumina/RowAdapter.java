@@ -61,6 +61,8 @@ final class RowAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    void refresh() { notifyDataSetChanged(); }
+
     boolean isGroupMode() { return groupMode; }
 
     List<Track> trackList() { return tracks; }

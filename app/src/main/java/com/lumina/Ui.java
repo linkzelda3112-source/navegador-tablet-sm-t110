@@ -1,6 +1,7 @@
 package com.lumina;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,19 +20,55 @@ import android.widget.TextView;
 final class Ui {
     private Ui() {}
 
-    static final int BG = 0xFF0B0C10;
-    static final int SURFACE = 0xFF15171E;
-    static final int SURFACE2 = 0xFF1E212B;
-    static final int TEXT = 0xFFF3EEE6;
-    static final int TEXT2 = 0xFF9A9CA6;
-    static final int ACCENT = 0xFFE6C07B;
-    static final int LINE = 0x1AFFFFFF;
+    static int BG, SURFACE, SURFACE2, TEXT, TEXT2, ACCENT, LINE;
+    static boolean light;
+    static int theme, npBg;
+
+    /** Esquema oscuro fijo para el mini reproductor y "Reproduciendo", que van sobre portadas. */
+    static final int DK_BG = 0xFF0B0C10, DK_SURFACE2 = 0xFF1E212B, DK_TEXT = 0xFFF3EEE6, DK_TEXT2 = 0xFF9A9CA6;
+
+    static final String[] THEME_NAMES = {"Medianoche", "Esmeralda", "Rosa", "Océano", "Carbón", "Marfil"};
+    // fondo, tarjeta, tarjeta2, texto, texto2, acento, línea
+    private static final int[][] THEMES = {
+        {0xFF0B0C10, 0xFF15171E, 0xFF1E212B, 0xFFF3EEE6, 0xFF9A9CA6, 0xFFE6C07B, 0x1AFFFFFF},
+        {0xFF07120E, 0xFF0F1D18, 0xFF172A23, 0xFFE9F4EE, 0xFF8FA89C, 0xFF6FE0B0, 0x1AFFFFFF},
+        {0xFF120A10, 0xFF1D1219, 0xFF291A23, 0xFFF7ECF0, 0xFFA8939C, 0xFFF28DB2, 0x1AFFFFFF},
+        {0xFF08101A, 0xFF0F1A28, 0xFF172538, 0xFFE8F0F8, 0xFF8FA2B8, 0xFF6CB4FF, 0x1AFFFFFF},
+        {0xFF000000, 0xFF0F0F10, 0xFF1B1B1D, 0xFFFFFFFF, 0xFF8E8E93, 0xFFF2F2F2, 0x1AFFFFFF},
+        {0xFFF7F3EC, 0xFFFFFFFF, 0xFFEDE7DB, 0xFF1D1B17, 0xFF7A746A, 0xFFB8862B, 0x14000000},
+    };
+
+    static int[] themeColors(int i) { return THEMES[i]; }
+
+    static void apply(int i) {
+        int[] t = THEMES[Math.max(0, Math.min(THEMES.length - 1, i))];
+        theme = Math.max(0, Math.min(THEMES.length - 1, i));
+        BG = t[0]; SURFACE = t[1]; SURFACE2 = t[2]; TEXT = t[3]; TEXT2 = t[4]; ACCENT = t[5]; LINE = t[6];
+        light = Color.red(BG) + Color.green(BG) + Color.blue(BG) > 3 * 128;
+    }
+
+    private static SharedPreferences prefs(Context c) {
+        return c.getApplicationContext().getSharedPreferences("lumina_ui", Context.MODE_PRIVATE);
+    }
+
+    static void saveTheme(Context c, int i) {
+        apply(i);
+        prefs(c).edit().putInt("theme", i).apply();
+    }
+
+    static void saveNpBg(Context c, int i) {
+        npBg = i;
+        prefs(c).edit().putInt("npBg", i).apply();
+    }
 
     static Typeface SERIF, MEDIUM, LIGHT, REGULAR;
     private static float density = 3f;
 
     static void init(Context c) {
         density = c.getResources().getDisplayMetrics().density;
+        SharedPreferences sp = prefs(c);
+        apply(sp.getInt("theme", 0));
+        npBg = sp.getInt("npBg", 0);
         SERIF = Typeface.create("serif", Typeface.NORMAL);
         MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
         LIGHT = Typeface.create("sans-serif-light", Typeface.NORMAL);

@@ -29,6 +29,7 @@ final class NowPlayingView extends FrameLayout {
         void onShuffle();
         void onRepeat();
         void onSeek(int ms);
+        void onCover();
     }
 
     /** La portada, con una sombra suave que la hace flotar y un latido al pausar/reanudar. */
@@ -87,9 +88,12 @@ final class NowPlayingView extends FrameLayout {
     private final SeekView seek;
     private final IconView shuffle, repeat, play;
     private final LinearLayout col;
-    private int bgColor = Ui.SURFACE2;
+    private int bgColor = Ui.DK_SURFACE2;
     private ValueAnimator colorAnim;
     private int durationMs;
+    private int bgStyle = Ui.npBg;
+    private Bitmap blurBm;
+    private final RectF dst = new RectF();
 
     NowPlayingView(Context c, Callbacks callbacks) {
         super(c);
@@ -103,13 +107,17 @@ final class NowPlayingView extends FrameLayout {
 
         // barra superior
         FrameLayout top = new FrameLayout(c);
-        IconView close = new IconView(c, Icons.CHEVRON_DOWN, Ui.TEXT);
+        IconView close = new IconView(c, Icons.CHEVRON_DOWN, Ui.DK_TEXT);
         close.setFrac(0.55f);
         close.setOnClickListener(v -> cb.onClose());
         top.addView(close, new LayoutParams(Ui.dpi(52), Ui.dpi(52), Gravity.START | Gravity.CENTER_VERTICAL));
-        TextView head = Ui.label(c, "REPRODUCIENDO", 12, Ui.TEXT2, Ui.MEDIUM);
+        TextView head = Ui.label(c, "REPRODUCIENDO", 12, Ui.DK_TEXT2, Ui.MEDIUM);
         head.setLetterSpacing(0.22f);
         top.addView(head, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        IconView imgBtn = new IconView(c, Icons.IMAGE, Ui.DK_TEXT);
+        imgBtn.setFrac(0.5f);
+        imgBtn.setOnClickListener(v -> cb.onCover());
+        top.addView(imgBtn, new LayoutParams(Ui.dpi(52), Ui.dpi(52), Gravity.END | Gravity.CENTER_VERTICAL));
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dpi(60));
         tlp.setMargins(Ui.dpi(12), Ui.dpi(4), Ui.dpi(12), 0);
         col.addView(top, tlp);
@@ -121,13 +129,13 @@ final class NowPlayingView extends FrameLayout {
         col.addView(artView, alp);
 
         // textos
-        title = Ui.label(c, "", 27, Ui.TEXT, Ui.SERIF);
+        title = Ui.label(c, "", 27, Ui.DK_TEXT, Ui.SERIF);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
         artist = Ui.label(c, "", 16.5f, Ui.ACCENT, Ui.MEDIUM);
         artist.setSingleLine(true);
         artist.setEllipsize(TextUtils.TruncateAt.END);
-        album = Ui.label(c, "", 13, Ui.TEXT2, Ui.REGULAR);
+        album = Ui.label(c, "", 13, Ui.DK_TEXT2, Ui.REGULAR);
         album.setSingleLine(true);
         album.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams t1 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -152,8 +160,8 @@ final class NowPlayingView extends FrameLayout {
 
         LinearLayout times = new LinearLayout(c);
         times.setOrientation(LinearLayout.HORIZONTAL);
-        tElapsed = Ui.label(c, "0:00", 12.5f, Ui.TEXT2, Ui.REGULAR);
-        tTotal = Ui.label(c, "0:00", 12.5f, Ui.TEXT2, Ui.REGULAR);
+        tElapsed = Ui.label(c, "0:00", 12.5f, Ui.DK_TEXT2, Ui.REGULAR);
+        tTotal = Ui.label(c, "0:00", 12.5f, Ui.DK_TEXT2, Ui.REGULAR);
         tTotal.setGravity(Gravity.END);
         times.addView(tElapsed, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         times.addView(tTotal, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -165,20 +173,20 @@ final class NowPlayingView extends FrameLayout {
         LinearLayout controls = new LinearLayout(c);
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(Gravity.CENTER_VERTICAL);
-        shuffle = new IconView(c, Icons.SHUFFLE, Ui.TEXT2);
+        shuffle = new IconView(c, Icons.SHUFFLE, Ui.DK_TEXT2);
         shuffle.setFrac(0.5f);
         shuffle.setOnClickListener(v -> cb.onShuffle());
-        IconView prev = new IconView(c, Icons.PREV, Ui.TEXT);
+        IconView prev = new IconView(c, Icons.PREV, Ui.DK_TEXT);
         prev.setFrac(0.6f);
         prev.setOnClickListener(v -> cb.onPrev());
-        play = new IconView(c, Icons.PLAY, Ui.BG);
+        play = new IconView(c, Icons.PLAY, Ui.DK_BG);
         play.setCircle(0xFFFFFFFF);
         play.setFrac(0.42f);
         play.setOnClickListener(v -> cb.onToggle());
-        IconView next = new IconView(c, Icons.NEXT, Ui.TEXT);
+        IconView next = new IconView(c, Icons.NEXT, Ui.DK_TEXT);
         next.setFrac(0.6f);
         next.setOnClickListener(v -> cb.onNext());
-        repeat = new IconView(c, Icons.REPEAT, Ui.TEXT2);
+        repeat = new IconView(c, Icons.REPEAT, Ui.DK_TEXT2);
         repeat.setFrac(0.5f);
         repeat.setOnClickListener(v -> cb.onRepeat());
         controls.addView(shuffle, new LinearLayout.LayoutParams(0, Ui.dpi(52), 1f));
@@ -192,6 +200,20 @@ final class NowPlayingView extends FrameLayout {
         col.addView(controls, clp);
     }
 
+    private static Bitmap makeBlur(Bitmap b) {
+        if (b == null) return null;
+        try {
+            return Bitmap.createScaledBitmap(b, 32, 32, true);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    void setBgStyle(int style) {
+        bgStyle = style;
+        invalidate();
+    }
+
     void onInsets(int top, int bottom) {
         col.setPadding(0, top, 0, bottom);
     }
@@ -202,12 +224,16 @@ final class NowPlayingView extends FrameLayout {
         artist.setText(t.artist);
         album.setText(t.album);
         artView.set(art, t.album + t.artist);
+        blurBm = makeBlur(art);
+        invalidate();
         durationMs = (int) t.durationMs;
         tTotal.setText(Ui.fmt(t.durationMs));
     }
 
     void setArt(Bitmap art, Track t) {
         artView.set(art, t.album + t.artist);
+        blurBm = makeBlur(art);
+        invalidate();
     }
 
     void setDuration(int ms) {
@@ -229,12 +255,12 @@ final class NowPlayingView extends FrameLayout {
     }
 
     void setShuffle(boolean on) {
-        shuffle.setColor(on ? Ui.ACCENT : Ui.TEXT2);
+        shuffle.setColor(on ? Ui.ACCENT : Ui.DK_TEXT2);
     }
 
     void setRepeat(int mode) {
         repeat.setKind(mode == 2 ? Icons.REPEAT_ONE : Icons.REPEAT);
-        repeat.setColor(mode == 0 ? Ui.TEXT2 : Ui.ACCENT);
+        repeat.setColor(mode == 0 ? Ui.DK_TEXT2 : Ui.ACCENT);
     }
 
     /** Cambia el color del fondo con una transición suave. */
@@ -253,8 +279,22 @@ final class NowPlayingView extends FrameLayout {
     @Override
     protected void onDraw(Canvas c) {
         float w = getWidth(), h = getHeight();
+        if (bgStyle == 2) {
+            c.drawColor(Ui.DK_BG);
+            return;
+        }
+        if (bgStyle == 1 && blurBm != null) {
+            bgPaint.setFilterBitmap(true);
+            dst.set(0, 0, w, h);
+            c.drawBitmap(blurBm, null, dst, bgPaint);
+            bgPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{0x88000000, 0xCC0B0C10, Ui.DK_BG},
+                    new float[]{0f, 0.6f, 1f}, Shader.TileMode.CLAMP));
+            c.drawRect(0, 0, w, h, bgPaint);
+            bgPaint.setShader(null);
+            return;
+        }
         bgPaint.setShader(new LinearGradient(0, 0, 0, h,
-                new int[]{bgColor, Ui.blend(bgColor, Ui.BG, 0.72f), Ui.BG}, new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP));
+                new int[]{bgColor, Ui.blend(bgColor, Ui.DK_BG, 0.72f), Ui.DK_BG}, new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP));
         c.drawRect(0, 0, w, h, bgPaint);
         bgPaint.setShader(new RadialGradient(w / 2f, h * 0.30f, w * 0.85f,
                 Ui.withAlpha(Ui.blend(bgColor, 0xFFFFFFFF, 0.25f), 80), 0x00000000, Shader.TileMode.CLAMP));
