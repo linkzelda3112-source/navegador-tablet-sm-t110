@@ -1,0 +1,84 @@
+name: Construir APK de Pulso Estelar
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar el proyecto (descomprime proyecto.zip si existe)
+        run: |
+          mkdir -p /tmp/app
+          if [ -f proyecto.zip ]; then
+            unzip -q -o proyecto.zip -d /tmp/app
+          else
+            cp -r . /tmp/app/
+          fi
+          ls -la /tmp/app
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar dependencias
+        run: |
+          cd /tmp/app
+          npm install
+
+      - name: Preparar la carpeta web
+        run: |
+          cd /tmp/app
+          mkdir -p www/fonts
+          cp index.html www/index.html
+          curl -L --fail -o www/fonts/PressStart2P-Regular.ttf "https://github.com/google/fonts/raw/main/ofl/pressstart2p/PressStart2P-Regular.ttf" || echo "No se pudo bajar la fuente, se usara la de respaldo"
+
+      - name: Crear el proyecto de Android
+        run: |
+          cd /tmp/app
+          npx cap add android
+          npx @capacitor/assets generate --android --iconBackgroundColor "#05060f" --splashBackgroundColor "#05060f"
+          npx cap sync android
+
+      - name: Bloquear en horizontal y pantalla completa
+        run: |
+          cd /tmp/app
+          sed -i 's/<activity/<activity android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</style>#    <item name="android:windowFullscreen">true</item>\n</style>#g' android/app/src/main/res/values/styles.xml
+
+      - name: Compilar el APK
+        run: |
+          cd /tmp/app/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Guardar el APK
+        run: cp /tmp/app/android/app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/PulsoEstelar.apk"
+
+      - name: Subir como archivo descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PulsoEstelar-APK
+          path: PulsoEstelar.apk
+
+      - name: Publicar el APK en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Pulso Estelar APK ${{ github.run_number }}
+          files: PulsoEstelar.apk

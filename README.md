@@ -1,39 +1,29 @@
-# Lumina — reproductor de música para Android
+# Pulso Estelar - subir a GitHub y sacar el APK (solo 2 archivos)
 
-Reproductor elegante para tus archivos de música locales (mp3, m4a, flac, ogg, opus, wav…).
-Sin cuentas y sin librerías externas (solo usa internet si tú buscas una carátula en línea): todo el dibujo (íconos, listas, barra de
-progreso) está hecho a mano con Canvas. Versión 1.1.0 · Android 7+ · vertical.
+Necesitas subir solo DOS cosas:
 
-## Dónde busca la música
+1. `proyecto.zip`  -> el juego completo (se sube sin descomprimir).
+2. `build-apk.yml` -> la receta que descomprime el zip y compila el APK.
 
-Tú decides, en la pantalla de fuentes (botón de carpeta arriba a la derecha):
+## Pasos
 
-- **Buscar en todo el teléfono**: usa el índice de música de Android (pide permiso de audio).
-- **Elegir una carpeta**: abre el selector del sistema y solo lee esa carpeta (y sus subcarpetas).
-  Puedes agregar varias. No requiere permiso de almacenamiento.
+1. En **github.com** crea tu cuenta y toca **+ > New repository**. Nombre: `pulso-estelar`. Crea el repositorio.
+2. Toca **Add file > Upload files**, elige `proyecto.zip` y toca **Commit changes**.
+   (No lo descomprimas: la receta lo hace sola.)
+3. Toca **Add file > Create new file**.
+   - En el nombre escribe exactamente: `.github/workflows/build-apk.yml`
+   - Abre `build-apk.yml`, copia TODO su contenido y pegalo ahi.
+   - Toca **Commit changes**.
+4. Abre la pestana **Actions**. Veras "Construir APK de Pulso Estelar" trabajando (5 a 10 minutos).
+   Si no empieza, entra a esa receta y toca **Run workflow**.
+5. Al terminar con una palomita verde, abre **Releases** (a la derecha en la pagina principal del repositorio)
+   y descarga **PulsoEstelar.apk**. Tambien esta en Actions > el run > **Artifacts**.
+6. Instalalo en tu Android (permite "instalar apps de origen desconocido").
 
-La biblioteca se guarda en caché, así que la app abre al instante y se actualiza en segundo plano.
+Si algo se pone rojo en Actions, abre el paso que fallo y copia el error: con eso se arregla.
 
-## Qué incluye
+## Despues
 
-- Pestañas **Canciones / Álbumes / Artistas**, búsqueda instantánea y "reproducir en aleatorio".
-- Mini reproductor flotante y pantalla **Reproduciendo** con portada grande, fondo que toma el
-  color de la portada, barra para adelantar, aleatorio y repetir (lista / una canción).
-- Reproducción en segundo plano con notificación, controles en pantalla de bloqueo y auriculares,
-  pausa automática al desconectar audífonos o recibir una llamada.
-
-## Carátulas y temas
-
-- En "Reproduciendo", el botón de imagen permite poner una **carátula propia**: una imagen del
-  teléfono o una **búsqueda en línea** (API pública de iTunes, sin cuenta). Se aplica a todo el álbum.
-- El botón de paleta abre **Ajustes**: 6 temas (Medianoche, Esmeralda, Rosa, Océano, Carbón, Marfil),
-  3 fondos para "Reproduciendo" (color de portada, difuminado, liso) y el permiso de batería para
-  que la música siga sonando en segundo plano (en Honor/Huawei, activa también "Ejecutar en segundo plano").
-
-## Estructura
-
-`Library` (fuentes, escaneo, caché) · `ArtCache` (portadas) · `MusicService` (reproducción) ·
-`MainActivity` (pantallas) · vistas propias: `NowPlayingView`, `MiniPlayerView`, `SourcesView`,
-`RowView`, `SeekView`, `TabsView`, `IconView` · `Icons` (íconos por código) · `Ui` (estilo).
-
-Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
+- Si cambias el juego, sube un `proyecto.zip` nuevo (reemplaza al anterior) y se compila otro APK solo.
+- El APK es de prueba (debug): se instala sin problema; para Google Play se necesita una version firmada.
+- La app queda en horizontal y pantalla completa.
