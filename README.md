@@ -26,4 +26,4 @@ Si algo se pone rojo en Actions, abre el paso que fallo y copia el error: con es
 
 - Si cambias el juego, sube un `proyecto.zip` nuevo (reemplaza al anterior) y se compila otro APK solo.
 - El APK es de prueba (debug): se instala sin problema; para Google Play se necesita una version firmada.
-- La app queda en horizontal y pantalla completa.
+- La app queda en vertical y pantalla completa.

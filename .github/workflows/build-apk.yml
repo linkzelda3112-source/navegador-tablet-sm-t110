@@ -55,10 +55,10 @@ jobs:
           npx @capacitor/assets generate --android --iconBackgroundColor "#05060f" --splashBackgroundColor "#05060f"
           npx cap sync android
 
-      - name: Bloquear en horizontal y pantalla completa
+      - name: Bloquear en vertical y pantalla completa
         run: |
           cd /tmp/app
-          sed -i 's/<activity/<activity android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<activity/<activity android:screenOrientation="portrait"/' android/app/src/main/AndroidManifest.xml
           sed -i 's#</style>#    <item name="android:windowFullscreen">true</item>\n</style>#g' android/app/src/main/res/values/styles.xml
 
       - name: Compilar el APK

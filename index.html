@@ -163,7 +163,7 @@ function buildLevelOld(){obs=[];
     const free=[0,1,2,3,4].filter(l=>l!==a[1]&&l!==a[2]&&l!==b[1]&&l!==b[2]).sort(()=>Math.random()-.5);
     free.slice(0,Math.min(free.length,2+(Math.random()<.5?1:0))).forEach(l=>mk(t,l,false,f,true))}}
 function endGame(w){won=w;state='over';overT=performance.now();best=Math.max(best,score);if(sng){try{sng.stop()}catch(e){}sng=null}}
-async function start(t0){t0=(+t0)||0;startOff=t0;try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}
+async function start(t0){t0=(+t0)||0;startOff=t0;try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('portrait').catch(()=>{})}catch(e){}
   initAudio();
   if(!buf){state='loading';try{buf=bufs[curLevel]=await ac.decodeAudioData(b64buf(SONG))}catch(e){state='menu';return}}
   score=0;lives=3;combo=0;won=false;pi=0;ship.tx=.5;parts.length=0;clk=0;evs=[];ei=0;curPh=null;banner=null;curSp=1;fin=null;flash=0;lasers.length=0;cools[0]=cools[1]=0;shT=0;shCD=0;boss=null;chase=null;bossDone=false;lastTp=0;bmines.length=0;beams.length=0;orbs.length=0;fxt.length=0;
@@ -200,7 +200,7 @@ addEventListener('keydown',e=>{keys[e.key]=1;if(!e.repeat&&(e.key==='Escape'||e.
 addEventListener('keyup',e=>keys[e.key]=0);
 function rs(){
   DPR=Math.min(devicePixelRatio||1,3);CW=cv.clientWidth;CH=cv.clientHeight;cv.width=CW*DPR;cv.height=CH*DPR;
-  S=Math.max(2,Math.round(CH/190));W=Math.ceil(CW/S);H=Math.ceil(CH/S);lo.width=W;lo.height=H;bgInit();vigInit();bgv=null;
+  S=Math.max(2,Math.round((CH>CW?CW/200:CH/190)));W=Math.ceil(CW/S);H=Math.ceil(CH/S);lo.width=W;lo.height=H;bgInit();vigInit();bgv=null;
 }
 addEventListener('resize',rs);
 function txt(s,x,y,sz,col,al){ctx.font=sz+'px '+FONT;ctx.textAlign=al||'left';const o=Math.max(1,Math.round(sz/8));ctx.fillStyle='#05060f';ctx.fillText(s,x+o,y+o);ctx.fillStyle=col;ctx.fillText(s,x,y)}
