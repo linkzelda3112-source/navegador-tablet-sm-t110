@@ -13,11 +13,11 @@ import android.view.View;
 final class TabsView extends View {
     interface Listener { void onTab(int index); }
 
-    private final String[] labels = {"Canciones", "Álbumes", "Artistas"};
+    private final String[] labels = {"Inicio", "Canciones", "Álbumes", "Artistas"};
     private final TextPaint tp = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF r = new RectF();
-    private final float[] left = new float[3], right = new float[3];
+    private final float[] left = new float[4], right = new float[4];
     private int selected;
     private float indX = -1, indW;
     private Listener listener;
@@ -40,13 +40,13 @@ final class TabsView extends View {
 
     private void layoutLabels() {
         float x = Ui.dp(24);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < labels.length; i++) {
             tp.setTypeface(Ui.MEDIUM);
-            tp.setTextSize(Ui.dp(16));
+            tp.setTextSize(Ui.dp(15));
             float w = tp.measureText(labels[i]);
             left[i] = x;
             right[i] = x + w;
-            x += w + Ui.dp(28);
+            x += w + Ui.dp(20);
         }
     }
 
@@ -73,9 +73,9 @@ final class TabsView extends View {
             indW = Ui.dp(20);
         }
         float base = getHeight() / 2f + Ui.dp(2);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < labels.length; i++) {
             tp.setTypeface(i == selected ? Ui.MEDIUM : Ui.REGULAR);
-            tp.setTextSize(Ui.dp(16));
+            tp.setTextSize(Ui.dp(15));
             tp.setColor(i == selected ? Ui.TEXT : Ui.TEXT2);
             c.drawText(labels[i], left[i], base, tp);
         }
@@ -90,7 +90,7 @@ final class TabsView extends View {
         if (e.getActionMasked() == MotionEvent.ACTION_DOWN) return true;
         if (e.getActionMasked() == MotionEvent.ACTION_UP) {
             layoutLabels();
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < labels.length; i++) {
                 if (e.getX() >= left[i] - Ui.dp(14) && e.getX() <= right[i] + Ui.dp(14)) {
                     if (i != selected) {
                         selected = i;

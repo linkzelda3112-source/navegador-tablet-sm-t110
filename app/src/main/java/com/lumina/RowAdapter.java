@@ -14,6 +14,7 @@ import java.util.List;
 final class RowAdapter extends BaseAdapter {
     private final Context ctx;
     private final ArtCache art;
+    private final Personal personal;
     private final Handler main = new Handler(Looper.getMainLooper());
     private List<Track> tracks = new ArrayList<>();
     private List<Library.Group> groups = new ArrayList<>();
@@ -37,9 +38,10 @@ final class RowAdapter extends BaseAdapter {
         }
     };
 
-    RowAdapter(Context ctx, ArtCache art) {
+    RowAdapter(Context ctx, ArtCache art, Personal personal) {
         this.ctx = ctx;
         this.art = art;
+        this.personal = personal;
     }
 
     void setTracks(List<Track> list) {
@@ -89,6 +91,7 @@ final class RowAdapter extends BaseAdapter {
             v.round = artistMode;
             v.current = false;
             v.playing = false;
+            v.rating = 0;
         } else {
             Track t = tracks.get(i);
             v.artTrack = t;
@@ -98,6 +101,7 @@ final class RowAdapter extends BaseAdapter {
             v.round = false;
             v.current = t.key.equals(currentKey);
             v.playing = v.current && playing;
+            v.rating = personal.rating(t);
         }
         v.invalidate();
         return v;

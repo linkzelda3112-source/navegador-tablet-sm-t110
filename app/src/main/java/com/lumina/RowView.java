@@ -18,6 +18,7 @@ final class RowView extends View {
     Track artTrack;
     String title = "", sub = "", right = "";
     boolean round, current, playing;
+    int rating;
     ArtCache art;
     Runnable artCb;
 
@@ -37,7 +38,7 @@ final class RowView extends View {
         Ui.drawArt(c, p, bm, artTrack == null ? title : artTrack.album + artTrack.artist, r, round ? s / 2f : Ui.dp(12));
 
         float tx = pad + s + Ui.dp(16);
-        float reserve = current && playing ? Ui.dp(52) : (right.isEmpty() ? Ui.dp(20) : Ui.dp(64));
+        float reserve = current && playing ? Ui.dp(52) : (right.isEmpty() ? Ui.dp(20) : Ui.dp(64)) + (rating > 0 ? Ui.dp(24) : 0);
         float maxW = w - tx - reserve;
 
         tp.setTypeface(Ui.MEDIUM);
@@ -67,7 +68,13 @@ final class RowView extends View {
                 c.drawRoundRect(r, bw / 2f, bw / 2f, p);
             }
             if (playing) postInvalidateOnAnimation();
-        } else if (!right.isEmpty()) {
+        }
+        if (rating > 0 && !(current && playing)) {
+            float ix = right.isEmpty() ? w - pad - Ui.dp(8) : w - pad - Ui.dp(68);
+            Icons.draw(c, p, rating >= 2 ? Icons.HEART_FILLED : Icons.THUMB_FILLED, ix, h / 2f, Ui.dp(24),
+                    rating >= 2 ? 0xFFE8557E : Ui.ACCENT);
+        }
+        if (!current && !right.isEmpty()) {
             tp.setTypeface(Ui.REGULAR);
             tp.setTextSize(Ui.dp(12.5f));
             tp.setColor(Ui.TEXT2);

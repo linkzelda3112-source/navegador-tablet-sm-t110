@@ -11,6 +11,8 @@ final class Track {
     /** true si viene de MediaStore (búsqueda en todo el teléfono); false si viene de una carpeta elegida. */
     final boolean store;
     final long albumId;
+    /** Clave normalizada (título|artista) para valoraciones; se calcula la primera vez que se pide. */
+    String pkey;
 
     Track(Uri uri, String title, String artist, String album, long durationMs, boolean store, long albumId) {
         this.key = uri.toString();

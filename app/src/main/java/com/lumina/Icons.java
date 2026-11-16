@@ -11,7 +11,8 @@ final class Icons {
 
     static final int PLAY = 0, PAUSE = 1, NEXT = 2, PREV = 3, SHUFFLE = 4, REPEAT = 5, REPEAT_ONE = 6,
             SEARCH = 7, FOLDER = 8, CLOSE = 9, CHEVRON_DOWN = 10, NOTE = 11, PLUS = 12, TRASH = 13,
-            PHONE = 14, CHECK = 15, BACK = 16, REFRESH = 17, IMAGE = 18, PALETTE = 19;
+            PHONE = 14, CHECK = 15, BACK = 16, REFRESH = 17, IMAGE = 18, PALETTE = 19,
+            HEART = 20, HEART_FILLED = 21, THUMB = 22, THUMB_FILLED = 23, TRENDING = 24, CLOCK = 25;
 
     private static final Path path = new Path();
     private static final RectF rf = new RectF();
@@ -247,6 +248,67 @@ final class Icons {
                 c.drawCircle(0.12f * s, -0.17f * s, 0.06f * s, p);
                 c.drawCircle(0.2f * s, 0.06f * s, 0.06f * s, p);
                 c.drawCircle(-0.2f * s, 0.08f * s, 0.06f * s, p);
+                break;
+            }
+            case HEART:
+            case HEART_FILLED: {
+                path.reset();
+                path.moveTo(0f, 0.34f * s);
+                path.cubicTo(-0.56f * s, -0.04f * s, -0.34f * s, -0.42f * s, 0f, -0.15f * s);
+                path.cubicTo(0.34f * s, -0.42f * s, 0.56f * s, -0.04f * s, 0f, 0.34f * s);
+                path.close();
+                if (kind == HEART_FILLED) {
+                    fill(p, color);
+                    c.drawPath(path, p);
+                }
+                stroke(p, color, sw);
+                c.drawPath(path, p);
+                break;
+            }
+            case THUMB:
+            case THUMB_FILLED: {
+                path.reset();
+                path.moveTo(-0.12f * s, 0.32f * s);
+                path.lineTo(-0.12f * s, -0.04f * s);
+                path.lineTo(0.05f * s, -0.34f * s);
+                path.quadTo(0.22f * s, -0.34f * s, 0.18f * s, -0.12f * s);
+                path.lineTo(0.16f * s, -0.06f * s);
+                path.lineTo(0.3f * s, -0.06f * s);
+                path.quadTo(0.42f * s, -0.06f * s, 0.38f * s, 0.08f * s);
+                path.lineTo(0.32f * s, 0.26f * s);
+                path.quadTo(0.28f * s, 0.32f * s, 0.2f * s, 0.32f * s);
+                path.close();
+                rf.set(-0.38f * s, -0.04f * s, -0.2f * s, 0.32f * s);
+                if (kind == THUMB_FILLED) {
+                    fill(p, color);
+                    c.drawPath(path, p);
+                    c.drawRoundRect(rf, s * 0.04f, s * 0.04f, p);
+                }
+                stroke(p, color, sw);
+                c.drawPath(path, p);
+                c.drawRoundRect(rf, s * 0.04f, s * 0.04f, p);
+                break;
+            }
+            case TRENDING: {
+                stroke(p, color, sw * 1.2f);
+                path.reset();
+                path.moveTo(-0.38f * s, 0.22f * s);
+                path.lineTo(-0.1f * s, -0.06f * s);
+                path.lineTo(0.06f * s, 0.1f * s);
+                path.lineTo(0.34f * s, -0.2f * s);
+                c.drawPath(path, p);
+                path.reset();
+                path.moveTo(0.14f * s, -0.22f * s);
+                path.lineTo(0.36f * s, -0.22f * s);
+                path.lineTo(0.36f * s, 0f);
+                c.drawPath(path, p);
+                break;
+            }
+            case CLOCK: {
+                stroke(p, color, sw);
+                c.drawCircle(0f, 0f, 0.36f * s, p);
+                c.drawLine(0f, 0f, 0f, -0.2f * s, p);
+                c.drawLine(0f, 0f, 0.15f * s, 0.1f * s, p);
                 break;
             }
             default:
