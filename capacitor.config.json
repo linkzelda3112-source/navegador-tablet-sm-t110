@@ -1,9 +1,0 @@
-{
-  "appId": "com.pulsoestelar.game",
-  "appName": "Pulso Estelar",
-  "webDir": "www",
-  "backgroundColor": "#05060f",
-  "server": {
-    "androidScheme": "https"
-  }
-}
