@@ -49,6 +49,9 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
     private Library lib;
     private ArtCache art;
     private CoverStore covers;
+    private Personal personal;
+    private Charts charts;
+    private HomeView home;
     private Track coverTarget;
     private MusicService svc;
 
@@ -106,6 +109,8 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         lib = app.library;
         art = app.art;
         covers = app.covers;
+        personal = app.personal;
+        charts = app.charts;
 
         Window w = getWindow();
         w.setBackgroundDrawable(new ColorDrawable(Ui.BG));
@@ -142,6 +147,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         startService(new Intent(this, MusicService.class));
         bindService(new Intent(this, MusicService.class), conn, Context.BIND_AUTO_CREATE);
         tick.post(ticker);
+        charts.refresh(false, this::chartsChanged);
     }
 
     @Override
@@ -284,7 +290,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         list.setClipToPadding(false);
         shuffleHeader = new ShuffleHeaderView(this);
         shuffleHeader.setOnClickListener(v -> shuffleAll());
-        adapter = new RowAdapter(this, art);
+        adapter = new RowAdapter(this, art, personal);
         list.setAdapter(adapter);
         list.setOnItemClickListener((parent, view, position, id) -> {
             int idx = position - list.getHeaderViewsCount();
@@ -293,6 +299,21 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
             else playFrom(adapter.trackList(), idx);
         });
         listFrame.addView(list, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        home = new HomeView(this, art, new HomeView.Callbacks() {
+            @Override public void onOpen(String title, List<Track> tracks) {
+                Library.Group g = new Library.Group(title);
+                g.tracks.addAll(tracks);
+                openDetail(g);
+            }
+            @Override public void onPlay(List<Track> l, int index) { playFrom(l, index); }
+            @Override public void onRefreshCharts() {
+                charts.refresh(true, MainActivity.this::chartsChanged);
+                refreshData();
+            }
+        });
+        home.setVisibility(View.GONE);
+        listFrame.addView(home, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         LinearLayout emptyBox = new LinearLayout(this);
         emptyBox.setOrientation(LinearLayout.VERTICAL);
@@ -338,6 +359,8 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
             @Override public void onRepeat() { if (svc != null) svc.cycleRepeat(); }
             @Override public void onSeek(int ms) { if (svc != null) svc.seekTo(ms); }
             @Override public void onCover() { openCoverSheet(); }
+            @Override public void onLike() { rate(1); }
+            @Override public void onLove() { rate(2); }
         });
         now.setVisibility(View.GONE);
         root.addView(now, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -351,6 +374,9 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         });
         sources.setVisibility(View.GONE);
         root.addView(sources, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // el mini reproductor tiene elevación: las pantallas completas deben quedar por encima
+        now.setElevation(Ui.dp(24));
+        sources.setElevation(Ui.dp(32));
     }
 
     private void applyInsets() {
@@ -360,6 +386,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         mini.setLayoutParams(m);
         updateListPadding();
         now.onInsets(insetTop, insetBottom);
+        home.onInsets(insetBottom);
         sources.onInsets(insetTop, insetBottom);
     }
 
@@ -388,13 +415,19 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
     private void refreshData() {
         List<Track> all = lib.tracks();
         String q = query.trim().toLowerCase(Locale.ROOT);
+        boolean showHome = tab == 0 && detail == null && !searching && !all.isEmpty();
+        home.setVisibility(showHome ? View.VISIBLE : View.GONE);
+        list.setVisibility(showHome ? View.GONE : View.VISIBLE);
         int count;
-        if (detail != null) {
+        if (showHome) {
+            refreshHome(all);
+            count = 1;
+        } else if (detail != null) {
             List<Track> l = filter(detail.tracks, q);
             adapter.setTracks(l);
             showShuffle(true, l.size());
             count = l.size();
-        } else if (tab == 0) {
+        } else if (tab <= 1) {
             List<Track> l = filter(all, q);
             adapter.setTracks(l);
             showShuffle(true, l.size());
@@ -405,12 +438,12 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
                 artistsCache = Library.artists(all);
                 groupsFor = all;
             }
-            List<Library.Group> src = tab == 1 ? albumsCache : artistsCache;
+            List<Library.Group> src = tab == 2 ? albumsCache : artistsCache;
             List<Library.Group> out = new ArrayList<>();
             for (Library.Group g : src) {
                 if (q.isEmpty() || g.name.toLowerCase(Locale.ROOT).contains(q) || g.sub.toLowerCase(Locale.ROOT).contains(q)) out.add(g);
             }
-            adapter.setGroups(out, tab == 2);
+            adapter.setGroups(out, tab == 3);
             showShuffle(false, 0);
             count = out.size();
         }
@@ -438,6 +471,31 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
                 emptyBtn.setVisibility(View.GONE);
             }
         }
+    }
+
+    private void refreshHome(List<Track> all) {
+        List<Track> liked = personal.rated(all, 1), loved = personal.rated(all, 2), recent = personal.recent(all);
+        List<Charts.Hit> hits = charts.match(all);
+        int state = charts.has() ? 2 : charts.isLoading() ? 1 : 0;
+        home.update(loved, liked, recent, hits, state, charts.size(), charts.countryName());
+    }
+
+    private void chartsChanged() {
+        if (home.getVisibility() == View.VISIBLE) refreshData();
+    }
+
+    private void rate(int which) {
+        Track t = svc == null ? null : svc.current();
+        if (t == null) return;
+        int cur = personal.rating(t), next;
+        if (which == 1) next = cur >= 1 ? 0 : 1;
+        else next = cur == 2 ? 1 : 2;
+        personal.setRating(t, next);
+        now.setRating(next);
+        adapter.refresh();
+        Toast.makeText(this, next == 2 ? "Me encanta" : next == 1 ? "Me gusta" : "Quitada de tus favoritas",
+                Toast.LENGTH_SHORT).show();
+        if (home.getVisibility() == View.VISIBLE) refreshData();
     }
 
     private void showShuffle(boolean show, int n) {
@@ -473,6 +531,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         searching = true;
         normalHeader.setVisibility(View.GONE);
         searchHeader.setVisibility(View.VISIBLE);
+        refreshData();
         searchEt.requestFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.showSoftInput(searchEt, InputMethodManager.SHOW_IMPLICIT);
@@ -561,7 +620,10 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         }
         if (!t.key.equals(lastKey)) {
             lastKey = t.key;
+            personal.played(t);
             now.setTrack(t, big);
+            now.setRating(personal.rating(t));
+            if (home.getVisibility() == View.VISIBLE) refreshData();
         } else {
             now.setArt(big, t);
         }

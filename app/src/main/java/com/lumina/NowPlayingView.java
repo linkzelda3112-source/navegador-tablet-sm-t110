@@ -30,6 +30,8 @@ final class NowPlayingView extends FrameLayout {
         void onRepeat();
         void onSeek(int ms);
         void onCover();
+        void onLike();
+        void onLove();
     }
 
     /** La portada, con una sombra suave que la hace flotar y un latido al pausar/reanudar. */
@@ -62,14 +64,14 @@ final class NowPlayingView extends FrameLayout {
         @Override
         protected void onDraw(Canvas c) {
             float w = getWidth(), h = getHeight();
-            float side = Math.min(w - Ui.dp(8), h - Ui.dp(24)) * scale;
-            float cx = w / 2f, cy = h / 2f;
+            float side = Math.min(w - Ui.dp(52), h - Ui.dp(70)) * scale;
+            float cx = w / 2f, cy = h / 2f - Ui.dp(4);
             float rad = side * 0.07f;
             p.setStyle(Paint.Style.FILL);
-            for (int i = 8; i >= 1; i--) {
-                float grow = i * Ui.dp(4);
-                r.set(cx - side / 2 - grow, cy - side / 2 - grow + Ui.dp(16), cx + side / 2 + grow, cy + side / 2 + grow + Ui.dp(16));
-                p.setColor(Ui.withAlpha(0xFF000000, 9));
+            for (int i = 6; i >= 1; i--) {
+                float grow = i * Ui.dp(3.5f);
+                r.set(cx - side / 2 - grow, cy - side / 2 - grow + Ui.dp(10), cx + side / 2 + grow, cy + side / 2 + grow + Ui.dp(10));
+                p.setColor(Ui.withAlpha(0xFF000000, 11));
                 c.drawRoundRect(r, rad + grow, rad + grow, p);
             }
             r.set(cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2);
@@ -86,7 +88,7 @@ final class NowPlayingView extends FrameLayout {
     private final ArtView artView;
     private final TextView title, artist, album, tElapsed, tTotal;
     private final SeekView seek;
-    private final IconView shuffle, repeat, play;
+    private final IconView shuffle, repeat, play, thumb, heart;
     private final LinearLayout col;
     private int bgColor = Ui.DK_SURFACE2;
     private ValueAnimator colorAnim;
@@ -138,15 +140,30 @@ final class NowPlayingView extends FrameLayout {
         album = Ui.label(c, "", 13, Ui.DK_TEXT2, Ui.REGULAR);
         album.setSingleLine(true);
         album.setEllipsize(TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams t1 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        t1.setMargins(Ui.dpi(32), Ui.dpi(18), Ui.dpi(32), 0);
-        col.addView(title, t1);
+        LinearLayout info = new LinearLayout(c);
+        info.setOrientation(LinearLayout.HORIZONTAL);
+        info.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout texts = new LinearLayout(c);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout.LayoutParams t2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        t2.setMargins(Ui.dpi(32), Ui.dpi(8), Ui.dpi(32), 0);
-        col.addView(artist, t2);
+        t2.topMargin = Ui.dpi(8);
+        texts.addView(artist, t2);
         LinearLayout.LayoutParams t3 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        t3.setMargins(Ui.dpi(32), Ui.dpi(4), Ui.dpi(32), 0);
-        col.addView(album, t3);
+        t3.topMargin = Ui.dpi(4);
+        texts.addView(album, t3);
+        info.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        thumb = new IconView(c, Icons.THUMB, Ui.DK_TEXT2);
+        thumb.setFrac(0.56f);
+        thumb.setOnClickListener(v -> cb.onLike());
+        heart = new IconView(c, Icons.HEART, Ui.DK_TEXT2);
+        heart.setFrac(0.56f);
+        heart.setOnClickListener(v -> cb.onLove());
+        info.addView(thumb, new LinearLayout.LayoutParams(Ui.dpi(46), Ui.dpi(46)));
+        info.addView(heart, new LinearLayout.LayoutParams(Ui.dpi(46), Ui.dpi(46)));
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ilp.setMargins(Ui.dpi(32), Ui.dpi(16), Ui.dpi(20), 0);
+        col.addView(info, ilp);
 
         // progreso
         seek = new SeekView(c);
@@ -252,6 +269,14 @@ final class NowPlayingView extends FrameLayout {
         if (dur > 0) durationMs = dur;
         seek.setProgress(durationMs > 0 ? pos / (float) durationMs : 0f);
         tElapsed.setText(Ui.fmt(pos));
+    }
+
+    /** 0 = sin valorar, 1 = me gusta, 2 = me encanta. */
+    void setRating(int r) {
+        thumb.setKind(r >= 1 ? Icons.THUMB_FILLED : Icons.THUMB);
+        thumb.setColor(r >= 1 ? Ui.ACCENT : Ui.DK_TEXT2);
+        heart.setKind(r >= 2 ? Icons.HEART_FILLED : Icons.HEART);
+        heart.setColor(r >= 2 ? 0xFFE8557E : Ui.DK_TEXT2);
     }
 
     void setShuffle(boolean on) {
