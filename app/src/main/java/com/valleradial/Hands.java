@@ -152,99 +152,188 @@ final class Hands {
     }
 
     // ------------------------------------------------------------------------------------ mano izquierda
-    private float anchorX = -1, anchorY = -1; // en espacio de referencia (lo pone HudView)
+    private float anchorX = -1, anchorY = -1; // ancla del gancho en espacio de referencia (lo pone HudView)
 
     void setAnchor(float rx, float ry) { anchorX = rx; anchorY = ry; }
 
+    private static float lerp(float a, float b, float t) { return a + (b - a) * t; }
+
     private void drawLeft(Canvas c, float Wr, float Hr, Game g, float time, float u) {
         stroke.setStrokeWidth(2.4f);
-        // manga
-        poly(c, SLEEVE, -30f, 340f, 36f, 262f, 104f, 240f, 150f, 300f, 196f, 380f, -30f, 380f);
-        for (int i = 0; i < 7; i++) line(c, 20f + i * 16f, 330f - i * 6f, 8f + i * 16f, 360f);
-        boolean attached = g.hookState == Game.HOOK_ATTACHED;
-        if (attached) {
+        if (g.hookState == Game.HOOK_ATTACHED) {
+            sleeveIdle(c);
             drawRopeFist(c, g, time);
-        } else if (g.throwT > 0f) {
-            float t = g.throwT / 0.45f;          // 1 -> 0
-            drawOpenHand(c, t);
+        } else if (g.hookState == Game.HOOK_FLY) {
+            drawThrow(c, g);
+        } else if (g.releaseT > 0f) {
+            drawRelease(c, g.releaseT / 0.4f);
         } else {
+            sleeveIdle(c);
             drawIdleKunai(c, time);
         }
+    }
+
+    private void sleeveIdle(Canvas c) {
+        poly(c, SLEEVE, -30f, 340f, 36f, 262f, 104f, 240f, 150f, 300f, 196f, 380f, -30f, 380f);
+        for (int i = 0; i < 7; i++) line(c, 20f + i * 16f, 330f - i * 6f, 8f + i * 16f, 360f);
     }
 
     private void cuff(Canvas c, float dy) {
         poly(c, INK, 66f, 226f + dy, 114f, 246f + dy, 104f, 282f + dy, 56f, 262f + dy);
     }
 
-    /** Dedo arriba con el kunai oscilando (como en el video). */
+    /** Antebrazo largo desde la esquina inferior izquierda hasta la muneca. Devuelve el angulo (grados) respecto a "arriba". */
+    private float armTo(Canvas c, float wx, float wy) {
+        float bx = 10f, by = 380f;
+        float dx = wx - bx, dy = wy - by;
+        float l = (float) Math.sqrt(dx * dx + dy * dy);
+        float ux = dx / l, uy = dy / l, nx = -uy, ny = ux;
+        float w0 = 44f, w1 = 25f;
+        poly(c, SLEEVE, bx + nx * w0, by + ny * w0, wx + nx * w1, wy + ny * w1,
+                wx - nx * w1, wy - ny * w1, bx - nx * w0, by - ny * w0);
+        for (int i = 1; i < 7; i++) {
+            float t = i / 7f;
+            float cx = lerp(bx, wx, t), cy = lerp(by, wy, t), w = lerp(w0, w1, t) * 0.8f;
+            line(c, cx + nx * w, cy + ny * w, cx + nx * (w - 10f) - ux * 8f, cy + ny * (w - 10f) - uy * 8f);
+            line(c, cx - nx * w * 0.2f, cy - ny * w * 0.2f, cx - nx * w * 0.2f - ux * 10f, cy - ny * w * 0.2f - uy * 10f);
+        }
+        // punio negro
+        poly(c, INK, wx - ux * 22f + nx * (w1 + 1f), wy - uy * 22f + ny * (w1 + 1f),
+                wx - ux * 22f - nx * (w1 + 1f), wy - uy * 22f - ny * (w1 + 1f),
+                wx - ux * 4f - nx * (w1 - 1f), wy - uy * 4f - ny * (w1 - 1f),
+                wx - ux * 4f + nx * (w1 - 1f), wy - uy * 4f + ny * (w1 - 1f));
+        return (float) Math.toDegrees(Math.atan2(dx, -dy));
+    }
+
+    /** Palma abierta (spread=1) o apuntando con el indice (spread=0). Origen en la muneca, apunta hacia -y. */
+    private void handLocal(Canvas c, float spread) {
+        rrect(c, SKIN, -18f, -40f, 18f, 2f, 10f);
+        float[] angs = {-36f, -18f, 0f, 18f, 34f};
+        float[] lens = {36f, 48f, 54f, 46f, 34f};
+        for (int i = 0; i < 5; i++) {
+            c.save();
+            c.translate(0f, -34f);
+            float ang = angs[i] * spread;
+            c.rotate(ang);
+            float len = lens[i];
+            if (spread < 0.5f && i != 1) len *= 0.35f;   // dedos doblados al apuntar
+            rrect(c, SKIN, -6.5f, -len, 6.5f, 6f, 6.5f);
+            c.restore();
+        }
+        // pulgar
+        c.save();
+        c.translate(-14f, -14f);
+        c.rotate(-58f * (0.4f + 0.6f * spread));
+        rrect(c, SKIN, -6f, -28f, 6f, 4f, 6f);
+        c.restore();
+        line(c, -8f, -4f, 8f, -6f);
+    }
+
+    private void kunai(Canvas c, float x, float y, float angDeg, float s) {
+        c.save();
+        c.translate(x, y);
+        c.rotate(angDeg);
+        c.scale(s, s);
+        poly(c, SKIN, 0f, -26f, 5.5f, -6f, 0f, 5f, -5.5f, -6f);
+        line(c, 0f, -22f, 0f, 0f);
+        c.drawCircle(0f, 10f, 4.5f, stroke);
+        c.restore();
+    }
+
+    private void rope(Canvas c, float x0, float y0, float x1, float y1, float sag) {
+        stroke.setColor(ROPE);
+        stroke.setStrokeWidth(2.2f);
+        path.reset();
+        path.moveTo(x0, y0);
+        path.quadTo((x0 + x1) * 0.5f, (y0 + y1) * 0.5f + sag, x1, y1);
+        c.drawPath(path, stroke);
+        stroke.setColor(INK);
+        stroke.setStrokeWidth(2.4f);
+    }
+
+    /** Lanzamiento: el brazo se extiende, la mano abierta apunta y el kunai vuela con la cuerda. */
+    private void drawThrow(Canvas c, Game g) {
+        float p = g.hookProg;
+        float ext = Math.min(1f, 0.35f + p * 2.2f);
+        float wx = lerp(100f, 182f, ext), wy = lerp(262f, 180f, ext);
+        float ang = armTo(c, wx, wy);
+        c.save();
+        c.translate(wx, wy);
+        c.rotate(ang);
+        handLocal(c, p < 0.35f ? 1f : 0f);
+        c.restore();
+        // punta de los dedos (indice) en espacio de referencia
+        double a = Math.toRadians(ang);
+        float tx = wx + (float) Math.sin(a) * 60f, ty = wy - (float) Math.cos(a) * 60f;
+        float ax = anchorX >= 0f ? anchorX : 320f, ay = anchorX >= 0f ? anchorY : 170f;
+        if (anchorX < 0f) { ax = tx + (float) Math.sin(a) * 300f; ay = ty - (float) Math.cos(a) * 300f; }
+        float ex = lerp(tx, ax, p), ey = lerp(ty, ay, p);
+        rope(c, tx, ty, ex, ey, 0f);
+        float dir = (float) Math.toDegrees(Math.atan2(ex - tx, -(ey - ty)));
+        kunai(c, ex, ey, dir, 0.55f);
+    }
+
+    /** Soltar: la mano se abre y vuelve a su sitio. t: 1 -> 0. */
+    private void drawRelease(Canvas c, float t) {
+        float wx = lerp(100f, 168f, t), wy = lerp(262f, 192f, t);
+        float ang = armTo(c, wx, wy);
+        c.save();
+        c.translate(wx, wy);
+        c.rotate(ang);
+        handLocal(c, 1f);
+        c.restore();
+    }
+
+    /** Dedo arriba con el kunai colgando de la cuerda y balanceandose (como en el video). */
     private void drawIdleKunai(Canvas c, float time) {
         cuff(c, 0f);
-        // puño
         rrect(c, SKIN, 66f, 188f, 122f, 244f, 18f);
         line(c, 74f, 222f, 112f, 226f);
         line(c, 76f, 232f, 110f, 236f);
-        // indice
-        rrect(c, SKIN, 88f, 110f, 108f, 198f, 10f);
-        // kunai en la punta del dedo
-        float ang = (float) Math.sin(time * 3.2f) * 22f - 20f;
-        c.save();
-        c.rotate(ang, 98f, 106f);
-        // cuerda en lazo
+        rrect(c, SKIN, 88f, 110f, 108f, 198f, 10f);       // indice
+        float tx = 98f, ty = 108f;
+        float swing = 1.05f + 0.55f * (float) Math.sin(time * 3.1f);   // radianes desde la vertical
+        float rx = tx + (float) Math.sin(swing) * 50f, ry = ty - (float) Math.cos(swing) * 50f;
+        // cuerda en V desde la punta del dedo hasta el anillo
         stroke.setColor(ROPE);
         stroke.setStrokeWidth(2f);
         path.reset();
-        path.moveTo(98f, 82f);
-        path.quadTo(150f, 90f, 124f, 190f);
+        path.moveTo(tx, ty);
+        path.quadTo((tx + rx) * 0.5f + 6f, (ty + ry) * 0.5f + 12f, rx, ry);
         c.drawPath(path, stroke);
         stroke.setColor(INK);
         stroke.setStrokeWidth(2.4f);
-        poly(c, SKIN, 98f, 40f, 108f, 74f, 98f, 88f, 88f, 74f);   // hoja
-        line(c, 98f, 46f, 98f, 82f);
-        c.drawCircle(98f, 94f, 6f, stroke);                      // anillo
-        c.restore();
+        // el kunai apunta alejandose del anillo
+        float deg = (float) Math.toDegrees(swing) + 62f;
+        kunai(c, rx, ry, deg, 0.95f);
+        // rayitas de movimiento
+        line(c, rx + 12f, ry - 20f, rx + 26f, ry - 30f);
+        line(c, rx + 20f, ry - 10f, rx + 36f, ry - 16f);
     }
 
-    /** Mano abierta al lanzar o soltar. */
-    private void drawOpenHand(Canvas c, float t) {
-        float lift = (1f - t) * 20f;
-        cuff(c, -lift * 0.2f);
-        c.save();
-        c.translate(0f, -lift);
-        rrect(c, SKIN, 62f, 196f, 120f, 244f, 14f);
-        float[] angs = {-38f, -18f, 0f, 18f, 34f};
-        float[] lens = {44f, 56f, 60f, 54f, 42f};
-        for (int i = 0; i < 5; i++) {
-            c.save();
-            c.rotate(angs[i], 92f, 206f);
-            rrect(c, SKIN, 92f - 8f, 206f - lens[i], 92f + 8f, 212f, 8f);
-            c.restore();
-        }
-        c.restore();
-    }
-
-    /** Puño con la cuerda hacia el punto donde clavo el kunai. */
+    /** Puno con la cuerda tensa hacia el punto donde se clavo el kunai. */
     private void drawRopeFist(Canvas c, Game g, float time) {
+        float shake = (float) Math.sin(time * 40f) * 1.2f;
+        c.save();
+        c.translate(shake, -shake * 0.6f);
         cuff(c, 0f);
-        float fx = 116f, fy = 204f;
-        // cuerda hacia el ancla
+        float fx = 108f, fy = 200f;
         float tx = anchorX, ty = anchorY;
         if (tx < 0f) { tx = 320f; ty = 170f; }
+        rope(c, fx, fy, tx, ty, 6f);
+        // kunai clavado en el ancla
+        float dir = (float) Math.toDegrees(Math.atan2(tx - fx, -(ty - fy)));
+        kunai(c, tx, ty, dir, 0.45f);
+        // cola de cuerda colgando del puno
         stroke.setColor(ROPE);
-        stroke.setStrokeWidth(2.6f);
-        path.reset();
-        path.moveTo(fx, fy);
-        float mx = (fx + tx) * 0.5f, my = (fy + ty) * 0.5f + 8f;
-        path.quadTo(mx, my, tx, ty);
-        c.drawPath(path, stroke);
-        // cola colgando
+        stroke.setStrokeWidth(3.2f);
         path.reset();
         path.moveTo(84f, 248f);
-        path.quadTo(70f + (float) Math.sin(time * 6f) * 4f, 280f, 92f, 312f);
-        stroke.setStrokeWidth(3f);
+        path.quadTo(66f + (float) Math.sin(time * 7f) * 5f, 284f, 94f, 322f);
         c.drawPath(path, stroke);
         stroke.setColor(INK);
         stroke.setStrokeWidth(2.4f);
-        // puño cerrado
+        // puno cerrado
         rrect(c, SKIN, 62f, 196f, 128f, 250f, 20f);
         for (int i = 0; i < 4; i++) {
             float y = 202f + i * 11f;
@@ -252,8 +341,10 @@ final class Hands {
         }
         line(c, 70f, 238f, 110f, 244f);
         // marquitas de tension
-        line(c, 54f, 196f, 46f, 190f);
-        line(c, 58f, 188f, 52f, 178f);
+        line(c, 54f, 196f, 44f, 190f);
+        line(c, 56f, 186f, 48f, 174f);
+        line(c, 66f, 182f, 62f, 168f);
+        c.restore();
     }
 
     // ------------------------------------------------------------------------------------ barra de vida

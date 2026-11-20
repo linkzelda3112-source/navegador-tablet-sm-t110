@@ -119,7 +119,7 @@ final class HudView extends View {
         float time = game.time;
 
         // si el gancho esta pegado, proyecta el ancla a la pantalla (espacio de referencia)
-        if (game.hookState == Game.HOOK_ATTACHED) {
+        if (game.hookState != Game.HOOK_NONE) {
             float[] m = game.vp;
             float x = game.hax, y = game.hay, z = game.haz;
             float cx = m[0] * x + m[4] * y + m[8] * z + m[12];
@@ -141,6 +141,7 @@ final class HudView extends View {
             c.drawRect(0, 0, W, H, p);
         }
 
+        drawSpeedLines(c, W, H);
         hands.drawHealth(c, H, game.hp, Game.MAX_HP, game.hurtFlash);
         hands.draw(c, W, H, game, time);
         drawCrosshair(c, W, H);
@@ -161,6 +162,27 @@ final class HudView extends View {
             }
         }
         postInvalidateOnAnimation();
+    }
+
+    /** Rayitas radiales al ir muy rapido (como el desenfoque de movimiento del video). */
+    private void drawSpeedLines(Canvas c, float W, float H) {
+        float sp = game.speed();
+        if (sp < 20f) return;
+        float k = Math.min(1f, (sp - 20f) / 30f);
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeCap(Paint.Cap.ROUND);
+        p.setStrokeWidth(1.6f * u);
+        p.setColor(((int) (110 * k) << 24) | 0x5A4A1A);
+        float cx = W / 2f, cy = H / 2f;
+        float t = game.time;
+        for (int i = 0; i < 26; i++) {
+            float a = i * 0.2417f + (float) Math.sin(i * 7.1f) * 0.1f;
+            float r0 = (0.42f + 0.1f * (float) Math.sin(t * 9f + i)) * H;
+            float r1 = r0 + (0.18f + 0.1f * k) * H;
+            float ca = (float) Math.cos(a), sa = (float) Math.sin(a);
+            c.drawLine(cx + ca * r0 * 1.5f, cy + sa * r0, cx + ca * r1 * 1.5f, cy + sa * r1, p);
+        }
+        p.setStrokeCap(Paint.Cap.BUTT);
     }
 
     private void drawCrosshair(Canvas c, float W, float H) {

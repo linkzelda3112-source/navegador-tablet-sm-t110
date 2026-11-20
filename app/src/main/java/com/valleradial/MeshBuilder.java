@@ -193,6 +193,69 @@ public final class MeshBuilder {
         return m;
     }
 
+    private static final float[] WHITE_STONE = {0.88f, 0.84f, 0.74f};
+    private static final float[] GREY_STONE = {0.62f, 0.60f, 0.58f};
+    private static final float[] WOOD = {0.50f, 0.34f, 0.22f};
+
+    /** Torre de piedra con techo conico rojo. */
+    public static MeshBuilder tower() {
+        MeshBuilder m = new MeshBuilder();
+        m.cylinder(0, 0, 0, 2.7f, 2.3f, 15f, 8, GREY_STONE);
+        m.cylinder(0, 15f, 0, 3.4f, 3.4f, 1.0f, 8, STONE);          // balcon
+        m.cylinder(0, 16f, 0, 3.5f, 0.0f, 5.5f, 8, ROOF_A);         // techo
+        for (int i = 0; i < 4; i++) {                                // ventanas
+            float y = 5f + i * 2.8f;
+            m.box(2.35f, y, 0, 0.12f, 0.6f, 0.4f, DARK);
+            m.box(-2.35f, y, 0, 0.12f, 0.6f, 0.4f, DARK);
+        }
+        m.box(0, 1.1f, 2.65f, 0.7f, 1.1f, 0.08f, DARK);              // puerta
+        return m;
+    }
+
+    /** Arco de piedra: dos pilares y un dintel. */
+    public static MeshBuilder arch() {
+        MeshBuilder m = new MeshBuilder();
+        m.box(-3.3f, 3.6f, 0, 1.1f, 3.6f, 1.1f, GREY_STONE);
+        m.box(3.3f, 3.6f, 0, 1.1f, 3.6f, 1.1f, GREY_STONE);
+        m.box(-3.3f, 0.3f, 0, 1.5f, 0.3f, 1.5f, STONE);
+        m.box(3.3f, 0.3f, 0, 1.5f, 0.3f, 1.5f, STONE);
+        m.box(0, 8.0f, 0, 5.0f, 0.8f, 1.2f, STONE);
+        m.box(0, 8.95f, 0, 1.0f, 0.3f, 1.3f, ROOF_B);
+        m.box(-3.3f, 7.4f, 0, 1.4f, 0.3f, 1.4f, STONE);
+        m.box(3.3f, 7.4f, 0, 1.4f, 0.3f, 1.4f, STONE);
+        return m;
+    }
+
+    /** Molino con aspas en cruz. */
+    public static MeshBuilder windmill() {
+        MeshBuilder m = new MeshBuilder();
+        m.cylinder(0, 0, 0, 2.8f, 1.7f, 9f, 8, WHITE_STONE);
+        m.cylinder(0, 9f, 0, 2.2f, 0.0f, 3.6f, 8, ROOF_A);
+        m.box(0, 1.0f, 2.7f, 0.7f, 1.0f, 0.08f, DARK);
+        float cy = 8.0f, cz = 2.2f;
+        m.box(0, cy, cz - 0.5f, 0.4f, 0.4f, 0.7f, WOOD);             // eje
+        m.box(0, cy, cz, 3.1f, 0.38f, 0.1f, WOOD);                   // aspas en cruz
+        m.box(0, cy, cz + 0.05f, 0.38f, 3.1f, 0.1f, WOOD);
+        m.box(2.0f, cy + 0.0f, cz + 0.12f, 0.9f, 0.3f, 0.05f, WHITE_STONE);
+        m.box(-2.0f, cy, cz + 0.12f, 0.9f, 0.3f, 0.05f, WHITE_STONE);
+        m.box(0, cy + 2.0f, cz + 0.17f, 0.3f, 0.9f, 0.05f, WHITE_STONE);
+        m.box(0, cy - 2.0f, cz + 0.17f, 0.3f, 0.9f, 0.05f, WHITE_STONE);
+        return m;
+    }
+
+    /** Ruinas: tres columnas rotas de distinta altura. */
+    public static MeshBuilder ruin() {
+        MeshBuilder m = new MeshBuilder();
+        float[] hs = {5.0f, 3.2f, 4.4f};
+        for (int i = 0; i < 3; i++) {
+            float x = (i - 1) * 2.5f;
+            m.cylinder(x, 0, 0, 0.9f, 0.75f, hs[i], 7, STONE);
+            m.box(x, 0.25f, 0, 1.1f, 0.25f, 1.1f, GREY_STONE);
+        }
+        m.box(-1.25f, 5.2f, 0, 2.0f, 0.3f, 0.7f, GREY_STONE); // dintel caido sobre dos columnas
+        return m;
+    }
+
     /** Mancha de tinta enemiga: bola rosada con un ojo grande hacia +Z. */
     public static MeshBuilder enemy() {
         MeshBuilder m = new MeshBuilder();
