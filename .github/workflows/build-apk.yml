@@ -1,0 +1,47 @@
+name: build-apk
+
+on:
+  push:
+    branches: [main, valle-radial]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Probar la logica (JVM)
+        run: |
+          mkdir -p out
+          javac -d out app/src/main/java/com/valleradial/World.java app/src/main/java/com/valleradial/Game.java tools/SimTest.java
+          java -cp out SimTest
+
+      - name: Compilar APK
+        run: gradle assembleRelease --no-daemon
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk ValleRadial.apk
+          gh release create "valle-${{ github.run_number }}" ValleRadial.apk \
+            --title "Valle Radial valle-${{ github.run_number }}" \
+            --notes "APK de Valle Radial (build ${{ github.run_number }})"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ValleRadial
+          path: ValleRadial.apk
