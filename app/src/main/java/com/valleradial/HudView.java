@@ -141,6 +141,7 @@ final class HudView extends View {
             c.drawRect(0, 0, W, H, p);
         }
 
+        drawLeaves(c, W, H);
         drawSpeedLines(c, W, H);
         hands.drawHealth(c, H, game.hp, Game.MAX_HP, game.hurtFlash);
         hands.draw(c, W, H, game, time);
@@ -162,6 +163,27 @@ final class HudView extends View {
             }
         }
         postInvalidateOnAnimation();
+    }
+
+    /** Hojas y petalos que flotan con el viento delante de la camara (vida en el ambiente). */
+    private void drawLeaves(Canvas c, float W, float H) {
+        float t = game.time;
+        int[] cols = {0xB8E8B030, 0xB8E07A2C, 0xB8D6477F, 0xB8F2D064};
+        p.setStyle(Paint.Style.FILL);
+        for (int i = 0; i < 16; i++) {
+            float sp = 0.035f + (i % 5) * 0.012f;
+            float x = ((i * 0.377f + t * sp) % 1f) * (W + 80f * u) - 40f * u;
+            float y = (0.1f + 0.8f * (0.5f + 0.5f * (float) Math.sin(i * 1.7f + t * 0.35f * (0.6f + (i % 3) * 0.25f)))) * H
+                    + (float) Math.sin(t * 1.3f + i) * 14f * u;
+            float rot = (float) Math.sin(t * 1.1f + i * 2.3f) * 70f + i * 20f;
+            float s = (3.2f + (i % 4)) * u;
+            p.setColor(cols[i % 4]);
+            c.save();
+            c.translate(x, y);
+            c.rotate(rot);
+            c.drawOval(-s, -s * 0.5f, s, s * 0.5f, p);
+            c.restore();
+        }
     }
 
     /** Rayitas radiales al ir muy rapido (como el desenfoque de movimiento del video). */

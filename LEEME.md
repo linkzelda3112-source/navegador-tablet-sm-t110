@@ -10,6 +10,11 @@ Inspirado en el video de referencia: el mundo es el interior de una esfera gigan
 - Manchas de tinta enemigas (3 disparos). Barra de vida rosa segmentada en diagonal, abajo a la izquierda.
 - Sonidos sintetizados, sin archivos de audio.
 
+## Detalle y vida
+- Modelos detallados cerca (casas con entramado, ventanas con postigos y flores, techos de tejas, chimenea con humo; árboles con raíces, ramas, copa de mechones, frutos y hongos; torres con almenas y bandera; arcos de dovelas; ruinas; rocas con musgo) y versión simple a lo lejos.
+- Viento: árboles, arbustos, hiedra, humo y banderas se mecen; los molinos giran sus aspas; matas de pasto y flores sobre el terreno; hojas flotando.
+- Terreno con sombra de contacto bajo cada objeto, pinceladas, florecitas y bordes de camino.
+
 ## Controles (horizontal)
 - Lado izquierdo: stick flotante para moverte.
 - Lado derecho: arrastra para mirar.

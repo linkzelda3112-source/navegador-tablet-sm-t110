@@ -149,19 +149,20 @@ public final class World {
             switch (kind) {
                 case HOUSE:
                     p.scale = 1.0f + rnd.nextFloat() * 0.35f;
+                    p.variant = rnd.nextInt(4);
                     p.r = 4.6f * p.scale; p.h = 8f * p.scale; p.solid = true; p.standable = true;
                     break;
                 case TOWER:
                     p.scale = 1.0f + rnd.nextFloat() * 0.5f;
-                    p.r = 2.8f * p.scale; p.h = 17f * p.scale; p.solid = true;
+                    p.r = 2.8f * p.scale; p.h = 24f * p.scale; p.solid = true;
                     break;
                 case ARCH:
                     p.scale = 1.0f + rnd.nextFloat() * 0.5f;
-                    p.off = 3.3f * p.scale; p.r = 1.1f * p.scale; p.h = 7.5f * p.scale; p.solid = true;
+                    p.off = 3.3f * p.scale; p.r = 1.1f * p.scale; p.h = 9f * p.scale; p.solid = true;
                     break;
                 case WINDMILL:
                     p.scale = 1.0f + rnd.nextFloat() * 0.4f;
-                    p.r = 2.9f * p.scale; p.h = 10f * p.scale; p.solid = true;
+                    p.r = 2.9f * p.scale; p.h = 12f * p.scale; p.solid = true;
                     break;
                 case RUIN:
                     p.scale = 0.9f + rnd.nextFloat() * 0.6f;

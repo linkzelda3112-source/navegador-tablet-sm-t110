@@ -28,6 +28,8 @@ jobs:
           mkdir -p out
           javac -d out app/src/main/java/com/valleradial/World.java app/src/main/java/com/valleradial/Game.java tools/SimTest.java
           java -cp out SimTest
+          javac -d out app/src/main/java/com/valleradial/MeshBuilder.java tools/MeshTest.java
+          java -cp out MeshTest
 
       - name: Compilar APK
         run: gradle assembleRelease --no-daemon
