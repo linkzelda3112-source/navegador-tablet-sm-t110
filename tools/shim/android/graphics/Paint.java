@@ -1,6 +1,7 @@
 package android.graphics;
 public class Paint {
-    public static final int ANTI_ALIAS_FLAG = 1;
+    public static final int ANTI_ALIAS_FLAG = 1, FILTER_BITMAP_FLAG = 2;
+    boolean filter;
     public enum Style { FILL, STROKE, FILL_AND_STROKE }
     public enum Cap { BUTT, ROUND, SQUARE }
     public enum Join { MITER, ROUND, BEVEL }
@@ -20,6 +21,7 @@ public class Paint {
     public void setTextAlign(Align a) { align = a; }
     public void setShader(Shader s) { shader = s; }
     public void setAntiAlias(boolean b) {}
+    public void setFilterBitmap(boolean b) { filter = b; }
     public float measureText(String s) {
         java.awt.Font f = new java.awt.Font("Dialog", ((tf.style & 1) != 0 ? java.awt.Font.BOLD : 0) | ((tf.style & 2) != 0 ? java.awt.Font.ITALIC : 0), 100).deriveFont(ts);
         return (float) f.getStringBounds(s, new java.awt.font.FontRenderContext(null, true, true)).getWidth();

@@ -5,6 +5,7 @@ import java.util.ArrayDeque;
 public class Canvas {
     public final Graphics2D g;
     private final ArrayDeque<AffineTransform> st = new ArrayDeque<>();
+    public Canvas(Bitmap b) { this(b.img.createGraphics()); }
     public Canvas(Graphics2D g) {
         this.g = g;
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -35,6 +36,17 @@ public class Canvas {
         float w = (float) gv.getLogicalBounds().getWidth();
         float dx = p.align == Paint.Align.CENTER ? -w / 2 : p.align == Paint.Align.RIGHT ? -w : 0;
         paint(p, gv.getOutline(x + dx, y));
+    }
+    public void drawBitmap(Bitmap b, Rect src, RectF dst, Paint p) {
+        int sw = b.getWidth(), sh = b.getHeight();
+        int sx0 = src == null ? 0 : src.left, sy0 = src == null ? 0 : src.top, sx1 = src == null ? sw : src.right, sy1 = src == null ? sh : src.bottom;
+        Object old = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Composite oc = g.getComposite();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, p != null && p.filter ? RenderingHints.VALUE_INTERPOLATION_BILINEAR : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        if (p != null) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (p.color >>> 24) / 255f));
+        g.drawImage(b.img, Math.round(dst.left), Math.round(dst.top), Math.round(dst.right), Math.round(dst.bottom), sx0, sy0, sx1, sy1, null);
+        g.setComposite(oc);
+        if (old != null) g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, old);
     }
     public void drawColor(int c) { g.setPaint(new Color(c, true)); g.fillRect(-10000, -10000, 20000, 20000); }
     public int save() { st.push(g.getTransform()); return st.size(); }

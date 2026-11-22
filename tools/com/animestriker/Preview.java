@@ -57,6 +57,14 @@ public class Preview {
         }
         g.dispose();
         ImageIO.write(img, "png", new File(out + "/chars.png"));
+        BufferedImage big = new BufferedImage(1100, 1100, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g3 = big.createGraphics(); g3.setColor(new java.awt.Color(0xFF7DBDEE)); g3.fillRect(0, 0, 1100, 1100);
+        g3.setColor(new java.awt.Color(0xFF4BA43D)); g3.fillRect(0, 850, 1100, 250);
+        Canvas c3 = new Canvas(g3);
+        Match.Player bp = m.pl[0][5]; bp.flip = 1f; bp.vx = bp.vy = 0; bp.anim = 0.4f; bp.stun = 0; bp.slide = 0; bp.cheer = 0; bp.charge = 0; bp.actionT = 0; bp.diveT = 0;
+        Art.body(c3, m, bp, 550, 1000, 150f, 1.0f, false);
+        g3.dispose();
+        ImageIO.write(big, "png", new File(out + "/big.png"));
         System.out.println("ok");
     }
 }

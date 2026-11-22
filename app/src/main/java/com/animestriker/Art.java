@@ -102,10 +102,10 @@ final class Art {
         }
         PA.lineTo(cx, cy); PA.close();
         fill(shade(hair, 0.8f)); cv.drawPath(PA, P);
-        stroke(INK, 0.1f * S); cv.drawPath(PA, P);
+        stroke(shade(hair, 0.35f), 0.05f * S); cv.drawPath(PA, P);
 
         // cabeza
-        oval(cv, cx, cy, R0, R0 * 0.96f, skin, 0.1f * S);
+        oval(cv, cx, cy, R0, R0 * 0.96f, skin, 0.05f * S);
         // sombra cel bajo la barbilla
         fill(alpha(shade(skin, 0.8f), 120));
         R.set(cx - R0 * 0.8f, cy + R0 * 0.55f, cx + R0 * 0.8f, cy + R0 * 0.9f);
@@ -185,7 +185,7 @@ final class Art {
         }
         PA.lineTo(cx, cy - R0 * 0.25f); PA.close();
         fill(hair); cv.drawPath(PA, P);
-        stroke(INK, 0.08f * S); cv.drawPath(PA, P);
+        stroke(shade(hair, 0.35f), 0.04f * S); cv.drawPath(PA, P);
         // brillo del pelo
         PB.reset();
         for (int i = 0; i < 6; i++) {
@@ -211,108 +211,167 @@ final class Art {
     // ------------------------------------------------------------ jugador
     static int gkColor(Teams.Def d) { return d.main == 0xFF00C853 ? 0xFFFF9100 : 0xFF39FF14; }
 
+    /** Tubo cónico con contorno fino del mismo tono (estilo anime semi-realista). */
+    static void tube(Canvas cv, float x0, float y0, float x1, float y1, float w0, float w1, int col, float ow) {
+        float dx = x1 - x0, dy = y1 - y0, l = (float) Math.sqrt(dx * dx + dy * dy);
+        if (l < 0.001f) return;
+        float nx = -dy / l, ny = dx / l;
+        PB.reset();
+        PB.moveTo(x0 + nx * w0 / 2, y0 + ny * w0 / 2); PB.lineTo(x1 + nx * w1 / 2, y1 + ny * w1 / 2);
+        PB.lineTo(x1 - nx * w1 / 2, y1 - ny * w1 / 2); PB.lineTo(x0 - nx * w0 / 2, y0 - ny * w0 / 2); PB.close();
+        fill(col); cv.drawPath(PB, P);
+        cv.drawCircle(x0, y0, w0 / 2, P); cv.drawCircle(x1, y1, w1 / 2, P);
+        if (ow > 0) { stroke(shade(col, 0.5f), ow); cv.drawPath(PB, P); }
+    }
+
+    /** Franja plana (sin tapas redondas ni contorno). */
+    static void band(Canvas cv, float x0, float y0, float x1, float y1, float w0, float w1, int col) {
+        float dx = x1 - x0, dy = y1 - y0, l = (float) Math.sqrt(dx * dx + dy * dy);
+        if (l < 0.001f) return;
+        float nx = -dy / l, ny = dx / l;
+        PB.reset();
+        PB.moveTo(x0 + nx * w0 / 2, y0 + ny * w0 / 2); PB.lineTo(x1 + nx * w1 / 2, y1 + ny * w1 / 2);
+        PB.lineTo(x1 - nx * w1 / 2, y1 - ny * w1 / 2); PB.lineTo(x0 - nx * w0 / 2, y0 - ny * w0 / 2); PB.close();
+        fill(col); cv.drawPath(PB, P);
+    }
+
     static void body(Canvas cv, Match m, Match.Player pl, float gx, float gy, float S, float t, boolean human) {
+        float U = S * 0.62f;                 // 1 cabeza ≈ 1U; el jugador mide ~7U
+        float ow = Math.max(1.2f, U * 0.06f);
         Teams.Def d = m.def[pl.team];
         boolean gk = pl.role == Match.GK;
         int main = gk ? gkColor(d) : d.main;
-        int second = gk ? 0xFF263238 : d.second;
+        int trim = gk ? 0xFF263238 : d.second;
+        int shorts = gk ? 0xFF263238 : shade(d.main, 0.82f);
+        int sock = gk ? shade(main, 0.9f) : shade(d.main, 0.95f);
         int skin = d.skin[pl.idx];
-        float fl = pl.flip;
+        float fl = pl.flip, afl = Math.abs(fl);
         float sp = (float) Math.sqrt(pl.vx * pl.vx + pl.vy * pl.vy);
         float run = Math.min(1f, sp / 8f);
         float ph = pl.anim;
-        float bob = (sp > 0.8f ? Math.abs((float) Math.sin(ph)) * 0.1f : (float) Math.sin(t * 2f + pl.idx) * 0.02f);
-        float lean = Math.min(1f, sp / 9f) * 0.22f;
+        float bob = sp > 0.8f ? Math.abs((float) Math.sin(ph)) * 0.16f : (float) Math.sin(t * 2f + pl.idx) * 0.03f;
+        float lean = Math.min(1f, sp / 9f) * 0.3f;
         boolean slide = pl.slide > 0;
         boolean fall = pl.stun > 0.18f && !slide;
         float jump = 0;
-        if (pl.diveT > 0) { float k = 1f - pl.diveT / 0.55f; jump = (float) Math.sin(Math.PI * Math.max(0, Math.min(1, k))) * 1.1f; }
-        if (pl.cheer > 0) jump = Math.max(jump, Math.abs((float) Math.sin(t * 9f + pl.idx)) * 0.8f);
+        if (pl.diveT > 0) { float k = 1f - pl.diveT / 0.55f; jump = (float) Math.sin(Math.PI * Math.max(0, Math.min(1, k))) * 1.6f; }
+        if (pl.cheer > 0) jump = Math.max(jump, Math.abs((float) Math.sin(t * 9f + pl.idx)) * 1.1f);
 
-        // sombra
-        float shw = 0.95f * S * (1f - jump * 0.25f);
-        fill(0x55000000);
-        R.set(gx - shw, gy - 0.22f * S, gx + shw, gy + 0.26f * S);
-        cv.drawOval(R, P);
+        // sombra larga (luz desde la izquierda)
+        cv.save();
+        cv.rotate(-5f, gx, gy);
+        fill(0x22000000); R.set(gx - 1.0f * U, gy - 0.5f * U, gx + 4.6f * U, gy + 0.5f * U); cv.drawOval(R, P);
+        fill(0x44000000); R.set(gx - 0.7f * U, gy - 0.32f * U, gx + 3.8f * U * (1f - jump * 0.15f), gy + 0.34f * U); cv.drawOval(R, P);
+        cv.restore();
 
         cv.save();
-        float gyJ = gy - jump * S;
-        if (slide) { cv.rotate(-78f * fl, gx, gyJ - 0.6f * S); cv.translate(0, 0.25f * S); }
-        else if (fall) { cv.rotate(-30f * fl, gx, gyJ); }
+        float gyJ = gy - jump * U;
+        if (slide) { cv.rotate(-80f * fl, gx, gyJ - 2.2f * U); cv.translate(0, 0.9f * U); }
+        else if (fall) { cv.rotate(-28f * fl, gx, gyJ); }
 
-        float hipX = gx, hipY = gyJ + (-1.05f - bob) * S;
-        float shY = gyJ + (-2.05f - bob) * S;
-        float headX = gx + fl * lean * 1.2f * S, headY = gyJ + (-3.05f - bob) * S;
-        float shX = gx + fl * lean * 0.7f * S;
+        float hipY = gyJ - (3.55f + bob) * U;
+        float shY = gyJ - (5.5f + bob) * U;
+        float waistX = gx + fl * lean * U * 0.6f, shX = gx + fl * lean * U * 1.5f;
+        float headX = gx + fl * lean * U * 2.1f, headY = gyJ - (6.5f + bob) * U;
+        float halfW = (0.78f - 0.2f * afl) * U, waistHalf = halfW * 0.72f;
 
-        // piernas
+        // ---- brazo lejano
+        arm(cv, 0, fl, ph, sp, run, shX, shY, halfW, U, main, trim, skin, gk, pl, ow, jump);
+
+        // ---- piernas
         for (int k = 0; k < 2; k++) {
             float phase = ph + k * (float) Math.PI;
-            float amp = sp > 0.8f ? 0.4f + 0.7f * run : 0.04f;
-            float fxo = (float) Math.sin(phase) * amp * 0.95f;
-            float lift = sp > 0.8f ? Math.max(0f, (float) Math.cos(phase)) * 0.5f * run : 0f;
-            float hx = hipX + fl * (k == 0 ? -0.22f : 0.22f) * S;
-            float ftx = hx + fl * fxo * S, fty = gyJ - lift * S;
-            if (slide) { ftx = hx + fl * (k == 0 ? 0.9f : 1.25f) * S; fty = gyJ - (k == 0 ? 0.1f : 0.35f) * S; }
+            float amp = sp > 0.8f ? 0.5f + 0.9f * run : 0.05f;
+            float fxo = (float) Math.sin(phase) * amp * 1.1f;
+            float lift = sp > 0.8f ? Math.max(0f, (float) Math.cos(phase)) * 0.95f * run : 0f;
+            float hx = waistX + fl * (k == 0 ? -0.26f : 0.26f) * U;
+            float ftx = hx + fl * fxo * U, fty = gyJ - (0.28f + lift) * U;
+            if (slide) { ftx = hx + fl * (k == 0 ? 2.2f : 2.9f) * U; fty = gyJ - (k == 0 ? 0.3f : 1.0f) * U; }
             if (k == 1 && pl.actionT > 0.02f && !gk) {
                 float r = Math.min(1f, pl.actionT / 0.3f);
-                ftx = hx + fl * (1.5f * r - 0.2f) * S; fty = gyJ - 0.5f * r * S;
+                ftx = hx + fl * (2.6f * r - 0.3f) * U; fty = gyJ - (0.3f + 1.1f * r) * U;
             }
-            if (jump > 0.1f && gk) { ftx = hx + fl * (k == 0 ? -0.5f : 0.5f) * S; fty = gyJ - 0.3f * S; }
-            float kx = (hx + ftx) * 0.5f + fl * 0.16f * S, ky = (hipY + fty) * 0.5f;
-            limb(cv, hx, hipY, kx, ky, 0.5f * S, second, 0.08f * S);
-            limb(cv, kx, ky, ftx, fty - 0.12f * S, 0.4f * S, k == 0 ? shade(main, 0.8f) : main, 0.08f * S);
-            oval(cv, ftx + fl * 0.14f * S, fty - 0.06f * S, 0.34f * S, 0.2f * S, 0xFFF5F5F5, 0.07f * S);
-            fill(shade(d.accent, 1.0f));
-            R.set(ftx + fl * 0.14f * S - 0.2f * S, fty - 0.02f * S, ftx + fl * 0.14f * S + 0.2f * S, fty + 0.08f * S);
-            cv.drawOval(R, P);
+            if (jump > 0.2f && gk) { ftx = hx + fl * (k == 0 ? -0.9f : 0.9f) * U; fty = gyJ - 0.5f * U; }
+            float kx = (hx + ftx) * 0.5f + fl * (0.3f + 0.45f * run) * U, ky = (hipY + fty) * 0.5f - 0.05f * U;
+            // muslo (piel) y pantaloneta
+            tube(cv, hx, hipY, kx, ky, 0.7f * U, 0.5f * U, skin, ow);
+            float sx1 = hx + (kx - hx) * 0.55f, sy1 = hipY + (ky - hipY) * 0.55f;
+            tube(cv, hx, hipY, sx1, sy1, 0.9f * U, 0.78f * U, shorts, ow);
+            // media larga con franja
+            tube(cv, kx, ky, ftx, fty, 0.52f * U, 0.36f * U, sock, ow);
+            float px = kx + (ftx - kx) * 0.16f, py = ky + (fty - ky) * 0.16f, qx = kx + (ftx - kx) * 0.3f, qy = ky + (fty - ky) * 0.3f;
+            band(cv, px, py, qx, qy, 0.5f * U, 0.47f * U, trim);
+            // botín
+            PA.reset();
+            PA.moveTo(ftx - fl * 0.3f * U, fty - 0.15f * U); PA.lineTo(ftx + fl * 0.25f * U, fty - 0.3f * U);
+            PA.lineTo(ftx + fl * 1.0f * U, fty + 0.02f * U); PA.lineTo(ftx + fl * 1.05f * U, fty + 0.3f * U);
+            PA.lineTo(ftx - fl * 0.32f * U, fty + 0.3f * U); PA.close();
+            fill(0xFFF4F6FA); cv.drawPath(PA, P);
+            fill(shade(d.accent, 1.15f)); R.set(Math.min(ftx, ftx + fl * 0.7f * U), fty - 0.12f * U, Math.max(ftx, ftx + fl * 0.7f * U), fty + 0.04f * U); cv.drawOval(R, P);
+            fill(0xFF2B2F3A); R.set(Math.min(ftx - fl * 0.32f * U, ftx + fl * 1.05f * U), fty + 0.22f * U, Math.max(ftx - fl * 0.32f * U, ftx + fl * 1.05f * U), fty + 0.32f * U); cv.drawRect(R, P);
+            stroke(shade(0xFF8FA0B8, 0.7f), ow); cv.drawPath(PA, P);
         }
 
-        // torso
-        float tw = 0.64f * S, tl = shX - tw, tr = shX + tw;
-        float torsoBot = hipY + 0.15f * S, torsoTop = shY - 0.05f * S;
-        R.set(tl, torsoTop, tr, torsoBot);
-        fill(main); cv.drawRoundRect(R, 0.3f * S, 0.3f * S, P);
-        // shorts
-        R.set(tl + 0.06f * S, hipY - 0.15f * S, tr - 0.06f * S, torsoBot + 0.18f * S);
-        fill(second); cv.drawRoundRect(R, 0.2f * S, 0.2f * S, P);
-        // sombra cel (lado trasero)
-        fill(alpha(0xFF000000, 60));
-        float bk = fl >= 0 ? tl : tr - 0.4f * S;
-        R.set(bk, torsoTop + 0.05f * S, bk + 0.4f * S, hipY - 0.15f * S);
-        cv.drawRoundRect(R, 0.2f * S, 0.2f * S, P);
-        // franja
-        fill(gk ? 0xFF263238 : d.second);
-        R.set(tl + 0.05f * S, shY + 0.32f * S, tr - 0.05f * S, shY + 0.5f * S);
-        cv.drawRect(R, P);
-        stroke(INK, 0.09f * S);
-        R.set(tl, torsoTop, tr, torsoBot);
-        cv.drawRoundRect(R, 0.3f * S, 0.3f * S, P);
-        // número
-        text(cv, String.valueOf(pl.number), shX + fl * 0.02f * S, shY + 0.92f * S, 0.52f * S,
-                gk ? 0xFFFFFFFF : (d.second == 0xFFFFFFFF ? d.accent : 0xFFFFFFFF), 0, 0, Paint.Align.CENTER, false);
+        // ---- pantaloneta (cintura)
+        PA.reset();
+        PA.moveTo(waistX - waistHalf * 1.05f, hipY - 0.2f * U); PA.lineTo(waistX + waistHalf * 1.05f, hipY - 0.2f * U);
+        PA.lineTo(waistX + waistHalf * 1.2f, hipY + 0.75f * U); PA.lineTo(waistX - waistHalf * 1.2f, hipY + 0.75f * U); PA.close();
+        fill(shorts); cv.drawPath(PA, P);
+        float sideX = waistX - fl * waistHalf * 1.1f;
+        line(cv, sideX, hipY - 0.1f * U, sideX - fl * 0.05f * U, hipY + 0.7f * U, 0.14f * U, trim);
+        stroke(shade(shorts, 0.5f), ow); cv.drawPath(PA, P);
+        fill(0x22FFFFFF); R.set(waistX - waistHalf, hipY - 0.2f * U, waistX + waistHalf, hipY + 0.05f * U); cv.drawRect(R, P);
 
-        // brazos
-        for (int k = 0; k < 2; k++) {
-            float phase = ph + (k == 0 ? (float) Math.PI : 0f);
-            float amp = sp > 0.8f ? 0.3f + 0.6f * run : 0.04f;
-            float sx0 = shX + fl * (k == 0 ? -0.5f : 0.5f) * S, sy0 = shY + 0.22f * S;
-            float hxp = sx0 + fl * (float) Math.sin(phase) * amp * S, hyp = sy0 + 0.85f * S;
-            if (jump > 0.1f && gk) { hxp = sx0 + fl * (k == 0 ? -0.25f : 0.9f) * S; hyp = sy0 - 0.9f * S; }
-            if (pl.cheer > 0) { hxp = sx0 + fl * (k == 0 ? -0.3f : 0.4f) * S; hyp = sy0 - 0.85f * S; }
-            if (pl.charge > 0.3f) { hxp = sx0 + fl * (k == 0 ? -0.6f : 0.2f) * S; hyp = sy0 + 0.55f * S; }
-            float ex = (sx0 + hxp) * 0.5f, ey = (sy0 + hyp) * 0.5f;
-            limb(cv, sx0, sy0, ex, ey, 0.3f * S, main, 0.07f * S);
-            limb(cv, ex, ey, hxp, hyp, 0.26f * S, gk ? main : skin, 0.07f * S);
-            oval(cv, hxp, hyp, gk ? 0.24f * S : 0.17f * S, gk ? 0.24f * S : 0.17f * S, gk ? 0xFFFFFFFF : skin, 0.07f * S);
-        }
+        // ---- torso (camiseta)
+        PA.reset();
+        PA.moveTo(shX - halfW, shY); PA.lineTo(shX + halfW, shY);
+        PA.lineTo(waistX + waistHalf, hipY - 0.15f * U); PA.lineTo(waistX - waistHalf, hipY - 0.15f * U); PA.close();
+        fill(main); cv.drawPath(PA, P);
+        cv.drawCircle(shX - halfW, shY + 0.28f * U, 0.3f * U, P); cv.drawCircle(shX + halfW, shY + 0.28f * U, 0.3f * U, P);
+        // sombra cel del lado trasero y panel lateral
+        float bx0 = fl >= 0 ? shX - halfW : shX + halfW * 0.25f;
+        fill(0x33000000);
+        PB.reset(); PB.moveTo(bx0, shY); PB.lineTo(bx0 + halfW * 0.75f, shY);
+        PB.lineTo(bx0 + halfW * 0.75f * 0.72f + (waistX - shX), hipY - 0.15f * U); PB.lineTo(bx0 + (waistX - shX) * 1f + (fl >= 0 ? waistHalf * 0.0f : 0f) - (fl >= 0 ? 0 : 0), hipY - 0.15f * U); PB.close();
+        cv.drawPath(PB, P);
+        float sx = shX - fl * halfW * 0.88f, ex = waistX - fl * waistHalf * 0.88f;
+        line(cv, sx, shY + 0.45f * U, ex, hipY - 0.2f * U, 0.22f * U, trim);
+        fill(0x30FFFFFF); PB.reset(); PB.moveTo(shX - halfW * 0.5f, shY + 0.1f * U); PB.lineTo(shX + halfW * 0.1f, shY + 0.1f * U); PB.lineTo(shX - halfW * 0.1f, shY + 1.4f * U); PB.lineTo(shX - halfW * 0.55f, shY + 1.2f * U); PB.close(); cv.drawPath(PB, P);
+        stroke(shade(main, 0.5f), ow); cv.drawPath(PA, P);
+        // cuello en V y número
+        PB.reset(); PB.moveTo(shX - 0.3f * U, shY - 0.02f * U); PB.lineTo(shX + 0.3f * U, shY - 0.02f * U); PB.lineTo(shX + fl * 0.05f * U, shY + 0.62f * U); PB.close();
+        fill(skin); cv.drawPath(PB, P); stroke(trim, ow * 1.4f); cv.drawPath(PB, P);
+        if (afl < 0.9f) text(cv, String.valueOf(pl.number), shX + fl * 0.05f * U, shY + 1.95f * U, 0.82f * U, trim, 0, 0, Paint.Align.CENTER, false);
+        else text(cv, String.valueOf(pl.number), shX - fl * 0.1f * U, shY + 1.7f * U, 0.5f * U, trim, 0, 0, Paint.Align.CENTER, false);
 
-        // cabeza
-        float emoSpeed = sp;
+        // ---- brazo cercano
+        arm(cv, 1, fl, ph, sp, run, shX, shY, halfW, U, main, trim, skin, gk, pl, ow, jump);
+
+        // ---- cuello y cabeza
+        tube(cv, shX + fl * 0.1f * U, shY - 0.05f * U, headX, headY + 0.4f * U, 0.34f * U, 0.3f * U, shade(skin, 0.92f), ow);
         int emo = pl.cheer > 0 ? 2 : (pl.charge > 0.3f || pl.sprinting || pl.actionT > 0 ? 1 : 0);
         if (pl.stun > 0.18f) emo = 3;
-        face(cv, d, pl.idx, headX, headY, 1.0f * S, fl, t, emo, emoSpeed);
+        face(cv, d, pl.idx, headX, headY, 0.7f * U, fl, t, emo, sp);
         cv.restore();
+    }
+
+    static void arm(Canvas cv, int k, float fl, float ph, float sp, float run, float shX, float shY, float halfW,
+                    float U, int main, int trim, int skin, boolean gk, Match.Player pl, float ow, float jump) {
+        float phase = ph + (k == 0 ? (float) Math.PI : 0f);
+        float amp = sp > 0.8f ? 0.35f + 0.65f * run : 0.05f;
+        float sx0 = shX + fl * (k == 0 ? -1f : 1f) * halfW * 0.85f, sy0 = shY + 0.3f * U;
+        float hx = sx0 + fl * (float) Math.sin(phase) * amp * 1.6f * U;
+        float hy = sy0 + (2.5f - 0.9f * run * Math.max(0f, (float) Math.sin(phase + 1.2f))) * U;
+        if (jump > 0.2f && gk) { hx = sx0 + fl * (k == 0 ? -0.5f : 0.7f) * U; hy = sy0 - 1.9f * U; }
+        if (pl.cheer > 0) { hx = sx0 + fl * (k == 0 ? -0.6f : 0.7f) * U; hy = sy0 - 1.8f * U; }
+        if (pl.charge > 0.3f) { hx = sx0 + fl * (k == 0 ? -1.0f : 0.4f) * U; hy = sy0 + 1.6f * U; }
+        float ex = (sx0 + hx) * 0.5f + fl * (0.15f + 0.4f * run) * U, ey = (sy0 + hy) * 0.5f + 0.05f * U;
+        tube(cv, sx0, sy0, ex, ey, 0.44f * U, 0.36f * U, skin, ow);
+        float sx1 = sx0 + (ex - sx0) * 0.65f, sy1 = sy0 + (ey - sy0) * 0.65f;
+        tube(cv, sx0, sy0, sx1, sy1, 0.6f * U, 0.52f * U, main, ow);
+        band(cv, sx0 + (ex - sx0) * 0.55f, sy0 + (ey - sy0) * 0.55f, sx1, sy1, 0.54f * U, 0.52f * U, trim);
+        tube(cv, ex, ey, hx, hy, 0.34f * U, 0.26f * U, skin, ow);
+        oval(cv, hx, hy, gk ? 0.26f * U : 0.18f * U, gk ? 0.26f * U : 0.2f * U, gk ? 0xFFFFFFFF : skin, 0);
     }
 
     // ------------------------------------------------------------ balón

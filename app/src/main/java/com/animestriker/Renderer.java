@@ -1,9 +1,11 @@
 package com.animestriker;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 
@@ -17,7 +19,13 @@ public final class Renderer {
 
     int w, h;
     float ppm, topY, botY, camX = 50f, shake, shakeT, time;
-    LinearGradient skyG, vigG;
+    LinearGradient skyG, vigG, grassG;
+    Bitmap bg, grass;
+    Canvas bgC;
+    int bgw, bgh;
+    final Rect srcR = new Rect();
+    final RectF dstR = new RectF();
+    final Paint bmpP = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     // multitud
     static final int ROWS = 6, COLS = 90;
@@ -50,10 +58,30 @@ public final class Renderer {
     public void resize(int w, int h) {
         this.w = w; this.h = h;
         ppm = w / 44f; topY = h * 0.30f; botY = h * 0.935f;
-        skyG = new LinearGradient(0, 0, 0, topY, new int[]{0xFF2A2E7A, 0xFFB5509B, 0xFFFF9E9E, 0xFFFFD9A8},
-                new float[]{0f, 0.45f, 0.8f, 1f}, Shader.TileMode.CLAMP);
-        vigG = new LinearGradient(0, topY, 0, botY, new int[]{0x40102040, 0x00000000, 0x30001000},
+        skyG = new LinearGradient(0, 0, 0, topY * 0.75f, new int[]{0xFF3F8FDD, 0xFF7DBDEE, 0xFFD3ECFA},
+                new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP);
+        vigG = new LinearGradient(0, topY, 0, botY, new int[]{0x30102040, 0x00000000, 0x28001800},
                 new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP);
+        grassG = new LinearGradient(0, topY, 0, botY, new int[]{0xFF3C8F35, 0xFF4BA43D, 0xFF5CB847},
+                new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP);
+        bgw = Math.max(64, w / 7); bgh = Math.max(32, (int) (topY / 7f));
+        bg = Bitmap.createBitmap(bgw, bgh, Bitmap.Config.ARGB_8888);
+        bgC = new Canvas(bg);
+        bmpP.setFilterBitmap(true);
+        buildGrass();
+    }
+
+    void buildGrass() {
+        grass = Bitmap.createBitmap(512, 128, Bitmap.Config.ARGB_8888);
+        Canvas gc = new Canvas(grass);
+        java.util.Random r = new java.util.Random(21);
+        for (int i = 0; i < 3600; i++) {
+            float x = r.nextFloat() * 512f, y = r.nextFloat() * 128f, len = 3f + r.nextFloat() * 9f, lean = (r.nextFloat() - 0.5f) * 4f;
+            boolean light = r.nextFloat() < 0.5f;
+            int a = 40 + r.nextInt(60);
+            Art.stroke(light ? Art.alpha(0xFFB6E86A, a) : Art.alpha(0xFF14501A, a), 1.0f + r.nextFloat() * 0.8f);
+            gc.drawLine(x, y, x + lean, y - len, P);
+        }
     }
 
     // ------------------------------------------------------------------ proyección
@@ -206,78 +234,114 @@ public final class Renderer {
     }
 
     // ------------------------------------------------------------------ fondo
-    void background(Canvas c, Match m) {
+    void backdropScene(Canvas c, Match m) {
+        // cielo
         P.setShader(skyG); P.setStyle(Paint.Style.FILL); c.drawRect(0, 0, w, topY, P); P.setShader(null);
-        // sol
-        float scx = w * 0.8f - camX * ppm * 0.05f, scy = h * 0.075f;
-        Art.fill(0x33FFE0A0); c.drawCircle(scx, scy, h * 0.11f, P);
-        Art.fill(0x55FFE9B0); c.drawCircle(scx, scy, h * 0.075f, P);
-        Art.fill(0xFFFFF2C4); c.drawCircle(scx, scy, h * 0.045f, P);
-        // montaña (estilo Fuji)
-        float mx = w * 0.3f - camX * ppm * 0.06f, mb = h * 0.125f, mh = h * 0.115f, mwid = h * 0.3f;
-        PA.reset(); PA.moveTo(mx - mwid, mb); PA.lineTo(mx - mwid * 0.12f, mb - mh); PA.lineTo(mx + mwid * 0.12f, mb - mh); PA.lineTo(mx + mwid, mb); PA.close();
-        Art.fill(0xFF4B3F8F); c.drawPath(PA, P);
-        PA.reset(); PA.moveTo(mx - mwid * 0.3f, mb - mh * 0.7f); PA.lineTo(mx - mwid * 0.12f, mb - mh); PA.lineTo(mx + mwid * 0.12f, mb - mh); PA.lineTo(mx + mwid * 0.3f, mb - mh * 0.7f);
-        PA.lineTo(mx + mwid * 0.14f, mb - mh * 0.6f); PA.lineTo(mx, mb - mh * 0.72f); PA.lineTo(mx - mwid * 0.14f, mb - mh * 0.58f); PA.close();
-        Art.fill(0xFFFFF3F8); c.drawPath(PA, P);
-        // nubes
-        for (int i = 0; i < 4; i++) {
-            float cx = ((i * 0.31f * w + time * 8f * (1 + i * 0.3f) - camX * ppm * 0.1f) % (w + 400f)) - 200f;
-            float cy = h * (0.04f + 0.03f * (i % 3)), s = h * (0.03f + 0.008f * i);
+        // nubes grandes y suaves
+        for (int i = 0; i < 5; i++) {
+            float cx = ((i * 0.27f * w + time * 5f * (1 + i * 0.2f) - camX * ppm * 0.06f) % (w + 700f)) - 350f;
+            float cy = h * (0.03f + 0.025f * (i % 3)), s = h * (0.05f + 0.01f * i);
+            Art.fill(0x66A9C9EA); R.set(cx - s * 0.5f, cy + s * 0.2f, cx + s * 4.2f, cy + s * 1.15f); c.drawOval(R, P);
             Art.fill(0xFFFFFFFF);
-            c.drawCircle(cx, cy, s, P); c.drawCircle(cx + s * 1.1f, cy - s * 0.3f, s * 1.2f, P); c.drawCircle(cx + s * 2.3f, cy, s * 0.9f, P);
-            R.set(cx - s, cy, cx + s * 3.2f, cy + s * 0.9f); c.drawRoundRect(R, s * 0.4f, s * 0.4f, P);
-            Art.fill(0x33B388D6); R.set(cx - s * 0.6f, cy + s * 0.45f, cx + s * 3f, cy + s * 0.9f); c.drawRoundRect(R, s * 0.4f, s * 0.4f, P);
+            c.drawCircle(cx, cy + s * 0.3f, s * 0.8f, P); c.drawCircle(cx + s * 1.1f, cy, s * 1.1f, P);
+            c.drawCircle(cx + s * 2.2f, cy + s * 0.15f, s, P); c.drawCircle(cx + s * 3.2f, cy + s * 0.35f, s * 0.75f, P);
+            R.set(cx - s * 0.3f, cy + s * 0.3f, cx + s * 3.7f, cy + s * 1.0f); c.drawOval(R, P);
         }
-        // tribunas
-        float standTop = h * 0.115f, boardH = 1.15f * ppm * sc(0), boardTop = topY - boardH;
-        Art.fill(0xFF2B1F4E); c.drawRect(0, standTop, w, boardTop, P);
-        // techo
-        Art.fill(0xFF1A1236); c.drawRect(0, standTop - h * 0.012f, w, standTop, P);
-        Art.fill(0xFFFFE9A8);
-        for (int i = 0; i < 9; i++) c.drawCircle(w * (0.06f + i * 0.11f), standTop - h * 0.006f, h * 0.004f, P);
-        float rowH = (boardTop - standTop) / ROWS, rad = rowH * 0.36f, spacing = w / (COLS * 0.5f);
+        float standTop = h * 0.07f, boardH = 1.15f * ppm * sc(0), boardTop = topY - boardH;
+        // estructura de la grada
+        Art.fill(0xFF6C7587); c.drawRect(0, standTop, w, boardTop, P);
+        Art.fill(0xFF858EA0); c.drawRect(0, standTop, w, standTop + h * 0.012f, P);
+        // torre de luces
+        float tx = w * 0.56f - camX * ppm * 0.05f;
+        Art.fill(0xFF8D95A5); R.set(tx - h * 0.006f, 0, tx + h * 0.006f, standTop + h * 0.02f); c.drawRect(R, P);
+        Art.fill(0xFFB8BFCC); R.set(tx - h * 0.06f, 0, tx + h * 0.06f, h * 0.075f); c.drawRect(R, P);
+        Art.fill(0x66FFFFFF); c.drawCircle(tx, h * 0.04f, h * 0.11f, P);
+        Art.fill(0xFFFFFFFF);
+        for (int i = 0; i < 4; i++) for (int j = 0; j < 3; j++) c.drawCircle(tx - h * 0.045f + i * h * 0.03f, h * 0.014f + j * h * 0.02f, h * 0.0085f, P);
+        // pantalla gigante
+        float vx = w * 0.04f - camX * ppm * 0.03f;
+        Art.fill(0xFF22262F); R.set(vx, h * 0.02f, vx + h * 0.4f, h * 0.17f); c.drawRect(R, P);
+        Art.fill(0xFF3D9F45); R.set(vx + h * 0.015f, h * 0.035f, vx + h * 0.19f, h * 0.155f); c.drawRect(R, P);
+        Art.fill(0xFF5FB0E8); R.set(vx + h * 0.21f, h * 0.035f, vx + h * 0.385f, h * 0.155f); c.drawRect(R, P);
+        Art.fill(0xFFFFFFFF); c.drawCircle(vx + h * 0.1f, h * 0.1f, h * 0.012f, P);
+        // techo de la tribuna (derecha)
+        PA.reset(); PA.moveTo(w * 0.8f, 0); PA.lineTo(w, 0); PA.lineTo(w, h * 0.16f); PA.lineTo(w * 0.84f, h * 0.11f); PA.close();
+        Art.fill(0xFF50586A); c.drawPath(PA, P);
+        Art.fill(0x55000000); PA.reset(); PA.moveTo(w * 0.84f, h * 0.11f); PA.lineTo(w, h * 0.16f); PA.lineTo(w, h * 0.2f); PA.lineTo(w * 0.86f, h * 0.15f); PA.close(); c.drawPath(PA, P);
+        // público
+        int rows = 9;
+        float rowH = (boardTop - standTop - h * 0.012f) / rows, rad = rowH * 0.5f, spacing = w / 62f;
         boolean party = m.state == Match.ST_GOAL;
-        float off = (-camX * ppm * 0.25f) % spacing;
-        for (int r = 0; r < ROWS; r++) {
-            float yy = standTop + rowH * (r + 0.62f);
-            Art.fill(Art.alpha(0xFF000000, 40 + r * 6)); c.drawRect(0, yy - rowH * 0.1f, w, yy + rowH * 0.38f, P);
-            for (int i = -1; i < COLS / 2 + 2; i++) {
+        float off = (-camX * ppm * 0.2f) % spacing;
+        for (int r = 0; r < rows; r++) {
+            float yy = standTop + h * 0.012f + rowH * (r + 0.7f);
+            Art.fill(Art.alpha(0xFF000000, 30 + r * 4)); c.drawRect(0, yy + rowH * 0.2f, w, yy + rowH * 0.5f, P);
+            for (int i = -1; i < 64; i++) {
                 float x = i * spacing + off + (r % 2) * spacing * 0.5f;
-                int col = crowd[(r * COLS + (i + 5)) % crowd.length];
-                float j = party ? (float) Math.abs(Math.sin(time * 8f + i * 0.9f + r)) * rowH * 0.5f : (float) Math.sin(time * 2f + i + r) * rowH * 0.03f;
-                Art.fill(col); c.drawCircle(x, yy - j, rad, P);
-                Art.fill(Art.shade(col, 0.7f)); R.set(x - rad * 1.1f, yy + rad * 0.7f - j, x + rad * 1.1f, yy + rowH * 0.36f); c.drawRect(R, P);
+                int col = crowd[(r * COLS + (i + 7)) % crowd.length];
+                float j = party ? (float) Math.abs(Math.sin(time * 8f + i * 0.9f + r)) * rowH * 0.6f : (float) Math.sin(time * 1.5f + i * 1.3f + r) * rowH * 0.05f;
+                Art.fill(Art.shade(col, 0.9f)); R.set(x - rad * 1.1f, yy - j, x + rad * 1.1f, yy + rowH * 0.45f); c.drawOval(R, P);
+                Art.fill(0xFFE2B596); c.drawCircle(x, yy - rad * 0.55f - j, rad * 0.55f, P);
+                if ((i + r) % 3 == 0) { Art.fill(0xFF2A2430); R.set(x - rad * 0.55f, yy - rad * 1.1f - j, x + rad * 0.55f, yy - rad * 0.55f - j); c.drawOval(R, P); }
             }
         }
-        // vallas publicitarias
+    }
+
+    void background(Canvas c, Match m) {
+        // la escena lejana se dibuja a 1/4 de resolución y se reescala: efecto de profundidad de campo
+        float k = bgw / (float) w;
+        bgC.save(); bgC.scale(k, k);
+        Canvas keep = null;
+        Canvas real = c;
+        backdropScene(bgC, m);
+        bgC.restore();
+        srcR.set(0, 0, bgw, bgh); dstR.set(0, 0, w, topY);
+        c.drawBitmap(bg, srcR, dstR, bmpP);
+        Art.fill(0x14FFFFFF); c.drawRect(0, 0, w, topY, P);
+        // vallas publicitarias nítidas
+        float boardH = 1.15f * ppm * sc(0), boardTop = topY - boardH;
         float bw = 9f * ppm * sc(0);
         int first = (int) Math.floor((camX - 45f) / 9f);
         for (int i = first; i < first + 12; i++) {
             float x0 = sx(i * 9f, 0), x1 = x0 + bw;
-            int k = ((i % 7) + 7) % 7;
-            Art.fill(ADC[k]); R.set(x0, boardTop, x1, topY); c.drawRect(R, P);
-            Art.fill(0x33FFFFFF); R.set(x0, boardTop, x1, boardTop + boardH * 0.3f); c.drawRect(R, P);
-            Art.stroke(INK, 3f); c.drawRect(R.left, boardTop, x1, topY, P);
-            Art.text(c, ADS[k], (x0 + x1) * 0.5f, boardTop + boardH * 0.72f, boardH * 0.42f, 0xFFFFFFFF, INK, boardH * 0.08f, Paint.Align.CENTER, true);
+            int kk = ((i % 7) + 7) % 7;
+            Art.fill(ADC[kk]); R.set(x0, boardTop, x1, topY); c.drawRect(R, P);
+            Art.fill(0x22FFFFFF); R.set(x0, boardTop, x1, boardTop + boardH * 0.3f); c.drawRect(R, P);
+            Art.fill(0x33000000); R.set(x0, topY - boardH * 0.12f, x1, topY); c.drawRect(R, P);
+            Art.text(c, ADS[kk], (x0 + x1) * 0.5f, boardTop + boardH * 0.7f, boardH * 0.4f, 0xFFFFFFFF, 0, 0, Paint.Align.CENTER, true);
+            Art.line(c, x1, boardTop, x1, topY, 2f, 0x55FFFFFF);
         }
     }
 
     // ------------------------------------------------------------------ campo
     void seg(Canvas c, float x0, float y0, float x1, float y1, int col) {
         float ww = (lw(y0) + lw(y1)) * 0.5f;
+        Art.line(c, sx(x0, y0), sy(y0), sx(x1, y1), sy(y1), ww * 1.9f, 0x22FFFFFF);
         Art.line(c, sx(x0, y0), sy(y0), sx(x1, y1), sy(y1), ww, col);
     }
 
     void pitch(Canvas c, Match m) {
-        Art.fill(0xFF2B7F3C); c.drawRect(0, topY, w, h, P);
+        P.setShader(grassG); P.setStyle(Paint.Style.FILL); c.drawRect(0, topY, w, h, P); P.setShader(null);
         for (int i = 0; i < 20; i++) {
             float x0 = i * 5f, x1 = x0 + 5f;
             float a = sx(x0, 0), b = sx(x1, 0), a2 = sx(x0, Match.W), b2 = sx(x1, Match.W);
             if (Math.max(b, b2) < -20 || Math.min(a, a2) > w + 20) continue;
             PA.reset(); PA.moveTo(a, sy(0)); PA.lineTo(b, sy(0)); PA.lineTo(b2, sy(Match.W)); PA.lineTo(a2, sy(Match.W)); PA.close();
-            Art.fill(i % 2 == 0 ? 0xFF3DAA52 : 0xFF349C49); c.drawPath(PA, P);
+            Art.fill(i % 2 == 0 ? 0x26D8FF9A : 0x1A0A3A10); c.drawPath(PA, P);
         }
+        // textura de hierba en 4 bandas (perspectiva aproximada)
+        float[] yb = {0f, 11f, 25f, 41f, 60f};
+        bmpP.setAlpha(150);
+        for (int bnd = 0; bnd < 4; bnd++) {
+            float ym = (yb[bnd] + yb[bnd + 1]) * 0.5f, tw = 360f * sc(ym) * (w / 2400f) * 1.6f;
+            float top = sy(yb[bnd]), bot = sy(yb[bnd + 1]);
+            float scroll = (-camX * ppm * sc(ym)) % tw;
+            if (scroll > 0) scroll -= tw;
+            for (float x = scroll; x < w; x += tw) { dstR.set(x, top, x + tw, bot); srcR.set(0, 0, 512, 128); c.drawBitmap(grass, srcR, dstR, bmpP); }
+        }
+        bmpP.setAlpha(255);
+        // luz del sol desde la izquierda
+        Art.fill(0x12FFFFC0); PA.reset(); PA.moveTo(0, topY); PA.lineTo(w * 0.55f, topY); PA.lineTo(w * 0.2f, botY); PA.lineTo(0, botY); PA.close(); c.drawPath(PA, P);
         P.setStyle(Paint.Style.FILL); P.setShader(vigG); c.drawRect(0, topY, w, botY, P); P.setShader(null);
         int wh = 0xF2FFFFFF;
         float L = Match.L, W = Match.W;
@@ -369,7 +433,7 @@ public final class Renderer {
         // marcador sobre el jugador controlado
         if (m.humanTeam >= 0 && m.ctrl != null && (m.state == Match.ST_PLAY || m.state == Match.ST_RESTART || m.state == Match.ST_KICKOFF)) {
             Match.Player p = m.ctrl;
-            float gx = sx(p.x, p.y), u = ppm * sc(p.y) * 0.72f, top = sy(p.y) - 4.6f * u;
+            float gx = sx(p.x, p.y), u = ppm * sc(p.y) * 0.72f, top = sy(p.y) - 5.0f * u;
             float bob = (float) Math.sin(time * 8f) * u * 0.18f;
             int col = m.def[p.team].main;
             PA.reset(); PA.moveTo(gx - u * 0.5f, top + bob); PA.lineTo(gx + u * 0.5f, top + bob); PA.lineTo(gx, top + u * 0.55f + bob); PA.close();
