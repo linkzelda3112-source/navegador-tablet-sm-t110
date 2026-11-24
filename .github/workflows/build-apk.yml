@@ -1,0 +1,47 @@
+name: Build APK
+
+on:
+  push:
+    branches: [mate-hub]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Probar la lógica matemática
+        run: node tests/logic.test.js
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Compilar APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk MateHub.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MateHub-apk
+          path: MateHub.apk
+
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: matehub-${{ github.run_number }}
+          name: Mate Hub ${{ github.run_number }}
+          files: MateHub.apk
