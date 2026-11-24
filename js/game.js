@@ -233,7 +233,7 @@ function drawScope(e, c) {
 
 // ---------- guardado y dias reales ----------
 let SV = null, NOTE = '', TEST = null, NOW = { ts: Date.now(), base: performance.now(), server: false }, UIB = [];
-const DEFSV = () => ({ v: 1, world: null, start: null, days: 0, last: null, done: null, pend: null, cor: 100, end: null, seenTs: 0 });
+const DEFSV = () => ({ v: 1, world: null, start: null, days: 0, last: null, done: null, pend: null, cor: 100, end: null, seenTs: 0, found: {} });
 const ymd = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const nowTs = () => NOW.ts + (performance.now() - NOW.base);
 function msToMidnight(ts) { const d = new Date(ts); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1) - d; }
@@ -259,7 +259,7 @@ const FLAV = [
 ];
 const NAMES = { luces: 'Contar las luces', ojos: 'Cerrar los ojos', remolino: 'Remar contra el remolino', botellas: 'Atrapar botellas', telescopio: 'Mantener la mira', sueno: 'Cerrar los ojos (gigante)', constelacion: 'Unir la constelación', fugaz: 'Estrellas fugaces', paso: 'Pasos lentos', congelados: 'Empujar lo congelado', relojes: 'El reloj distinto', mirada: 'Luz verde / roja', despierto: 'No dormirse', tentaculos: 'Cortar tentáculos', ventanas: 'Secuencia de ventanas', respiracion: 'Respirar al ritmo' };
 const dailyDef = (w, day) => { const k = Object.keys(EVENTS[w]); return EVENTS[w][k[(day * 3 + w) % k.length]]; };
-const newG = (p, day, cor, test) => ({ p, day, cor, t: 0, ev: null, msg: null, flash: 0, over: 0, mode: 'stamp', mt: 0, test: !!test, lost: false });
+const newG = (p, day, cor, test) => ({ p, day, cor, t: 0, ev: null, msg: null, flash: 0, over: 0, mode: 'stamp', mt: 0, test: !!test, lost: false, cam: { yaw: 0, pitch: -.07, fov: 62 }, found: {}, drag: null, moved: false });
 
 function enterDay() {
   const p = SV.world; G = newG(p, SV.days, SV.cor, false); S = 'play'; stopAudio();
@@ -288,14 +288,18 @@ function testWorld(free, def) { G = newG(TEST.w, TEST.day, 100, true); G.mode = 
 
 function idleView() {
   const d = G.day, p = G.p;
-  if (p === 0) { const n = (d % 6) >= 3 ? 1 : 0; return n ? ['nsea', { night: 1, whirl: d >= 40, town: d < 90 }] : (d >= 40 && d % 2 ? ['whirl', { whirl: 1, town: d < 90 }] : ['beach', { whirl: d >= 40, town: d < 90 }]); }
+  if (p === 0) { // Las Islas: al entrar al mundo (modo 'idle') la cámara es libre; el resto del tiempo, planos fijos
+    if (G.mode === 'idle') return ['beach', islasFree(G)];
+    const n = (d % 6) >= 3 ? 1 : 0, b = { day: d, whirl: d >= 40, town: d < 90 };
+    return n ? ['nsea', { ...b, night: 1 }] : (d >= 40 && d % 2 ? ['whirl', b] : ['beach', b]);
+  }
   if (p === 1) return [d % 3 === 0 ? 'cot' : 'wide', { grow: d / 365 }];
   if (p === 2) return [d > 260 ? 'tent' : 'tower', { clk: d * .35, tent: d > 260, freeze: d > 260 }];
   const n = (d % 8) >= 4 ? 1 : 0; return ['day', { night: n, dusk: n ? 1 : ((d % 8) === 3 ? 1 : 0), hood: d > 250 ? .3 : undefined }];
 }
 
 function update(dt) {
-  T += dt; SND.tick(dt, { cor: (S === 'play' && G && !G.test && G.mode === 'event') ? G.cor : undefined });
+  DT = dt; T += dt; SND.tick(dt, { cor: (S === 'play' && G && !G.test && G.mode === 'event') ? G.cor : undefined });
   if (S === 'cine') { CI.t = CINE[CI.p].t0 + (T - CI.start); if (CI.t >= CINE[CI.p].t1) endCine(); }
   if (S === 'select') {
     if (!SEL.confirm) SEL.t += dt;
@@ -357,11 +361,11 @@ function render() {
   if (S === 'play') {
     const g = G, w = WN[g.p]; let shot, st;
     if (g.mode === 'event' && g.ev.def.scope) drawScope(g.ev, scopeC(g.ev.t));
-    else { if (g.mode === 'event') { shot = g.ev.def.shot; st = g.ev.def.st(g.ev); } else [shot, st] = idleView(); scene(w, shot, T, st); }
+    else { if (g.mode === 'event') { shot = g.ev.def.shot; st = g.ev.def.st(g.ev); } else [shot, st] = idleView(); scene(w, shot, T, st); if (g.mode === 'idle' && g.p === 0) glitchFX(g.day); }
     if (g.mode === 'event') { g.ev.def.draw(g.ev); X.font = 'bold 11px ' + MONO; const tx = g.ev.def.txt, ww = X.measureText(tx).width + 12; X.fillStyle = 'rgba(0,0,0,.72)'; X.fillRect(RW / 2 - ww / 2, 606, ww, 18); txt(tx, RW / 2, 615, 11, '#fff'); }
     if (g.msg) sub(g.msg.s, .8);
     if (g.flash > 0) { X.fillStyle = `rgba(255,255,255,${Math.min(.6, g.flash)})`; X.fillRect(0, 0, RW, RH); }
-    liminal(); drawHUD();
+    liminal(); drawHUD(); if (g.mode === 'idle' && g.p === 0) drawFree(g);
     if (g.mode === 'stamp') {
       X.fillStyle = `rgba(0,0,0,${Math.min(.55, g.mt)})`; X.fillRect(0, 0, RW, RH); const a = Math.min(1, g.mt * 1.2);
       X.globalAlpha = a; txt('DÍA ' + Math.floor(g.day), RW / 2, 230, 26, '#fff', 'center', PIX, false); txt('DE 365', RW / 2, 272, 12, '#cfc8ff', 'center', PIX, false);
@@ -395,6 +399,38 @@ function drawTest() {
 }
 let _sd = null; function SCOPEDATA() { if (!_sd) { rs(9); _sd = []; for (let i = 0; i < 160; i++) _sd.push([rnd() * 360, rnd() * 640, rnd()]); } return _sd; }
 
+// ---------- cámara libre (mundo 1 · Las Islas): mira alrededor y busca lo que cambia cada día ----------
+let DT = .016;
+const foundMap = () => G.test ? G.found : (SV.found || (SV.found = {}));
+function islasFree(g) { const d = g.day; return { free: g.cam, day: d, night: (d % 6) >= 3 ? 1 : 0, whirl: d >= 40, town: d < 90, anoms: anomsFor(d) }; }
+function tapFree(x, y) {
+  const g = G; if (!g || g.p !== 0 || g.mode !== 'idle') return;
+  setCam(freeCamIslas(g.cam)); let best = null, bd = 1e9;
+  for (const a of anomsFor(g.day)) { const q = proj(a.c); if (q[2] <= 0) continue; const d = Math.hypot(q[0] - x, q[1] - y), R = Math.max(34, a.sz * 533 / q[2] + 14); if (d < R && d < bd) { best = a; bd = d; } }
+  if (!best) { beep(130, .04, .03); return; }
+  const f = foundMap(); if (f[best.id]) { say('Ya la registraste.', 1.6); beep(200, .05, .03); return; }
+  f[best.id] = g.day; g.flash = .35; SND.chime(true); say(best.txt, 4); if (!g.test) saveSV();
+}
+function drawFree(g) {
+  const A = anomsFor(g.day), f = foundMap(); let n = 0; setCam(freeCamIslas(g.cam));
+  for (const a of A) if (f[a.id]) { n++; const q = proj(a.c); if (q[2] > 0 && q[0] > -12 && q[0] < RW + 12 && q[1] > -12 && q[1] < RH + 12) { X.strokeStyle = 'rgba(255,255,255,.6)'; X.lineWidth = 1; X.strokeRect(q[0] - 10.5, q[1] - 10.5, 21, 21); } }
+  txt('ANOMALÍAS ' + n + ' / ' + A.length, RW / 2, 66, 11, '#ffd98a');
+  if (!g.moved) { txt('ARRASTRA PARA MIRAR', RW / 2, 84, 10, '#cfc8ff'); txt('TOCA LO QUE SE VE EXTRAÑO', RW / 2, 98, 10, '#cfc8ff'); }
+  if (g.test) { const sd = k => () => { g.day = clamp(g.day + k, 1, 365); }; ubtn(8, 586, 44, 22, '-30', sd(-30), { size: 9 }); ubtn(56, 586, 44, 22, '-1', sd(-1), { size: 9 }); ubtn(RW - 100, 586, 44, 22, '+1', sd(1), { size: 9 }); ubtn(RW - 52, 586, 44, 22, '+30', sd(30), { size: 9 }); }
+}
+// glitch de pantalla: cortes horizontales, franjas de color y mensajes; más frecuente cuanto más avanza el año
+let GFX = { t: 0, txt: '', x: 0, y: 0 };
+const GL_TXT = ['FALTAN', 'NO MIRES', 'CUENTA LAS LUCES', 'ESTÁ AQUÍ', 'NO HAY PUEBLO', 'TODOS LOS OJOS', 'ERROR 0x0000', 'SIGUE AHÍ'];
+function glitchFX(day) {
+  if (day < 8) return; const gi = clamp(day / 365, 0, 1);
+  if (GFX.t > 0) GFX.t -= DT; else if (Math.random() < DT * (.12 + gi)) { GFX.t = .06 + Math.random() * (.1 + gi * .25); GFX.txt = Math.random() < gi * .6 ? GL_TXT[Math.random() * GL_TXT.length | 0] : ''; GFX.x = 60 + Math.random() * 240; GFX.y = 120 + Math.random() * 380; }
+  if (GFX.t <= 0) return;
+  for (let i = 0, k = 2 + Math.floor(gi * 7); i < k; i++) { const y = Math.random() * RH | 0, h = Math.min(RH - y, 3 + (Math.random() * (10 + gi * 40) | 0)), dx = (Math.random() - .5) * (20 + gi * 80); X.drawImage(cv, 0, y, RW, h, dx, y, RW, h); }
+  X.fillStyle = `rgba(255,0,90,${.06 + gi * .14})`; X.fillRect(0, Math.random() * RH, RW, 2 + Math.random() * 8);
+  X.fillStyle = `rgba(0,255,230,${.05 + gi * .1})`; X.fillRect(0, Math.random() * RH, RW, 2 + Math.random() * 6);
+  if (GFX.txt) txt(GFX.txt, GFX.x, GFX.y, 12 + gi * 8, 'rgba(255,255,255,.9)');
+}
+
 // ---------- entrada ----------
 function pos(e) { const r = ui.getBoundingClientRect(); return { x: (e.clientX - r.left) * RW / r.width, y: (e.clientY - r.top) * RH / r.height }; }
 ui.addEventListener('pointerdown', e => {
@@ -407,10 +443,16 @@ ui.addEventListener('pointerdown', e => {
   if (S === 'play') {
     if (G.mode === 'stamp' && G.mt > 1) { if (SV && !G.test && SV.done === SV.last) { G.mode = 'idle'; say(FLAV[G.p][G.day % 6], 5); } else startDaily(G.test ? null : undefined); SND.amb(WN[G.p]); return; }
     if (G.mode === 'event') G.ev.def.tap(G.ev, p.x, p.y);
+    if (G.mode === 'idle' && G.p === 0) G.drag = { x: p.x, y: p.y, lx: p.x, ly: p.y, t: T, mv: 0 };
   }
 });
-ui.addEventListener('pointermove', e => { const p = pos(e); ptr.x = p.x; ptr.y = p.y; });
-addEventListener('pointerup', () => { ptr.down = false; }); addEventListener('pointercancel', () => { ptr.down = false; });
+ui.addEventListener('pointermove', e => {
+  const p = pos(e); ptr.x = p.x; ptr.y = p.y;
+  const d = S === 'play' && G && G.drag; // arrastrar = mirar alrededor (el mundo sigue al dedo)
+  if (d) { const dx = p.x - d.lx, dy = p.y - d.ly, k = .0022 * (G.cam.fov / 62); d.lx = p.x; d.ly = p.y; d.mv += Math.abs(dx) + Math.abs(dy); G.cam.yaw -= dx * k; G.cam.pitch = clamp(G.cam.pitch + dy * k, -1.3, 1.3); if (d.mv > 10) G.moved = true; }
+});
+addEventListener('pointerup', () => { ptr.down = false; const d = S === 'play' && G && G.drag; if (d) { G.drag = null; if (d.mv < 10 && T - d.t < .6) tapFree(d.x, d.y); } });
+addEventListener('pointercancel', () => { ptr.down = false; if (G) G.drag = null; });
 
 // ---------- arranque ----------
 async function start() {

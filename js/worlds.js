@@ -16,6 +16,8 @@ function initTex() {
   TX.fac = fac(false, '#b9876c'); TX.facN = fac(true, '#a8806b'); TX.fac2 = fac(false, '#8f7a68'); TX.fac2N = fac(true, '#7d6c60');
   TX.tile = mkTex(32, 32, (g, w, h) => { g.fillStyle = '#e9e5d6'; g.fillRect(0, 0, w, h); g.fillStyle = '#7fa0b8'; for (let y = 0; y < 32; y += 8) for (let x = 0; x < 32; x += 8) if (((x + y) / 8) % 2 === 0) g.fillRect(x + 1, y + 1, 6, 6); });
   TX.wall = mkTex(32, 32, (g, w, h) => { blocks(g, w, h, '#e4d3a4', 14, 4, 13); });
+  // textura perdida (magenta/negro): la que aparece cuando el juego "se rompe"
+  TX.miss = mkTex(16, 16, (g, w, h) => { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { g.fillStyle = (x + y) % 2 ? '#000000' : '#ff00ff'; g.fillRect(x * 4, y * 4, 4, 4); } });
   TX.planet = [['#33b09a', '#7fcf6a', '#f2f4d0', 1], ['#262a63', '#3f3a8f', '#d8d0ff', 2], ['#c8c04a', '#4c8a38', '#ffffff', 3], ['#a8a2b8', '#9a8ab0', '#f4eef8', 4]].map(([a, b, c, s]) => mkTex(32, 16, (g, w, h) => { blocks(g, w, h, a, 24, 2, s); rs(s * 7); for (let i = 0; i < 22; i++) { g.fillStyle = rnd() < .7 ? b : c; g.fillRect(rnd() * w, rnd() * h, 2 + rnd() * 4, 2 + rnd() * 2); } if (s === 3) { for (let y = 0; y < 16; y += 4) for (let x = 0; x < 32; x += 4) { g.fillStyle = (x + y) / 4 % 2 ? '#c8c04a' : '#5a8d38'; g.fillRect(x, y, 4, 4); } } }));
 }
 
@@ -40,7 +42,7 @@ function worldIslas() {
   o.man = humanParts({ shirt: '#22252b', pants: '#2c4a8c', collar: true });
   // pueblo lejano
   m = new MB(); rs(31); for (let i = 0; i < 22; i++) { const x = -25 + i * 3.4, h = 1.6 + rnd() * 2.6; m.box(x, h / 2, -185, 3.2, h, 3.2, i % 3 ? '#cfc2bd' : '#c9b2a8'); m.cyl(x, h, -185, 0, 2.6, 1.2, 4, '#a07a70'); } o.town = m.build();
-  m = new MB(); m.lit = false; for (let i = 0; i < 22; i++) { const x = -25 + i * 3.4; if (rnd() < .8) m.box(x, 1 + rnd() * 1.6, -182.9, .6, .7, .1, '#ffd88a'); } o.townLights = m.build();
+  m = new MB(); m.lit = false; let nl = 0; for (let i = 0; i < 22; i++) { const x = -25 + i * 3.4; if (rnd() < .8) { m.box(x, 1 + rnd() * 1.6, -182.9, .6, .7, .1, '#ffd88a'); nl++; } } o.townLights = m.build(); o.nTL = nl;
   m = new MB(); m.cyl(52, 0, -184, 1.2, 1.6, 10, 8, '#e6e2e0'); m.cyl(52, 2.2, -184, 1.4, 1.4, 2, 8, '#a02c2c'); m.cyl(52, 5.8, -184, 1.4, 1.4, 2, 8, '#a02c2c'); m.cyl(52, 10, -184, 1.5, 0, 1.5, 8, '#2a2a2e'); o.light = m.build();
   // muelle
   m = new MB(); m.box(0, 0, -6, 2.6, .25, 14, '#ffffff', 2, 9); for (let i = 0; i < 6; i++) { m.box(-1.2, -1.2, -1 - i * 2.4, .28, 2.4, .28, '#5b422a'); m.box(1.2, -1.2, -1 - i * 2.4, .28, 2.4, .28, '#5b422a'); } o.pier = m.build(TX.wood);
@@ -62,6 +64,10 @@ function worldIslas() {
   o.eyes = []; rs(5); const ep = [[-2.3, 13.3], [0, 14.4], [2.3, 13.3], [-3.1, 10.9], [3.1, 10.9], [0, 11.6], [-1.5, 8.3], [1.6, 8.5]];
   ep.forEach(([x, y]) => { const e = new MB(); e.lit = true; e.amb = .6; e.dif = .4; e.sph(0, 0, 0, 1.15, .75, .6, 8, '#1f4b3f'); o.eyes.push({ x, y, z: 3.0, m: e.build() }); });
   m = new MB(); m.lit = false; m.sph(0, 0, 0, .8, .5, .3, 12, '#ffffff'); o.eyeW = m.build();
+  // extras de la cámara libre: cubo con textura perdida, figura negra, pupila para los ojos del mar
+  m = new MB(); m.lit = false; m.box(0, 0, 0, 1, 1, 1, '#ffffff', 2, 2); o.gcube = m.build(TX.miss);
+  o.fig = humanParts({ shirt: '#030304', pants: '#030304', skin: '#08080a', hair: '#000000', shoes: '#000000' });
+  m = new MB(); m.lit = false; m.sph(0, 0, .2, .32, .32, .12, 8, '#050505'); o.eyeP = m.build();
   m = new MB(); m.lit = false; for (let i = 0; i < 5; i++) { const x = -22 + i * 11 + (i % 2) * 3; m.quad([x, 0, -30], [x + 4, 0, -30], [x + 14, 40, -26], [x + 10, 40, -26], [.8, 1, .9, .3]); } o.shafts = m.build(null, { trans: true });
   m = new MB(); m.lit = false; rs(3); for (let i = 0; i < 40; i++) { const p = [rnd() * 40 - 20, rnd() * 18, -4 - rnd() * 26]; m.quad([p[0], p[1], p[2]], [p[0] + .2, p[1], p[2]], [p[0] + .2, p[1] + .2, p[2]], [p[0], p[1] + .2, p[2]], '#e8fff0'); } o.snow = m.build();
   return o;
@@ -75,8 +81,61 @@ const ISL = {
   under: { pos: [0, 5.5, 18], tgt: [0, 8, 0], fov: 62, under: true },
   eyes: { pos: [0, 14.2, 6.0], tgt: [0, 13.2, -2], fov: 64, under: true },
 };
+// ---------- CÁMARA LIBRE de Las Islas: te quedas en la playa y miras alrededor ----------
+const ISL_CAM = [0, 2.3, 1.2];
+const EXTRA_PALMS = [[-7, 6, .1], [8, 10, .08], [-12, -6, .06], [14, -3, .1], [-4, 16, .05], [3, 22, .07], [-16, 12, .1], [18, 14, .06]];
+function freeCamIslas(F) {
+  const cp = Math.cos(F.pitch), p = ISL_CAM;
+  return { pos: p, tgt: [p[0] + Math.sin(F.yaw) * cp * 10, p[1] + Math.sin(F.pitch) * 10, p[2] - Math.cos(F.yaw) * cp * 10], fov: F.fov || 62 };
+}
+// Anomalías: todo depende SOLO del día, así cada día real el mundo cambia y lo anterior se queda.
+// c = punto que se toca (centro), sz = mitad del tamaño (para la zona táctil), txt = lo que ves al encontrarla.
+const CUBE_TXT = ['Una textura que no existe.', 'Ayer esto no estaba.', 'Se mueve cuando no lo miras.', 'No tiene sombra.', 'Parpadea.', 'Le faltan píxeles.'];
+let _AC = { d: -1, l: [] };
+function anomsFor(day) {
+  if (_AC.d === day) return _AC.l;
+  const hr = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }, A = [], CP = ISL_CAM;
+  const place = (a, r) => [Math.sin(a) * r, 0, CP[2] - Math.cos(a) * r];
+  // cubos con textura perdida: uno nuevo cada 12 días, cada vez más lejos y más grandes
+  for (let i = 0; i < Math.min(30, Math.floor(day / 12)); i++) {
+    const a = hr(i * 3 + 1) * PI * 2, r = 7 + hr(i * 3 + 2) * (10 + i * 2.2), s = .7 + hr(i * 3 + 3) * 1.5 + i * .04, p = place(a, r);
+    p[1] = s / 2 + (i % 3 === 0 ? 1.5 + hr(i + 90) * 5 : 0);
+    A.push({ id: 'c' + i, kind: 'cube', p, c: p, s, sz: s * .9, fq: 2 + hr(i + 5) * 4, ph: hr(i + 7) * 6, sp: .3 + hr(i + 9) * 1.2, txt: CUBE_TXT[i % CUBE_TXT.length] });
+  }
+  // una figura negra parada sobre el agua: cada día está más cerca de la orilla
+  if (day >= 25) {
+    const dist = lerp(170, 7, clamp((day - 25) / 340, 0, 1)), p = place(-.55 + Math.sin(day * .7) * .03, dist);
+    A.push({ id: 'fig', kind: 'fig', p, c: [p[0], p[1] + .9, p[2]], sz: 1, face: Math.atan2(-p[0], CP[2] - p[2]), txt: dist > 100 ? 'Alguien parado sobre el mar.' : (dist > 40 ? 'Se acerca. Nadie lo vio caminar.' : 'Ya casi está en la orilla.') });
+  }
+  // ojos que parpadean sobre el agua: uno nuevo cada 30 días desde el 120
+  for (let i = 0; i < (day >= 120 ? Math.min(8, Math.floor((day - 120) / 30) + 1) : 0); i++) {
+    const a = hr(i * 5 + 200) * PI * 2, p = place(a, 35 + hr(i * 5 + 201) * 80), sc = 2 + hr(i * 5 + 202) * 1.5; p[1] = .5;
+    A.push({ id: 'e' + i, kind: 'eye', p, c: p, sc, sz: sc * .8, ph: hr(i * 5 + 203) * 6, face: Math.atan2(-p[0], CP[2] - p[2]), txt: 'Un ojo sobre el agua. Te sigue.' });
+  }
+  // una luna roja a plena luz del día
+  if (day >= 200) { const p = [-90, 70, -140]; A.push({ id: 'moon', kind: 'moon', p, c: [p[0] + CP[0], p[1] + CP[1], p[2] + CP[2]], sz: 13, txt: 'La luna no era roja.' }); }
+  _AC = { d: day, l: A }; return A;
+}
+function drawAnoms(o, S, t, A) {
+  const fr = cur.fogr;
+  for (const a of A) {
+    if (a.kind === 'cube') {
+      if (Math.sin(t * a.fq + a.ph) < -.55) continue; // parpadea
+      const j = Math.sin(t * 23 + a.ph) > .85 ? 1.18 : 1;
+      draw(o.gcube, M4.mul(M4.T(a.p[0], a.p[1], a.p[2]), M4.mul(M4.RY(t * a.sp + a.ph), M4.mul(M4.RX(t * a.sp * .6), M4.S(a.s * j, a.s * j, a.s * j)))), {});
+    } else if (a.kind === 'fig') {
+      cur.fogr = [9999, 10000]; drawHuman(o.fig, M4.mul(M4.T(a.p[0], 0, a.p[2]), M4.RY(a.face)), {}); cur.fogr = fr;
+    } else if (a.kind === 'eye') {
+      const op = clamp(Math.sin(t * .8 + a.ph) * 1.4 + .35, 0, 1); if (op < .06) continue;
+      const m = M4.mul(M4.T(a.p[0], a.p[1], a.p[2]), M4.mul(M4.RY(a.face), M4.S(a.sc, a.sc * op, a.sc)));
+      draw(o.eyeW, m, {}); draw(o.eyeP, m, {});
+    } else if (a.kind === 'moon') {
+      draw(o.moon, M4.mul(M4.T(S.pos[0] + a.p[0], S.pos[1] + a.p[1], S.pos[2] + a.p[2]), M4.S(4, 4, 4)), { nofog: true, tint: [1, .12, .1, .75] });
+    }
+  }
+}
 function renderIslas(o, shot, t, st) {
-  const S = ISL[shot], n = st.night || 0, tint = [NIGHT[0], NIGHT[1], NIGHT[2], n * NIGHT[3]];
+  const D = st.day || 0, F = st.free, S = F ? freeCamIslas(F) : ISL[shot], n = st.night || 0, tint = [NIGHT[0], NIGHT[1], NIGHT[2], n * NIGHT[3]];
   if (S.under) {
     clear([.18, .5, .43, 1]); cur.fogr = [8, 70]; setCam({ pos: S.pos, tgt: S.tgt, fov: S.fov });
     draw(o.uDome, M4.T(...S.pos), { nofog: true, nodepth: true });
@@ -97,16 +156,22 @@ function renderIslas(o, shot, t, st) {
   setCam({ pos: S.pos, tgt: S.tgt, fov: S.fov });
   draw(n > .5 ? o.domeN : o.dome, M4.T(...S.pos), { nofog: true, nodepth: true, tint: n > .5 ? null : tint });
   if (n > .5) { draw(o.stars, M4.T(...S.pos), { nofog: true, nodepth: true }); draw(o.moon, M4.T(S.pos[0] + 48, S.pos[1] + 96, S.pos[2] - 200), { nofog: true }); }
-  const seaT = n > 0 ? tint : null; draw(o.sea, M4.id(), { tint: seaT });
+  const seaT = n > 0 ? tint : null, rd = clamp((D - 180) / 185, 0, 1) * .4, seaR = rd > 0 ? (n > 0 ? [tint[0] + .3 * rd, tint[1], tint[2], Math.min(.85, tint[3] + rd * .25)] : [.5, .05, .08, rd]) : seaT; // el mar se enrojece con los días
+  draw(o.sea, M4.id(), { tint: seaR });
   if (!S.nosand) draw(o.sand, M4.id(), { tint: seaT });
-  if (st.town !== false) { draw(o.town, M4.id(), { tint: n > 0 ? [.1, .1, .2, .5 * n] : null }); if (n > .5 && st.lights !== false) draw(o.townLights, M4.id(), { nofog: true }); draw(o.light, M4.id(), { tint: n > 0 ? [.1, .1, .2, .5 * n] : null }); if (n > .5) { const m2 = new MB(); } }
-  if (st.whirl) { const k = 1 + Math.sin(t) * .02; draw(o.whirl, M4.mul(M4.T(0, 0, -60), M4.S(.26 * k, 1, .2 * k)), { tint: seaT }); }
+  if (st.town !== false) { draw(o.town, M4.id(), { tint: n > 0 ? [.1, .1, .2, .5 * n] : null }); if (n > .5 && st.lights !== false) draw(D ? { ...o.townLights, n: 36 * Math.ceil(o.nTL * clamp(1 - D / 90, 0, 1)) } : o.townLights, M4.id(), { nofog: true }); draw(o.light, M4.id(), { tint: n > 0 ? [.1, .1, .2, .5 * n] : null }); if (n > .5) { const m2 = new MB(); } }
+  if (st.whirl) { const k = 1 + Math.sin(t) * .02; draw(o.whirl, M4.mul(M4.T(0, 0, -60), M4.S(.26 * k * (1 + D / 220), 1, .2 * k * (1 + D / 220))), { tint: seaT }); }
+  if (F && st.anoms) drawAnoms(o, S, t, st.anoms);
   if (S.pier) draw(o.pier, M4.T(S.pos[0] + 3.4, 1.2 - 3.2 + 1.6, S.pos[2] - 5), { tint: seaT });
   if (shot === 'beach' || shot === 'nsea') {
-    draw(o.palm, M4.mul(M4.T(-1.35, 0, -2.6), M4.RZ(-.06)), { tint: seaT }); draw(o.palm, M4.mul(M4.T(1.4, 0, -2.4), M4.RZ(.05)), { tint: seaT });
-        draw(o.ham, M4.T(0, -.75, .6), { tint: seaT });
+    { // las palmeras se van doblando con los días; en cámara libre hay más palmeras con copa
+      const lean = D / 365 * .45, P = (x, z, a) => { const pm = M4.mul(M4.T(x, 0, z), M4.RZ(a)); draw(o.palm, pm, { tint: seaT }); if (F) draw(o.crown, M4.mul(pm, M4.T(0, 11, 0)), { tint: seaT }); };
+      P(-1.35, -2.6, -.06 - lean); P(1.4, -2.4, .05 + lean);
+      if (F) EXTRA_PALMS.forEach(([x, z, a], i) => P(x, z, a * (1 + D / 120) * (i % 2 ? 1 : -1)));
+    }
+        draw(o.ham, M4.mul(M4.T(0, 1.25, .6), M4.mul(M4.RZ(D >= 10 ? Math.sin(t * 1.1) * .02 * Math.min(1, D / 60) : 0), M4.T(0, -2, 0))), { tint: seaT }); // la hamaca se mece sola
 
-    draw(o.pier, M4.T(4.6, 1.0, -8), { tint: seaT });
+    draw(o.pier, M4.mul(M4.T(4.6, 1.0, -8), M4.S(1, 1, 1 + D / 100)), { tint: seaT }); // el muelle se alarga hacia el mar
   }
 }
 
