@@ -37,6 +37,19 @@ jobs:
       - name: Crear el proyecto de Android
         run: |
           npx cap add android
+
+      - name: Plugin nativo de guardado persistente (Block Store de Google)
+        run: |
+          PKG=android/app/src/main/java/com/sobreviveunano/game
+          cp native/PersistentStorePlugin.java "$PKG/PersistentStorePlugin.java"
+          cp native/MainActivity.java "$PKG/MainActivity.java"
+          sed -i '0,/^dependencies {/s//dependencies {\n    implementation "com.google.android.gms:play-services-auth-blockstore:16.4.0"/' android/app/build.gradle
+          grep -n "blockstore" android/app/build.gradle
+
+      - name: Firma fija (permite actualizar sin desinstalar)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
           npx @capacitor/assets generate --android --iconBackgroundColor "#342c6e" --splashBackgroundColor "#28225c"
           npx cap sync android
 

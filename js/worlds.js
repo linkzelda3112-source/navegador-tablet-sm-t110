@@ -67,8 +67,8 @@ function worldIslas() {
   return o;
 }
 const ISL = {
-  beach: { pos: [0, 1.7, 8], tgt: [0, -.9, -10], fov: 60 },
-  nsea: { pos: [0, 1.7, 8], tgt: [0, 1.4, -10], fov: 60 },
+  beach: { pos: [0, 2.3, 1.2], tgt: [0, 1.5, -10], fov: 62 },
+  nsea: { pos: [0, 2.3, 1.2], tgt: [0, 1.9, -10], fov: 62 },
   whirl: { pos: [0, 2.6, -22], tgt: [0, 1.0, -80], fov: 60, nosand: true },
   town: { pos: [0, 2.2, -110], tgt: [24, 3.0, -185], fov: 26, nosand: true },
   pier: { pos: [0, 3.2, -18], tgt: [0, 1.4, -60], fov: 60, nosand: true, pier: true },
@@ -103,9 +103,9 @@ function renderIslas(o, shot, t, st) {
   if (st.whirl) { const k = 1 + Math.sin(t) * .02; draw(o.whirl, M4.mul(M4.T(0, 0, -60), M4.S(.26 * k, 1, .2 * k)), { tint: seaT }); }
   if (S.pier) draw(o.pier, M4.T(S.pos[0] + 3.4, 1.2 - 3.2 + 1.6, S.pos[2] - 5), { tint: seaT });
   if (shot === 'beach' || shot === 'nsea') {
-    draw(o.palm, M4.mul(M4.T(-2.55, 0, 0), M4.RZ(-.05)), { tint: seaT }); draw(o.palm, M4.mul(M4.T(2.6, 0, 0), M4.RZ(.04)), { tint: seaT });
-        draw(o.ham, M4.T(0, 0, 0), { tint: seaT });
-    drawHuman(o.man, M4.mul(M4.T(0, 1.9, 0), M4.mul(M4.RZ(PI / 2), M4.RY(0))), { leg: 0, arm: 0 });
+    draw(o.palm, M4.mul(M4.T(-1.35, 0, -2.6), M4.RZ(-.06)), { tint: seaT }); draw(o.palm, M4.mul(M4.T(1.4, 0, -2.4), M4.RZ(.05)), { tint: seaT });
+        draw(o.ham, M4.T(0, -.75, .6), { tint: seaT });
+
     draw(o.pier, M4.T(4.6, 1.0, -8), { tint: seaT });
   }
 }
@@ -134,9 +134,9 @@ function worldEstrellas() {
 }
 const EST = {
   wide: { pos: [0, 1.6, 12], tgt: [1.2, 3.2, -6], fov: 58 },
-  cot: { pos: [-.6, 1.5, -3.2], tgt: [1.9, 1.1, -6.2], fov: 62 },
-  cot2: { pos: [-.4, 1.4, -2.6], tgt: [2.1, 1.7, -6.2], fov: 66 },
-  look: { pos: [1.8, 1.5, -2.2], tgt: [3.1, 1.6, -6.2], fov: 60 },
+  cot: { pos: [1.5, 1.15, -6.1], tgt: [1.9, 5.6, -9.2], fov: 64 },
+  cot2: { pos: [1.0, 1.15, -6.1], tgt: [3.2, 2.5, -6.7], fov: 66 },
+  look: { pos: [3.05, 1.55, -5.9], tgt: [3.3, 6, -9], fov: 60 },
   sky: { pos: [0, 1.6, 12], tgt: [0, 40, -20], fov: 62 },
   giant: { pos: [0, 1.6, 2], tgt: [0, 11, -40], fov: 62 },
 };
@@ -148,8 +148,8 @@ function renderEstrellas(o, shot, t, st) {
   draw(o.ground, M4.id(), { tint: [.05, .08, .1, .0] }); draw(o.ridge, M4.id());
   draw(o.rock, M4.T(-4.5, .2, -9));
   const cot = M4.mul(M4.T(1.6, 0, -6.2), M4.RY(-.3)); draw(o.cot, cot); draw(o.tele, M4.mul(M4.T(3.3, .0, -6.6), M4.S(1, 1, 1)));
-  if (shot === 'cot' || shot === 'cot2' || st.lying) drawHuman(o.man, M4.mul(M4.T(1.2, 1.0, -6.1), M4.mul(M4.RY(-.3), M4.mul(M4.RZ(-PI / 2), M4.RY(PI / 2)))), { leg: 0, arm: .3 });
-  if (shot === 'look') drawHuman(o.man, M4.mul(M4.T(2.9, 0, -5.6), M4.mul(M4.RY(-1.2), M4.RX(.35))), { leg: 0, arm: -1.2 });
+
+
   if (shot === 'giant' || st.giant) { const k = st.giant || 1; draw(o.giant, M4.mul(M4.T(0, 3.6 * k, -40 + (1 - k) * -10), M4.S(k, k, 1))); draw(o.hole, M4.mul(M4.T(0, 13.4 * k, -40 + (1 - k) * -10), M4.S(k, k, 1)), { nofog: true }); }
 }
 
@@ -190,10 +190,10 @@ const PLZ = {
   wrist: { pos: [0, 3, 5], tgt: [0, 3, -2], fov: 32, wrist: true },
   baker: { pos: [0, 1.5, 6], tgt: [0, 2.3, -6], fov: 58 },
   tent: { pos: [0, 12, -8], tgt: [0, 13, -30], fov: 58 },
-  foot: { pos: [0, 1.0, 3], tgt: [0, .6, -4], fov: 62 },
+  foot: { pos: [0, 1.6, 3], tgt: [0, 1.1, -7], fov: 62, bob: true },
 };
 function renderPlaza(o, shot, t, st) {
-  const S = PLZ[shot]; clear([.83, .78, .66, 1]); cur.fogr = [40, 150]; setCam({ pos: S.pos, tgt: S.tgt, fov: S.fov });
+  const S = PLZ[shot]; clear([.83, .78, .66, 1]); cur.fogr = [40, 150]; const bb = S.bob ? [Math.sin(t * 2.2) * .06, Math.abs(Math.sin(t * 2.2)) * .1 - .05] : [0, 0]; setCam({ pos: [S.pos[0] + bb[0], S.pos[1] + bb[1], S.pos[2]], tgt: S.tgt, fov: S.fov });
   if (S.kitchen || S.wrist) { clear([.9, .85, .7, 1]); cur.fogr = [999, 1000]; if (S.kitchen) { draw(o.kWall, M4.id()); draw(o.kTile, M4.id()); draw(o.kit, M4.id()); const a = st.clk || 0; drawHands(o, M4.mul(M4.T(1, 5, -1.78), M4.S(.5, .5, .5)), a); } else { draw(o.wrist, M4.id()); drawHands(o, M4.mul(M4.T(0, 3, -1.3), M4.S(.5, .5, .5)), st.clk || 0); } return; }
   draw(o.dome, M4.T(...S.pos), { nofog: true, nodepth: true }); draw(o.ground, M4.id());
   draw(o.tower, M4.T(0, 0, -30)); draw(o.door, M4.T(0, 0, -30)); draw(o.face, M4.T(0, 0, -30)); draw(o.ticks, M4.T(0, 0, -30), { nofog: true }); drawHands(o, M4.T(0, 13, -25.8), st.clk || 0, true);
@@ -205,7 +205,7 @@ function renderPlaza(o, shot, t, st) {
   if (shot === 'baker') {
     const B = M4.mul(M4.T(1, 0, -4), M4.RY(-.3)); drawHuman(o.baker, B, { leg: .55, arm: 1.0 }); draw(o.pigeon, M4.T(-3.4, 5.5, -3), {}); draw(o.h1, M4.mul(M4.T(-9, 0, -6), M4.RY(.7)));
   }
-  if (shot === 'foot') { draw(o.boot, M4.mul(M4.T(1, .45, -2), M4.RX(-.2 + Math.sin(t) * .02))); }
+  if (shot === 'foot') { }
 }
 function drawHands(o, base, tm, flip) {
   draw(o.hMin, M4.mul(base, M4.RZ(-(tm || 0) - 4.0 * 1 - (flip ? 0 : 0))), { nofog: true });
@@ -238,16 +238,16 @@ const CAL = {
   neigh: { pos: [-2, 1.6, 6], tgt: [-3, 1.5, -2], fov: 60 },
   hood: { pos: [0, 2, 12], tgt: [0, 30, -20], fov: 66 },
   street: { pos: [0, 1.7, 14], tgt: [0, 3.1, -60], fov: 62 },
-  room: { pos: [-5.2, 5.2, 1.6], tgt: [0, 1.2, -3.2], fov: 62, room: true },
+  room: { pos: [0, 1.95, -1.3], tgt: [0, 3.7, -8], fov: 64, room: true },
 };
 function renderCalle(o, shot, t, st) {
   const S = CAL[shot], n = st.night || 0, d = st.dusk || 0; cur.fogr = [30, 200];
   const base = mixc(mixc('#d9c8a8', '#a99890', d), '#3a4060', n); clear(base); setCam({ pos: S.pos, tgt: S.tgt, fov: S.fov });
-  if (S.room) { clear([.18, .17, .22, 1]); cur.fogr = [999, 1000]; draw(o.floor, M4.id()); draw(o.room, M4.id()); draw(o.bed, M4.T(0, 0, -3)); drawHuman(o.man, M4.mul(M4.T(0, 1.8, -2.6), M4.mul(M4.RX(-PI / 2), M4.RY(0))), { leg: .1, arm: .2 }); return; }
+  if (S.room) { clear([.18, .17, .22, 1]); cur.fogr = [999, 1000]; draw(o.floor, M4.id()); draw(o.room, M4.id()); draw(o.bed, M4.T(0, 0, -3)); return; }
   draw(n > .5 ? o.domeN : (d > .5 ? o.domeS : o.domeD), M4.T(...S.pos), { nofog: true, nodepth: true }); if (n > .3) draw(o.stars, M4.T(...S.pos), { nofog: true, nodepth: true });
   const tint = n > 0 ? [.1, .1, .2, .45 * n] : (d > 0 ? [.4, .3, .3, .2 * d] : null);
   draw(o.road, M4.id(), { tint }); draw(o.walk, M4.id(), { tint }); draw(n > .5 ? o.bN : o.bD, M4.id(), { tint: n > .5 ? [.1, .1, .22, .35] : tint }); draw(o.lamps, M4.id(), { nofog: n < .3 ? false : true });
-  if (shot === 'neigh') { draw(o.bD, M4.id()); drawHuman(o.n1, M4.mul(M4.T(-4, 0, -2), M4.RY(.8)), { leg: .2 * Math.sin(t * 3), arm: .9 * Math.sin(t * 3) }); drawHuman(o.n2, M4.mul(M4.T(-2.8, 0, -2), M4.RY(.3)), { arm: .5 * Math.sin(t * 2) }); drawHuman(o.man, M4.mul(M4.T(-.6, 0, -2.5), M4.RY(-.7)), { arm: .3 }); }
+  if (shot === 'neigh') { draw(o.bD, M4.id()); drawHuman(o.n1, M4.mul(M4.T(-4, 0, -2), M4.RY(.8)), { leg: .2 * Math.sin(t * 3), arm: .9 * Math.sin(t * 3) }); drawHuman(o.n2, M4.mul(M4.T(-2.8, 0, -2), M4.RY(.3)), { arm: .5 * Math.sin(t * 2) }); }
   if (st.hood || shot === 'hood') { const k = st.hood === undefined ? 1 : st.hood; draw(o.hood, M4.T(0, 130 - k * 40, -30), {}); draw(o.tent, M4.T(0, 130 - k * 40 - 38, -18), {}); }
 }
 
