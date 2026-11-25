@@ -173,27 +173,43 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         playPos(pos, true);
     }
 
-    /** Activa el modo aleatorio y empieza por una canción al azar de la lista. */
+    /** Activa el modo aleatorio con las canciones permitidas (sin artistas/canciones excluidos). */
     void playShuffled(List<Track> list) {
-        if (list == null || list.isEmpty()) return;
+        if (list == null) return;
+        List<Track> ok = new ArrayList<>();
+        for (Track t : list) if (!ShuffleRules.isExcluded(t)) ok.add(t);
+        if (ok.isEmpty()) return;
         shuffle = true;
-        setQueue(list, new java.util.Random().nextInt(list.size()));
+        setQueue(ok, new java.util.Random().nextInt(ok.size()));
     }
 
     private void rebuildOrder(int currentQueueIdx) {
         int n = queue.size();
-        order = new int[n];
         if (!shuffle) {
+            order = new int[n];
             for (int i = 0; i < n; i++) order[i] = i;
             pos = currentQueueIdx;
         } else {
             List<Integer> rest = new ArrayList<>();
-            for (int i = 0; i < n; i++) if (i != currentQueueIdx) rest.add(i);
+            for (int i = 0; i < n; i++) if (i != currentQueueIdx && !ShuffleRules.isExcluded(queue.get(i))) rest.add(i);
             Collections.shuffle(rest);
+            order = new int[rest.size() + 1];
             order[0] = currentQueueIdx;
             for (int i = 0; i < rest.size(); i++) order[i + 1] = rest.get(i);
             pos = 0;
         }
+    }
+
+    /** Nuevo ciclo aleatorio: todas las permitidas otra vez, sin empezar por la que acaba de sonar. */
+    private void newShuffleCycle(int lastQueueIdx) {
+        List<Integer> all = new ArrayList<>();
+        for (int i = 0; i < queue.size(); i++) if (!ShuffleRules.isExcluded(queue.get(i))) all.add(i);
+        if (all.isEmpty()) all.add(lastQueueIdx);
+        Collections.shuffle(all);
+        if (all.size() > 1 && all.get(0) == lastQueueIdx) Collections.swap(all, 0, 1);
+        order = new int[all.size()];
+        for (int i = 0; i < order.length; i++) order[i] = all.get(i);
+        pos = 0;
     }
 
     void setShuffle(boolean on) {
@@ -270,7 +286,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         int p = pos + 1;
         if (p >= n) {
             if (repeat == 1) {
-                if (shuffle) rebuildOrder(order[pos]);
+                if (shuffle) newShuffleCycle(order[pos]);
                 playPos(0, true);
             } else {
                 playPos(0, false); // fin de la lista: se queda lista en la primera canción, en pausa
@@ -327,6 +343,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     void next() {
         if (queue.isEmpty()) return;
+        if (shuffle && pos + 1 >= order.length) newShuffleCycle(order[pos]);
         playPos((pos + 1) % order.length, true);
     }
 

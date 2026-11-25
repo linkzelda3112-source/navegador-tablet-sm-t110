@@ -19,6 +19,27 @@ final class ShuffleHeaderView extends View {
         setClickable(true);
     }
 
+    interface OnSettings { void open(); }
+    private OnSettings settings;
+    private float downX;
+
+    void setOnSettings(OnSettings s) { settings = s; }
+
+    @Override
+    public boolean onTouchEvent(android.view.MotionEvent e) {
+        if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) downX = e.getX();
+        boolean inTune = downX > getWidth() - Ui.dp(76);
+        if (inTune && settings != null) {
+            if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP) {
+                performClick0();
+            }
+            return true;
+        }
+        return super.onTouchEvent(e);
+    }
+
+    private void performClick0() { settings.open(); }
+
     void setCount(int n) { count = n; invalidate(); }
 
     @Override
@@ -46,8 +67,24 @@ final class ShuffleHeaderView extends View {
         tp.setTextSize(Ui.dp(13));
         tp.setColor(Ui.TEXT2);
         tp.setTextAlign(Paint.Align.RIGHT);
-        c.drawText(String.valueOf(count), r.right - Ui.dp(18), h / 2f + Ui.dp(4.5f), tp);
+        c.drawText(String.valueOf(count), r.right - Ui.dp(58), h / 2f + Ui.dp(4.5f), tp);
         tp.setTextAlign(Paint.Align.LEFT);
+        // botón de ajustes (controles deslizantes)
+        float cx = r.right - Ui.dp(28);
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeWidth(Ui.dp(1.6f));
+        p.setStrokeCap(Paint.Cap.ROUND);
+        p.setColor(Ui.withAlpha(Ui.TEXT2, 60));
+        c.drawLine(cx - Ui.dp(24), r.top + Ui.dp(10), cx - Ui.dp(24), r.bottom - Ui.dp(10), p);
+        p.setColor(Ui.ACCENT);
+        float[] ys = {-7, 0, 7}, ks = {-3, 4, -1};
+        for (int i = 0; i < 3; i++) {
+            float y = h / 2f + Ui.dp(ys[i]);
+            c.drawLine(cx - Ui.dp(9), y, cx + Ui.dp(9), y, p);
+            p.setStyle(Paint.Style.FILL);
+            c.drawCircle(cx + Ui.dp(ks[i]), y, Ui.dp(2.6f), p);
+            p.setStyle(Paint.Style.STROKE);
+        }
     }
 
     @Override

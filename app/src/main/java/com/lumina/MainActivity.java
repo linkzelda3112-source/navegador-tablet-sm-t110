@@ -290,6 +290,11 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         list.setClipToPadding(false);
         shuffleHeader = new ShuffleHeaderView(this);
         shuffleHeader.setOnClickListener(v -> shuffleAll());
+        shuffleHeader.setOnSettings(() -> {
+            ShuffleSheet sh = new ShuffleSheet(this, lib.tracks());
+            sh.setOnDismissListener(d -> shuffleHeader.setCount(ShuffleRules.countAllowed(adapter.trackList())));
+            sh.show();
+        });
         adapter = new RowAdapter(this, art, personal);
         list.setAdapter(adapter);
         list.setOnItemClickListener((parent, view, position, id) -> {
@@ -499,7 +504,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
     }
 
     private void showShuffle(boolean show, int n) {
-        shuffleHeader.setCount(n);
+        shuffleHeader.setCount(ShuffleRules.countAllowed(adapter.trackList()));
         if (show && !headerShown) {
             list.addHeaderView(shuffleHeader, null, false);
             headerShown = true;
@@ -585,6 +590,10 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
 
     private void shuffleAll() {
         if (svc == null || adapter.trackList().isEmpty()) return;
+        if (ShuffleRules.countAllowed(adapter.trackList()) == 0) {
+            Toast.makeText(this, "Todas están excluidas del aleatorio", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (!ensureNotifPermission()) maybeAskBattery();
         svc.playShuffled(adapter.trackList());
     }

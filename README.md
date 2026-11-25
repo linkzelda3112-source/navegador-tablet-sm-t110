@@ -38,6 +38,11 @@ La biblioteca se guarda en caché, así que la app abre al instante y se actuali
 
 Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
 
+## Novedades 1.3
+
+- Aleatorio: el botón de ajustes (a la derecha de «Reproducir en aleatorio») deja excluir artistas o canciones para que nunca salgan.
+- Aleatorio sin repetir: suenan todas una vez antes de volver a empezar, y la primera del nuevo ciclo nunca es la última que sonó.
+
 ## Novedades 1.2
 
 - Pantalla de **Inicio** estilo Spotify: saludo, accesos a *Me encanta*, *Me gusta*, *Éxitos* y *Recientes*.

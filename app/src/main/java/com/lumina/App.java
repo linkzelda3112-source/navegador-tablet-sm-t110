@@ -18,6 +18,7 @@ public class App extends Application {
         covers = new CoverStore(this);
         art = new ArtCache(this, covers);
         personal = new Personal(this);
+        ShuffleRules.init(this);
         charts = new Charts(this);
     }
 
