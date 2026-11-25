@@ -1,0 +1,38 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.letrasmagicas.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.letrasmagicas.app'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    // Firma fija (keystore incluido en el repo) para que las versiones nuevas se instalen encima de las viejas.
+    signingConfigs {
+        release {
+            storeFile file('../matehub.keystore')
+            storePassword 'matehub'
+            keyAlias 'matehub'
+            keyPassword 'matehub'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

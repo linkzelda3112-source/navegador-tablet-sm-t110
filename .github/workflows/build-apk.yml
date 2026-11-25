@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  push:
+    branches: [letras-magicas]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Probar la lógica (palabras, sílabas, cuentos, trazo)
+        run: node tests/logic.test.js
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compilar APK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk LetrasMagicas.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LetrasMagicas-apk
+          path: LetrasMagicas.apk
+
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: letrasmagicas-${{ github.run_number }}
+          name: Letras Mágicas ${{ github.run_number }}
+          files: LetrasMagicas.apk
