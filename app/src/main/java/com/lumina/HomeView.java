@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -26,12 +27,14 @@ final class HomeView extends ScrollView {
         void onOpen(String title, List<Track> tracks);
         void onPlay(List<Track> list, int index);
         void onRefreshCharts();
+        void onShuffle();
     }
 
     private final Callbacks cb;
     private final ArtCache art;
     private final LinearLayout col;
     private int insetBottom;
+    private boolean shown;
 
     HomeView(Context c, ArtCache art, Callbacks cb) {
         super(c);
@@ -71,11 +74,15 @@ final class HomeView extends ScrollView {
             r.set(0, 0, w, h);
             p.setStyle(Paint.Style.FILL);
             p.setColor(isPressed() ? Ui.SURFACE2 : Ui.SURFACE);
-            c.drawRoundRect(r, Ui.dp(14), Ui.dp(14), p);
+            c.drawRoundRect(r, Ui.dp(16), Ui.dp(16), p);
+            p.setShader(new android.graphics.LinearGradient(0, 0, w, 0, Ui.withAlpha(color, Ui.light ? 40 : 70),
+                    Ui.withAlpha(color, 0), android.graphics.Shader.TileMode.CLAMP));
+            c.drawRoundRect(r, Ui.dp(16), Ui.dp(16), p);
+            p.setShader(null);
             p.setStyle(Paint.Style.STROKE);
             p.setStrokeWidth(Ui.dp(1));
             p.setColor(Ui.LINE);
-            c.drawRoundRect(r, Ui.dp(14), Ui.dp(14), p);
+            c.drawRoundRect(r, Ui.dp(16), Ui.dp(16), p);
             float m = Ui.dp(9);
             r.set(m, m, h - m, h - m);
             p.setStyle(Paint.Style.FILL);
@@ -150,9 +157,89 @@ final class HomeView extends ScrollView {
         }
     }
 
+    private final class Hero extends View {
+        private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final TextPaint tp = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF r = new RectF(), btn = new RectF();
+        private final int songs, artists, albums;
+        private boolean btnDown;
+
+        Hero(Context c, int songs, int artists, int albums) {
+            super(c);
+            this.songs = songs;
+            this.artists = artists;
+            this.albums = albums;
+            setClickable(true);
+            setOnClickListener(v -> { if (btnDown) cb.onShuffle(); });
+        }
+
+        @Override
+        public boolean onTouchEvent(android.view.MotionEvent e) {
+            if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) btnDown = btn.contains(e.getX(), e.getY());
+            return super.onTouchEvent(e);
+        }
+
+        @Override
+        protected void onDraw(Canvas c) {
+            float w = getWidth(), h = getHeight();
+            float t = System.nanoTime() / 1e9f;
+            r.set(0, 0, w, h);
+            int a = Ui.ACCENT, b = Ui.blend(Ui.ACCENT, Ui.light ? 0xFFFFFFFF : 0xFF000000, Ui.light ? 0.55f : 0.62f);
+            p.setStyle(Paint.Style.FILL);
+            p.setShader(new android.graphics.LinearGradient(0, 0, w, h, a, b, android.graphics.Shader.TileMode.CLAMP));
+            c.drawRoundRect(r, Ui.dp(26), Ui.dp(26), p);
+            p.setShader(null);
+            // ondas decorativas que se mueven
+            c.save();
+            Path clip = new Path();
+            clip.addRoundRect(r, Ui.dp(26), Ui.dp(26), Path.Direction.CW);
+            c.clipPath(clip);
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(Ui.dp(1.4f));
+            for (int k = 0; k < 4; k++) {
+                p.setColor(0x22FFFFFF);
+                Path wave = new Path();
+                float y0 = h * (0.35f + 0.13f * k);
+                wave.moveTo(0, y0);
+                for (float x = 0; x <= w; x += Ui.dp(8)) {
+                    wave.lineTo(x, y0 + Ui.dp(10) * (float) Math.sin(x / Ui.dp(46) + t * (0.8f + k * 0.25f) + k));
+                }
+                c.drawPath(wave, p);
+            }
+            c.restore();
+            p.setStyle(Paint.Style.FILL);
+            tp.setLetterSpacing(0.22f);
+            tp.setTypeface(Ui.MEDIUM);
+            tp.setTextSize(Ui.dp(11));
+            tp.setColor(0xCCFFFFFF);
+            c.drawText("TU BIBLIOTECA", Ui.dp(22), Ui.dp(34), tp);
+            tp.setLetterSpacing(0f);
+            tp.setTypeface(Ui.SERIF);
+            tp.setTextSize(Ui.dp(34));
+            tp.setColor(0xFFFFFFFF);
+            c.drawText(songs + (songs == 1 ? " canción" : " canciones"), Ui.dp(22), Ui.dp(76), tp);
+            tp.setTypeface(Ui.REGULAR);
+            tp.setTextSize(Ui.dp(13.5f));
+            tp.setColor(0xDDFFFFFF);
+            c.drawText(artists + " artistas · " + albums + " álbumes", Ui.dp(22), Ui.dp(100), tp);
+            // botón
+            float bw = Ui.dp(170), bh = Ui.dp(44);
+            btn.set(Ui.dp(22), h - Ui.dp(22) - bh, Ui.dp(22) + bw, h - Ui.dp(22));
+            p.setColor(0xFFFFFFFF);
+            c.drawRoundRect(btn, bh / 2f, bh / 2f, p);
+            Icons.draw(c, p, Icons.SHUFFLE, btn.left + Ui.dp(26), btn.centerY(), Ui.dp(24), 0xFF1A1A22);
+            tp.setTypeface(Ui.MEDIUM);
+            tp.setTextSize(Ui.dp(14.5f));
+            tp.setColor(0xFF1A1A22);
+            c.drawText("Aleatorio", btn.left + Ui.dp(48), btn.centerY() + Ui.dp(5), tp);
+            postInvalidateDelayed(40);
+        }
+    }
+
     private TextView heading(String text, String subText) {
-        TextView t = Ui.label(getContext(), text, 22, Ui.TEXT, Ui.SERIF);
-        t.setPadding(Ui.dpi(24), Ui.dpi(26), Ui.dpi(24), subText.isEmpty() ? Ui.dpi(12) : Ui.dpi(2));
+        TextView t = Ui.label(getContext(), text, 23, Ui.TEXT, Ui.SERIF);
+        t.setPadding(Ui.dpi(24), Ui.dpi(22), Ui.dpi(24), subText.isEmpty() ? Ui.dpi(12) : Ui.dpi(2));
+        t.setCompoundDrawablePadding(Ui.dpi(10));
         return t;
     }
 
@@ -206,17 +293,19 @@ final class HomeView extends ScrollView {
      * Reconstruye la pantalla.
      * chartState: 0 = sin datos (sin conexión), 1 = descargando, 2 = con datos.
      */
-    void update(List<Track> loved, List<Track> liked, List<Track> recent, List<Charts.Hit> hits,
+    void update(List<Track> all, List<Track> loved, List<Track> liked, List<Track> recent, List<Charts.Hit> hits,
                 int chartState, int chartTotal, String chartCountry) {
         int keep = getScrollY();
         col.removeAllViews();
         col.setPadding(0, Ui.dpi(6), 0, insetBottom + Ui.dpi(120));
         Context c = getContext();
 
-        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        TextView hi = Ui.label(c, hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches", 28, Ui.TEXT, Ui.SERIF);
-        hi.setPadding(Ui.dpi(24), Ui.dpi(10), Ui.dpi(24), Ui.dpi(16));
-        col.addView(hi);
+        java.util.HashSet<String> ar = new java.util.HashSet<>(), al = new java.util.HashSet<>();
+        for (Track t : all) { ar.add(Personal.norm(t.artist)); al.add(Personal.norm(t.album)); }
+        Hero hero = new Hero(c, all.size(), ar.size(), al.size());
+        LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dpi(190));
+        hl.setMargins(Ui.dpi(18), Ui.dpi(8), Ui.dpi(18), Ui.dpi(18));
+        col.addView(hero, hl);
 
         final List<Track> hitTracks = new ArrayList<>();
         final List<Integer> hitRanks = new ArrayList<>();
@@ -258,6 +347,16 @@ final class HomeView extends ScrollView {
         if (!recent.isEmpty()) addCarousel("Escuchado recientemente", "", recent.subList(0, Math.min(recent.size(), 20)), null);
         if (!loved.isEmpty()) addCarousel("Me encanta", "", loved.subList(0, Math.min(loved.size(), 20)), null);
 
+        if (!shown) {
+            shown = true;
+            for (int i = 0; i < col.getChildCount(); i++) {
+                View v = col.getChildAt(i);
+                v.setAlpha(0f);
+                v.setTranslationY(Ui.dp(30));
+                v.animate().alpha(1f).translationY(0f).setStartDelay(80L + i * 70L).setDuration(520)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator(2f)).start();
+            }
+        }
         final int restore = keep;
         post(() -> scrollTo(0, restore));
     }

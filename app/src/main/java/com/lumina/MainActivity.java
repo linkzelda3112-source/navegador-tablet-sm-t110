@@ -330,6 +330,13 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
                 openDetail(g);
             }
             @Override public void onPlay(List<Track> l, int index) { playFrom(l, index); }
+            @Override public void onShuffle() {
+                if (svc == null) return;
+                List<Track> a = ShuffleRules.view(lib.tracks());
+                if (ShuffleRules.countAllowed(a) == 0) return;
+                if (!ensureNotifPermission()) maybeAskBattery();
+                svc.playShuffled(a);
+            }
             @Override public void onRefreshCharts() {
                 charts.refresh(true, MainActivity.this::chartsChanged);
                 refreshData();
@@ -500,7 +507,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         List<Track> liked = personal.rated(all, 1), loved = personal.rated(all, 2), recent = personal.recent(all);
         List<Charts.Hit> hits = charts.match(all);
         int state = charts.has() ? 2 : charts.isLoading() ? 1 : 0;
-        home.update(loved, liked, recent, hits, state, charts.size(), charts.countryName());
+        home.update(all, loved, liked, recent, hits, state, charts.size(), charts.countryName());
     }
 
     private void chartsChanged() {

@@ -38,6 +38,11 @@ La biblioteca se guarda en caché, así que la app abre al instante y se actuali
 
 Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
 
+## Novedades 1.6
+
+- Colores nuevos: Aurora, Atardecer, Neón, Selva, Chicle y Perla.
+- Pantalla principal rediseñada: tarjeta grande con ondas animadas, tus números y botón Aleatorio; accesos con degradado; entrada animada.
+
 ## Novedades 1.5
 
 - Diseño con vida: fondo con halos que flotan, saludo según la hora, filas que entran en cascada, cambio suave entre pestañas, mini-reproductor que sube con rebote, destello en el botón de aleatorio y rebote al tocar canciones.

@@ -25,17 +25,17 @@ final class Ui {
     static int theme, npBg;
 
     /** Esquema oscuro fijo para el mini reproductor y "Reproduciendo", que van sobre portadas. */
-    static final int DK_BG = 0xFF0B0C10, DK_SURFACE2 = 0xFF1E212B, DK_TEXT = 0xFFF3EEE6, DK_TEXT2 = 0xFF9A9CA6;
+    static final int DK_BG = 0xFF0A0914, DK_SURFACE2 = 0xFF1E1B2E, DK_TEXT = 0xFFF5F2FF, DK_TEXT2 = 0xFF9E9BB4;
 
-    static final String[] THEME_NAMES = {"Medianoche", "Esmeralda", "Rosa", "Océano", "Carbón", "Marfil"};
+    static final String[] THEME_NAMES = {"Aurora", "Atardecer", "Neón", "Selva", "Chicle", "Perla"};
     // fondo, tarjeta, tarjeta2, texto, texto2, acento, línea
     private static final int[][] THEMES = {
-        {0xFF0B0C10, 0xFF15171E, 0xFF1E212B, 0xFFF3EEE6, 0xFF9A9CA6, 0xFFE6C07B, 0x1AFFFFFF},
-        {0xFF07120E, 0xFF0F1D18, 0xFF172A23, 0xFFE9F4EE, 0xFF8FA89C, 0xFF6FE0B0, 0x1AFFFFFF},
-        {0xFF120A10, 0xFF1D1219, 0xFF291A23, 0xFFF7ECF0, 0xFFA8939C, 0xFFF28DB2, 0x1AFFFFFF},
-        {0xFF08101A, 0xFF0F1A28, 0xFF172538, 0xFFE8F0F8, 0xFF8FA2B8, 0xFF6CB4FF, 0x1AFFFFFF},
-        {0xFF000000, 0xFF0F0F10, 0xFF1B1B1D, 0xFFFFFFFF, 0xFF8E8E93, 0xFFF2F2F2, 0x1AFFFFFF},
-        {0xFFF7F3EC, 0xFFFFFFFF, 0xFFEDE7DB, 0xFF1D1B17, 0xFF7A746A, 0xFFB8862B, 0x14000000},
+        {0xFF0D0A1F, 0xFF171233, 0xFF221B48, 0xFFF4F1FF, 0xFFA39FC4, 0xFFB388FF, 0x1AFFFFFF},
+        {0xFF160B12, 0xFF22121C, 0xFF331A28, 0xFFFFF1EA, 0xFFC09A9A, 0xFFFF7A59, 0x1AFFFFFF},
+        {0xFF05070D, 0xFF0D1220, 0xFF141C33, 0xFFEAF6FF, 0xFF7F93B3, 0xFF00E5FF, 0x1AFFFFFF},
+        {0xFF06130F, 0xFF0C2019, 0xFF133229, 0xFFEAFBF3, 0xFF86B3A0, 0xFF3DDC97, 0x1AFFFFFF},
+        {0xFF1A0A18, 0xFF2A1226, 0xFF3D1A37, 0xFFFFEDF8, 0xFFC596B6, 0xFFFF5CAA, 0x1AFFFFFF},
+        {0xFFF6F3FB, 0xFFFFFFFF, 0xFFECE6F7, 0xFF1C1830, 0xFF77708F, 0xFF7C4DFF, 0x14000000},
     };
 
     static int[] themeColors(int i) { return THEMES[i]; }
