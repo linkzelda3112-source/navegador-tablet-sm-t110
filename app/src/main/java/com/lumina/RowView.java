@@ -25,6 +25,12 @@ final class RowView extends View {
     RowView(Context c) { super(c); }
 
     @Override
+    public void setPressed(boolean pressed) {
+        super.setPressed(pressed);
+        animate().scaleX(pressed ? 0.97f : 1f).scaleY(pressed ? 0.97f : 1f).setDuration(pressed ? 90 : 220).start();
+    }
+
+    @Override
     protected void onMeasure(int wSpec, int hSpec) {
         setMeasuredDimension(MeasureSpec.getSize(wSpec), Ui.dpi(72));
     }

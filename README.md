@@ -38,6 +38,10 @@ La biblioteca se guarda en caché, así que la app abre al instante y se actuali
 
 Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
 
+## Novedades 1.5
+
+- Diseño con vida: fondo con halos que flotan, saludo según la hora, filas que entran en cascada, cambio suave entre pestañas, mini-reproductor que sube con rebote, destello en el botón de aleatorio y rebote al tocar canciones.
+
 ## Novedades 1.4
 
 - Modo trabajo (candado arriba): eliges los artistas o canciones que pueden sonar en el trabajo; al activarlo solo se ven y suenan esos. Al desactivarlo vuelve toda tu música.

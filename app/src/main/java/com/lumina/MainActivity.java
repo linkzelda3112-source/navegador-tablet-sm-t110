@@ -186,6 +186,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         root = new FrameLayout(this);
         root.setBackgroundColor(Ui.BG);
 
+        root.addView(new AmbientView(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         root.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -201,7 +202,17 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         titleTv = Ui.label(this, "Tu música", 34, Ui.TEXT, Ui.SERIF);
         subTv = Ui.label(this, "", 13, Ui.TEXT2, Ui.REGULAR);
         subTv.setPadding(0, Ui.dpi(6), 0, 0);
+        int hr = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        TextView greet = Ui.label(this, (hr < 6 ? "BUENAS NOCHES" : hr < 12 ? "BUENOS DÍAS" : hr < 19 ? "BUENAS TARDES" : "BUENAS NOCHES"),
+                11, Ui.ACCENT, Ui.MEDIUM);
+        greet.setLetterSpacing(0.25f);
+        greet.setPadding(0, 0, 0, Ui.dpi(4));
+        titleBox.addView(greet);
         titleBox.addView(titleTv);
+        titleBox.setAlpha(0f);
+        titleBox.setTranslationY(Ui.dp(14));
+        titleBox.animate().alpha(1f).translationY(0f).setDuration(650).setStartDelay(120)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator(2f)).start();
         titleBox.addView(subTv);
         normalHeader.addView(titleBox, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT));
         ((LinearLayout.LayoutParams) titleBox.getLayoutParams()).weight = 1f;
@@ -262,8 +273,10 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         tabs.setListener(i -> {
             tab = i;
             detail = null;
+            adapter.animateNext();
             refreshData();
             list.setSelection(0);
+            animateSwap();
         });
         content.addView(tabs, lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -526,15 +539,27 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         detailTitle.setText(g.name);
         tabs.setVisibility(View.GONE);
         detailBar.setVisibility(View.VISIBLE);
+        adapter.animateNext();
         refreshData();
         list.setSelection(0);
+        animateSwap();
+    }
+
+    private void animateSwap() {
+        View v = home.getVisibility() == View.VISIBLE ? home : list;
+        v.setAlpha(0f);
+        v.setTranslationY(Ui.dp(18));
+        v.animate().alpha(1f).translationY(0f).setDuration(380)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator(2f)).start();
     }
 
     private void closeDetail() {
         detail = null;
         detailBar.setVisibility(View.GONE);
         tabs.setVisibility(View.VISIBLE);
+        adapter.animateNext();
         refreshData();
+        animateSwap();
     }
 
     private void openSearch() {
@@ -629,7 +654,9 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         if (mini.getVisibility() != View.VISIBLE) {
             mini.setVisibility(View.VISIBLE);
             mini.setAlpha(0f);
-            mini.animate().alpha(1f).setDuration(260).start();
+            mini.setTranslationY(Ui.dp(70));
+            mini.animate().alpha(1f).translationY(0f).setDuration(520)
+                    .setInterpolator(new android.view.animation.OvershootInterpolator(1.1f)).start();
             updateListPadding();
         }
         if (!t.key.equals(lastKey)) {

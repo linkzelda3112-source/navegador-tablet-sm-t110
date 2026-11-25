@@ -63,6 +63,16 @@ final class RowAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    private boolean pendingAnim = true;
+
+    /** La próxima vez que se dibuje la lista, las filas entran una tras otra. */
+    void animateNext() {
+        pendingAnim = true;
+        main.removeCallbacks(stopAnim);
+    }
+
+    private final Runnable stopAnim = new Runnable() { @Override public void run() { pendingAnim = false; } };
+
     void refresh() { notifyDataSetChanged(); }
 
     boolean isGroupMode() { return groupMode; }
@@ -102,6 +112,18 @@ final class RowAdapter extends BaseAdapter {
             v.current = t.key.equals(currentKey);
             v.playing = v.current && playing;
             v.rating = personal.rating(t);
+        }
+        v.animate().cancel();
+        if (pendingAnim && i < 12) {
+            v.setAlpha(0f);
+            v.setTranslationY(Ui.dp(26));
+            v.animate().alpha(1f).translationY(0f).setStartDelay(i * 45L).setDuration(420)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator(2f)).start();
+            main.removeCallbacks(stopAnim);
+            main.postDelayed(stopAnim, 700);
+        } else {
+            v.setAlpha(1f);
+            v.setTranslationY(0f);
         }
         v.invalidate();
         return v;

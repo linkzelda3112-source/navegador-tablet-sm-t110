@@ -58,7 +58,23 @@ final class ShuffleHeaderView extends View {
         p.setStrokeWidth(Ui.dp(1));
         p.setColor(Ui.withAlpha(Ui.ACCENT, 90));
         c.drawRoundRect(r, Ui.dp(18), Ui.dp(18), p);
-        Icons.draw(c, p, Icons.SHUFFLE, r.left + Ui.dp(34), h / 2f, Ui.dp(30), Ui.ACCENT);
+        // destello que cruza la tarjeta cada pocos segundos
+        float cyc = (System.nanoTime() / 1e9f) % 5f;
+        if (cyc < 1.1f) {
+            float f = cyc / 1.1f;
+            float gx = r.left + (r.width() + Ui.dp(120)) * f - Ui.dp(60);
+            c.save();
+            c.clipRect(r);
+            p.setShader(new android.graphics.LinearGradient(gx - Ui.dp(60), 0, gx + Ui.dp(60), 0,
+                    new int[]{0x00FFFFFF, Ui.withAlpha(Ui.ACCENT, 70), 0x00FFFFFF}, null, android.graphics.Shader.TileMode.CLAMP));
+            p.setStyle(Paint.Style.FILL);
+            c.drawRect(r, p);
+            p.setShader(null);
+            c.restore();
+        }
+        postInvalidateDelayed(cyc < 1.1f ? 16 : 120);
+        float pulse = 1f + 0.06f * (float) Math.sin(System.nanoTime() / 1e9f * 2.2f);
+        Icons.draw(c, p, Icons.SHUFFLE, r.left + Ui.dp(34), h / 2f, Ui.dp(30) * pulse, Ui.ACCENT);
         tp.setTypeface(Ui.MEDIUM);
         tp.setTextSize(Ui.dp(16));
         tp.setColor(Ui.TEXT);
