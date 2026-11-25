@@ -63,6 +63,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
     private ListView list;
     private RowAdapter adapter;
     private ShuffleHeaderView shuffleHeader;
+    private IconView workBtn;
     private boolean headerShown;
     private MiniPlayerView mini;
     private NowPlayingView now;
@@ -210,6 +211,10 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         IconView folderBtn = new IconView(this, Icons.FOLDER, Ui.TEXT);
         folderBtn.setFrac(0.5f);
         folderBtn.setOnClickListener(v -> showSources(false));
+        workBtn = new IconView(this, Icons.LOCK, ShuffleRules.workOn() ? Ui.ACCENT : Ui.TEXT);
+        workBtn.setFrac(0.5f);
+        workBtn.setOnClickListener(v -> openWork());
+        normalHeader.addView(workBtn, lp(Ui.dpi(48), Ui.dpi(48)));
         normalHeader.addView(searchBtn, lp(Ui.dpi(48), Ui.dpi(48)));
         IconView paletteBtn = new IconView(this, Icons.PALETTE, Ui.TEXT);
         paletteBtn.setFrac(0.5f);
@@ -291,7 +296,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         shuffleHeader = new ShuffleHeaderView(this);
         shuffleHeader.setOnClickListener(v -> shuffleAll());
         shuffleHeader.setOnSettings(() -> {
-            ShuffleSheet sh = new ShuffleSheet(this, lib.tracks());
+            ShuffleSheet sh = new ShuffleSheet(this, ShuffleRules.view(lib.tracks()));
             sh.setOnDismissListener(d -> shuffleHeader.setCount(ShuffleRules.countAllowed(adapter.trackList())));
             sh.show();
         });
@@ -418,7 +423,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
     }
 
     private void refreshData() {
-        List<Track> all = lib.tracks();
+        List<Track> all = ShuffleRules.view(lib.tracks());
         String q = query.trim().toLowerCase(Locale.ROOT);
         boolean showHome = tab == 0 && detail == null && !searching && !all.isEmpty();
         home.setVisibility(showHome ? View.VISIBLE : View.GONE);
@@ -648,6 +653,16 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
     }
 
     // ================================================ ajustes, carátulas, batería
+
+    private void openWork() {
+        ShuffleSheet sh = new ShuffleSheet(this, lib.tracks(), true, () -> {
+            workBtn.setColor(ShuffleRules.workOn() ? Ui.ACCENT : Ui.TEXT);
+            Track cur = svc == null ? null : svc.current();
+            if (ShuffleRules.workOn() && cur != null && !ShuffleRules.workAllowed(cur)) svc.pause();
+            refreshData();
+        });
+        sh.show();
+    }
 
     private void openSettings() {
         new AppearanceSheet(this, new AppearanceSheet.Callbacks() {

@@ -26,16 +26,22 @@ import java.util.TreeMap;
 /** Hoja para elegir qué artistas o canciones no deben salir en el aleatorio. */
 final class ShuffleSheet extends Dialog {
     private final List<Track> all;
+    private final boolean work;
+    private final Runnable onWorkChange;
     private boolean artistMode = true;
     private String query = "";
     private final List<Object> shown = new ArrayList<>(); // String (artista) o Track
     private List<String> artistNames;
     private BaseAdapter adapter;
-    private TextView tabA, tabS, summary;
+    private TextView tabA, tabS, summary, toggle;
 
-    ShuffleSheet(Context c, List<Track> all) {
+    ShuffleSheet(Context c, List<Track> all) { this(c, all, false, null); }
+
+    ShuffleSheet(Context c, List<Track> all, boolean work, Runnable onWorkChange) {
         super(c);
         this.all = all;
+        this.work = work;
+        this.onWorkChange = onWorkChange;
     }
 
     @Override
@@ -71,11 +77,23 @@ final class ShuffleSheet extends Dialog {
         hl.gravity = Gravity.CENTER_HORIZONTAL;
         hl.bottomMargin = Ui.dpi(14);
         root.addView(h, hl);
-        root.addView(Ui.label(c, "Aleatorio", 24, Ui.TEXT, Ui.SERIF));
+        root.addView(Ui.label(c, work ? "Modo trabajo" : "Aleatorio", 24, Ui.TEXT, Ui.SERIF));
         summary = Ui.label(c, "", 13, Ui.TEXT2, Ui.REGULAR);
         summary.setPadding(0, Ui.dpi(4), 0, Ui.dpi(12));
         root.addView(summary);
 
+        if (work) {
+            toggle = Ui.label(c, "", 15, Color.WHITE, Ui.MEDIUM);
+            toggle.setGravity(Gravity.CENTER);
+            toggle.setOnClickListener(v -> {
+                ShuffleRules.setWork(!ShuffleRules.workOn());
+                updateSummary();
+                if (onWorkChange != null) onWorkChange.run();
+            });
+            LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, Ui.dpi(46));
+            tl.bottomMargin = Ui.dpi(10);
+            root.addView(toggle, tl);
+        }
         LinearLayout tabs = new LinearLayout(c);
         tabA = tab(c, "Artistas", true);
         tabS = tab(c, "Canciones", false);
@@ -115,21 +133,22 @@ final class ShuffleSheet extends Dialog {
                 String main, sub = null;
                 if (o instanceof Track) {
                     Track tr = (Track) o;
-                    ex = ShuffleRules.songExcluded(tr) || ShuffleRules.artistExcluded(tr.artist);
+                    ex = work ? ShuffleRules.workAllowed(tr)
+                            : ShuffleRules.songExcluded(tr) || ShuffleRules.artistExcluded(tr.artist);
                     main = tr.title;
                     sub = tr.artist;
                 } else {
-                    ex = ShuffleRules.artistExcluded((String) o);
+                    ex = work ? ShuffleRules.workArtist((String) o) : ShuffleRules.artistExcluded((String) o);
                     main = (String) o;
                 }
-                String mark = ex ? "⊘  " : "     ";
+                String mark = ex ? (work ? "✓  " : "⊘  ") : "     ";
                 t.setText(mark + main + (sub != null ? "\n     " + sub : ""));
                 t.setTextSize(15);
                 t.setSingleLine(false);
                 t.setMaxLines(2);
                 t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                t.setTextColor(ex ? Ui.withAlpha(Ui.TEXT, 120) : Ui.TEXT);
-                t.setPaintFlags(ex ? t.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                t.setTextColor(work ? (ex ? Ui.ACCENT : Ui.TEXT) : (ex ? Ui.withAlpha(Ui.TEXT, 120) : Ui.TEXT));
+                t.setPaintFlags(ex && !work ? t.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
                         : t.getPaintFlags() & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
                 t.setGravity(Gravity.CENTER_VERTICAL);
                 t.setPadding(Ui.dpi(4), Ui.dpi(10), Ui.dpi(4), Ui.dpi(10));
@@ -140,17 +159,21 @@ final class ShuffleSheet extends Dialog {
         lv.setAdapter(adapter);
         lv.setOnItemClickListener((pa, v, i, id) -> {
             Object o = shown.get(i);
-            if (o instanceof Track) ShuffleRules.toggleSong((Track) o);
+            if (work) {
+                if (o instanceof Track) ShuffleRules.toggleWorkSong((Track) o);
+                else ShuffleRules.toggleWorkArtist((String) o);
+                if (onWorkChange != null && ShuffleRules.workOn()) onWorkChange.run();
+            } else if (o instanceof Track) ShuffleRules.toggleSong((Track) o);
             else ShuffleRules.toggleArtist((String) o);
             adapter.notifyDataSetChanged();
             updateSummary();
         });
         root.addView(lv, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        TextView clear = Ui.label(c, "Quitar todas las exclusiones", 14, Ui.ACCENT, Ui.MEDIUM);
+        TextView clear = Ui.label(c, work ? "Quitar toda la selección" : "Quitar todas las exclusiones", 14, Ui.ACCENT, Ui.MEDIUM);
         clear.setGravity(Gravity.CENTER);
         clear.setPadding(0, Ui.dpi(12), 0, Ui.dpi(4));
-        clear.setOnClickListener(v -> { ShuffleRules.clear(); adapter.notifyDataSetChanged(); updateSummary(); });
+        clear.setOnClickListener(v -> { if (work) ShuffleRules.clearWork(); else ShuffleRules.clear(); adapter.notifyDataSetChanged(); updateSummary(); });
         root.addView(clear, new LinearLayout.LayoutParams(-1, -2));
 
         tabA.setOnClickListener(v -> setMode(true));
@@ -189,6 +212,16 @@ final class ShuffleSheet extends Dialog {
     }
 
     private void updateSummary() {
+        if (work) {
+            boolean on = ShuffleRules.workOn();
+            int ok = 0;
+            for (Track x : all) if (ShuffleRules.workAllowed(x)) ok++;
+            summary.setText("Marca con ✓ los artistas o canciones que pueden sonar en el trabajo. Con el modo activo, "
+                    + "solo se ven y suenan esas (" + ok + ").");
+            toggle.setText(on ? "Modo trabajo ACTIVADO · toca para desactivar" : "Activar modo trabajo");
+            toggle.setBackground(Ui.shape(on ? Ui.ACCENT : Ui.SURFACE2, 0, Ui.dp(14)));
+            return;
+        }
         int ok = ShuffleRules.countAllowed(all);
         summary.setText("Toca para excluir o incluir. Las excluidas nunca salen en el aleatorio. Entran "
                 + ok + " de " + all.size() + " canciones.");

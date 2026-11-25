@@ -38,6 +38,10 @@ La biblioteca se guarda en caché, así que la app abre al instante y se actuali
 
 Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
 
+## Novedades 1.4
+
+- Modo trabajo (candado arriba): eliges los artistas o canciones que pueden sonar en el trabajo; al activarlo solo se ven y suenan esos. Al desactivarlo vuelve toda tu música.
+
 ## Novedades 1.3
 
 - Aleatorio: el botón de ajustes (a la derecha de «Reproducir en aleatorio») deja excluir artistas o canciones para que nunca salgan.

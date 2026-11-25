@@ -12,7 +12,7 @@ final class Icons {
     static final int PLAY = 0, PAUSE = 1, NEXT = 2, PREV = 3, SHUFFLE = 4, REPEAT = 5, REPEAT_ONE = 6,
             SEARCH = 7, FOLDER = 8, CLOSE = 9, CHEVRON_DOWN = 10, NOTE = 11, PLUS = 12, TRASH = 13,
             PHONE = 14, CHECK = 15, BACK = 16, REFRESH = 17, IMAGE = 18, PALETTE = 19,
-            HEART = 20, HEART_FILLED = 21, THUMB = 22, THUMB_FILLED = 23, TRENDING = 24, CLOCK = 25;
+            HEART = 20, HEART_FILLED = 21, THUMB = 22, THUMB_FILLED = 23, TRENDING = 24, CLOCK = 25, LOCK = 26;
 
     private static final Path path = new Path();
     private static final RectF rf = new RectF();
@@ -302,6 +302,16 @@ final class Icons {
                 path.lineTo(0.36f * s, -0.22f * s);
                 path.lineTo(0.36f * s, 0f);
                 c.drawPath(path, p);
+                break;
+            }
+            case LOCK: {
+                stroke(p, color, sw);
+                rf.set(-0.26f * s, -0.04f * s, 0.26f * s, 0.34f * s);
+                c.drawRoundRect(rf, s * 0.07f, s * 0.07f, p);
+                rf.set(-0.16f * s, -0.36f * s, 0.16f * s, 0.2f * s);
+                c.drawArc(rf, 180f, 180f, false, p);
+                c.drawLine(-0.16f * s, -0.18f * s, -0.16f * s, -0.04f * s, p);
+                c.drawLine(0.16f * s, -0.18f * s, 0.16f * s, -0.04f * s, p);
                 break;
             }
             case CLOCK: {
