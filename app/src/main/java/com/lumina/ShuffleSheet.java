@@ -77,7 +77,7 @@ final class ShuffleSheet extends Dialog {
         hl.gravity = Gravity.CENTER_HORIZONTAL;
         hl.bottomMargin = Ui.dpi(14);
         root.addView(h, hl);
-        root.addView(Ui.label(c, work ? "Modo trabajo" : "Aleatorio", 24, Ui.TEXT, Ui.SERIF));
+        root.addView(Ui.label(c, work ? "Modo mi playlist" : "Aleatorio", 24, Ui.TEXT, Ui.SERIF));
         summary = Ui.label(c, "", 13, Ui.TEXT2, Ui.REGULAR);
         summary.setPadding(0, Ui.dpi(4), 0, Ui.dpi(12));
         root.addView(summary);
@@ -216,9 +216,9 @@ final class ShuffleSheet extends Dialog {
             boolean on = ShuffleRules.workOn();
             int ok = 0;
             for (Track x : all) if (ShuffleRules.workAllowed(x)) ok++;
-            summary.setText("Marca con ✓ los artistas o canciones que pueden sonar en el trabajo. Con el modo activo, "
+            summary.setText("Marca con ✓ los artistas o canciones que entran en mi playlist. Con el modo activo, "
                     + "solo se ven y suenan esas (" + ok + ").");
-            toggle.setText(on ? "Modo trabajo ACTIVADO · toca para desactivar" : "Activar modo trabajo");
+            toggle.setText(on ? "Modo mi playlist ACTIVADO · toca para desactivar" : "Activar modo mi playlist");
             toggle.setBackground(Ui.shape(on ? Ui.ACCENT : Ui.SURFACE2, 0, Ui.dp(14)));
             return;
         }
