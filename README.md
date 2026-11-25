@@ -38,6 +38,11 @@ La biblioteca se guarda en caché, así que la app abre al instante y se actuali
 
 Cada push a `main` compila el APK con GitHub Actions y lo publica en Releases.
 
+## Novedades 1.7
+
+- Botones Inicio / Canciones / Álbumes / Artistas en píldoras con degradado que se deslizan.
+- Iconos de la cabecera en círculos; la canción que suena resalta su fila.
+
 ## Novedades 1.6
 
 - Colores nuevos: Aurora, Atardecer, Neón, Selva, Chicle y Perla.

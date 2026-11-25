@@ -180,6 +180,12 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
 
     // ================================================================== interfaz
 
+    private LinearLayout.LayoutParams hdrLp() {
+        LinearLayout.LayoutParams l = new LinearLayout.LayoutParams(Ui.dpi(40), Ui.dpi(40));
+        l.leftMargin = Ui.dpi(6);
+        return l;
+    }
+
     private LinearLayout.LayoutParams lp(int w, int h) { return new LinearLayout.LayoutParams(w, h); }
 
     private void buildUi() {
@@ -199,7 +205,7 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         normalHeader.setPadding(Ui.dpi(24), Ui.dpi(14), Ui.dpi(10), Ui.dpi(4));
         LinearLayout titleBox = new LinearLayout(this);
         titleBox.setOrientation(LinearLayout.VERTICAL);
-        titleTv = Ui.label(this, "Tu música", 34, Ui.TEXT, Ui.SERIF);
+        titleTv = Ui.label(this, "Tu música", 30, Ui.TEXT, Ui.SERIF);
         subTv = Ui.label(this, "", 13, Ui.TEXT2, Ui.REGULAR);
         subTv.setPadding(0, Ui.dpi(6), 0, 0);
         int hr = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
@@ -218,20 +224,24 @@ public class MainActivity extends Activity implements Library.Listener, MusicSer
         ((LinearLayout.LayoutParams) titleBox.getLayoutParams()).weight = 1f;
         IconView searchBtn = new IconView(this, Icons.SEARCH, Ui.TEXT);
         searchBtn.setFrac(0.5f);
+        searchBtn.setCircle(Ui.SURFACE);
         searchBtn.setOnClickListener(v -> openSearch());
         IconView folderBtn = new IconView(this, Icons.FOLDER, Ui.TEXT);
         folderBtn.setFrac(0.5f);
+        folderBtn.setCircle(Ui.SURFACE);
         folderBtn.setOnClickListener(v -> showSources(false));
         workBtn = new IconView(this, Icons.LOCK, ShuffleRules.workOn() ? Ui.ACCENT : Ui.TEXT);
         workBtn.setFrac(0.5f);
+        workBtn.setCircle(Ui.SURFACE);
         workBtn.setOnClickListener(v -> openWork());
-        normalHeader.addView(workBtn, lp(Ui.dpi(48), Ui.dpi(48)));
-        normalHeader.addView(searchBtn, lp(Ui.dpi(48), Ui.dpi(48)));
+        normalHeader.addView(workBtn, hdrLp());
+        normalHeader.addView(searchBtn, hdrLp());
         IconView paletteBtn = new IconView(this, Icons.PALETTE, Ui.TEXT);
         paletteBtn.setFrac(0.5f);
+        paletteBtn.setCircle(Ui.SURFACE);
         paletteBtn.setOnClickListener(v -> openSettings());
-        normalHeader.addView(paletteBtn, lp(Ui.dpi(48), Ui.dpi(48)));
-        normalHeader.addView(folderBtn, lp(Ui.dpi(48), Ui.dpi(48)));
+        normalHeader.addView(paletteBtn, hdrLp());
+        normalHeader.addView(folderBtn, hdrLp());
 
         // cabecera de búsqueda
         searchHeader = new LinearLayout(this);

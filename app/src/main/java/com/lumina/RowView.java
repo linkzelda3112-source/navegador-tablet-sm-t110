@@ -39,6 +39,12 @@ final class RowView extends View {
     protected void onDraw(Canvas c) {
         float w = getWidth(), h = getHeight();
         float pad = Ui.dp(20), s = Ui.dp(52);
+        if (current) {
+            r.set(Ui.dp(10), Ui.dp(4), w - Ui.dp(10), h - Ui.dp(4));
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(Ui.withAlpha(Ui.ACCENT, Ui.light ? 34 : 40));
+            c.drawRoundRect(r, Ui.dp(18), Ui.dp(18), p);
+        }
         r.set(pad, (h - s) / 2f, pad + s, (h + s) / 2f);
         Bitmap bm = (art != null && artTrack != null) ? art.get(artTrack, 160, artCb) : null;
         Ui.drawArt(c, p, bm, artTrack == null ? title : artTrack.album + artTrack.artist, r, round ? s / 2f : Ui.dp(12));
