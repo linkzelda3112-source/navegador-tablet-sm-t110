@@ -18,3 +18,7 @@ Rama: `zombies-origins`. El APK se compila con GitHub Actions y se publica en Re
 ## v1.2 — inteligencia colectiva
 - Mapa de rutas compartido (campo de flujo sobre una rejilla con obstáculos): todos los zombis saben cómo llegar al jugador rodeando muros, trincheras, iglesia y puertas cerradas; se recalcula varias veces por segundo (<1 ms).
 - Si te ven, se reparten en posiciones distintas alrededor tuyo para rodearte en vez de apilarse; sin línea de visión siguen la ruta.
+
+## v1.3
+- **Zona de pruebas** (4.º modo del hub): todo gratis y abierto, vida y munición infinitas, zombis de todos los tipos; el botón CAMBIAR recorre las 5 armas y las máquinas de ventajas, la caja y las paredes funcionan sin coste.
+- **TR-74 "Tempest" (Tormenta)** rediseñada a partir de la imagen de referencia: freno de boca ranurado con bronce, carcasa hexagonal, mira holográfica, núcleo de plasma que pulsa, rótulos "TR-74 TEMPEST / TORMENTA", cargador con franjas luminosas y arcos eléctricos animados que se intensifican al disparar.

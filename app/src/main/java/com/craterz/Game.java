@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 /** Toda la lógica del juego: jugador, armas, zombis, rondas, compras y efectos. */
 public final class Game {
-    public static final int MODE_NORMAL = 0, MODE_FAST = 1, MODE_NIGHT = 2;
-    public static final String[] MODE_NAME = {"Supervivencia", "Horda veloz", "Noche cerrada"};
+    public static final int MODE_NORMAL = 0, MODE_FAST = 1, MODE_NIGHT = 2, MODE_TEST = 3;
+    public static final String[] MODE_NAME = {"Supervivencia", "Horda veloz", "Noche cerrada", "Zona de pruebas"};
 
     public static final class Zombie {
         public float x, y, z, yaw, hp, maxHp, speed, scale = 1f, phase, hitFlash, deathT, riseT, atkT, atkCd, grT, stuckT, side, sideT;
@@ -75,6 +75,12 @@ public final class Game {
         ammo[0][0] = Weapons.MAG[Weapons.PISTOL]; ammo[0][1] = Weapons.RESERVE[Weapons.PISTOL];
         points = mode == MODE_FAST ? 1500 : 500;
         if (mode == MODE_FAST) round = 0;
+        if (mode == MODE_TEST) {
+            // zona de pruebas: todo abierto y gratis, vida y munición infinitas, zombis de todos los tipos
+            round = 10; points = 999999; roundActive = true;
+            for (int i = 0; i < world.doors.size(); i++) if (!world.doors.get(i).open) openDoor(i);
+            say("ZONA DE PRUEBAS: todo gratis. CAMBIAR recorre todas las armas");
+        }
         sfx.play(Sfx.ROUND, 0.7f);
     }
 
@@ -160,6 +166,15 @@ public final class Game {
     }
 
     private void swapWeapon() {
+        if (mode == MODE_TEST) {
+            if (swapT > 0) return;
+            int w = (slotW[cur] + 1) % Weapons.COUNT;
+            slotW[cur] = w;
+            ammo[cur][0] = Weapons.MAG[w]; ammo[cur][1] = Weapons.RESERVE[w];
+            swapT = 0.5f; sfx.play(Sfx.SWITCH, 0.4f); reloadT = 0; adsOn = false;
+            say(Weapons.NAME[w]);
+            return;
+        }
         if (slotW[1] < 0 || swapT > 0) return;
         cur = 1 - cur;
         swapT = 0.5f; sfx.play(Sfx.SWITCH, 0.4f); reloadT = 0; adsOn = false;
@@ -354,7 +369,7 @@ public final class Game {
         float dd = (float) Math.hypot(z.x - px, z.z - pz);
         sfx.play(Sfx.ZDIE, Math.max(0.15f, 0.7f - dd / 40f), pan(z.x, z.z));
         ps.blood(z.x, z.y + 1.2f * z.scale, z.z, 0, 0, 0, 10);
-        if (round >= 2 && ups.size() < 1 && rnd() < 0.045f) {
+        if (round >= 2 && ups.size() < 1 && rnd() < (mode == MODE_TEST ? 0.25f : 0.045f)) {
             PowerUp u = new PowerUp();
             u.type = (int) (rnd() * 4); if (u.type > 3) u.type = 3;
             u.x = z.x; u.z = z.z; u.y = world.ground(z.x, z.z) + 0.9f; u.life = 28f;
@@ -378,6 +393,13 @@ public final class Game {
     }
 
     private void updateRounds(float dt) {
+        if (mode == MODE_TEST) {
+            health = maxHealth; points = 999999;
+            for (int s = 0; s < 2; s++) if (slotW[s] >= 0) { ammo[s][0] = Weapons.MAG[slotW[s]]; ammo[s][1] = Weapons.RESERVE[slotW[s]]; }
+            spawnTimer -= dt;
+            if (alive < 6 && spawnTimer <= 0) { spawnZombie(); alive++; spawnTimer = 1.5f; }
+            return;
+        }
         if (!roundActive) {
             roundWait -= dt;
             if (roundWait <= 0) {
@@ -565,8 +587,7 @@ public final class Game {
         over = true;
         health = 0;
         sfx.play(Sfx.END, 0.9f);
-        Prefs.saveRecord(mode, round, points, kills);
-        Prefs.addKills(kills);
+        if (mode != MODE_TEST) { Prefs.saveRecord(mode, round, points, kills); Prefs.addKills(kills); }
         in.clear();
     }
 

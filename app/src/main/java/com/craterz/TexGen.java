@@ -3,8 +3,8 @@ package com.craterz;
 /** Texturas procedurales (difusa + mapa de normales con brillo en el canal alfa). Todo generado por código. */
 public final class TexGen {
     public static final int N = 256;
-    public static final int MUD = 0, BRICK = 1, WOOD = 2, METAL = 3, CONCRETE = 4, SAND = 5, BARK = 6, ZOMBIE = 7, GUNMETAL = 8, WALNUT = 9;
-    public static final int COUNT = 10;
+    public static final int MUD = 0, BRICK = 1, WOOD = 2, METAL = 3, CONCRETE = 4, SAND = 5, BARK = 6, ZOMBIE = 7, GUNMETAL = 8, WALNUT = 9, TEMPEST = 10;
+    public static final int COUNT = 11;
     public static final int ZN = 512;
 
     public static int size(int id) { return id == ZOMBIE ? ZN : N; }
@@ -74,6 +74,7 @@ public final class TexGen {
             case BARK: bark(m); strength = 6f; break;
             case GUNMETAL: gunmetal(m); strength = 3f; break;
             case WALNUT: walnut(m); strength = 3f; break;
+            case TEMPEST: tempest(m); strength = 2f; break;
             default: zombie(m); strength = 5f; break;
         }
         return finish(m, strength);
@@ -431,6 +432,49 @@ public final class TexGen {
     }
 
     // ----------------------------------------------------- armas: acero pavonado y nogal
+    private static final String[][] FONT = {
+        {"T","11111","00100","00100","00100","00100","00100","00100"},
+        {"R","11110","10001","10001","11110","10100","10010","10001"},
+        {"-","00000","00000","00000","11111","00000","00000","00000"},
+        {"7","11111","00001","00010","00100","01000","01000","01000"},
+        {"4","00010","00110","01010","10010","11111","00010","00010"},
+        {"E","11111","10000","10000","11110","10000","10000","11111"},
+        {"M","10001","11011","10101","10101","10001","10001","10001"},
+        {"P","11110","10001","10001","11110","10000","10000","10000"},
+        {"S","01111","10000","10000","01110","00001","00001","11110"},
+        {"O","01110","10001","10001","10001","10001","10001","01110"},
+        {"N","10001","11001","10101","10011","10001","10001","10001"},
+        {"A","01110","10001","10001","11111","10001","10001","10001"},
+    };
+
+    private static void drawText(Img m, String s, int x0, int yTop, int sc) {
+        int x = x0;
+        for (int ci = 0; ci < s.length(); ci++, x += 6 * sc) {
+            String[] gl = null;
+            for (int k = 0; k < FONT.length; k++) if (FONT[k][0].charAt(0) == s.charAt(ci)) gl = FONT[k];
+            if (gl == null) continue;
+            for (int ry = 0; ry < 7; ry++)
+                for (int rx = 0; rx < 5; rx++) {
+                    if (gl[1 + ry].charAt(rx) != '1') continue;
+                    for (int py = 0; py < sc; py++)
+                        for (int px = 0; px < sc; px++) {
+                            int xx = x + rx * sc + px, yy = m.h - 1 - (yTop + ry * sc + py); // v crece hacia arriba
+                            if (xx < 0 || xx >= m.w || yy < 0 || yy >= m.h) continue;
+                            m.set(xx, yy, 0.45f, 0.95f, 1.0f, 0.04f, 0.2f);
+                        }
+                }
+        }
+    }
+
+    /** Pantalla oscura con letras cian (TR-74 TEMPEST / TORMENTA) y un bloque blanco para zonas emisivas. */
+    private static void tempest(Img m) {
+        for (int y = 0; y < m.h; y++)
+            for (int x = 0; x < m.w; x++) m.set(x, y, 0.035f, 0.06f + 0.01f * Noise.rnd(x, y, 7), 0.08f, 0f, 0.3f);
+        drawText(m, "TR-74 TEMPEST", 12, 8, 3);
+        drawText(m, "TORMENTA", 32, 42, 4);
+        for (int y = 0; y < 24; y++) for (int x = 232; x < 256; x++) m.set(x, y, 1f, 1f, 1f, 0f, 0.1f);
+    }
+
     private static void gunmetal(Img m) {
         int n = m.w;
         for (int y = 0; y < n; y++) {

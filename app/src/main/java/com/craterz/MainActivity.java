@@ -258,14 +258,14 @@ public class MainActivity extends Activity {
                 }
                 case MODES: {
                     text(c, "ELIGE UN MODO", w / 2f, h * 0.17f, u * 0.08f, 0xFFD8E4E8, Paint.Align.CENTER, serif);
-                    float y = h * 0.26f;
-                    String[] desc = {"Rondas infinitas en El Cráter. Compra puertas, armas y ventajas.", "Los zombis corren desde el inicio. Empiezas con más puntos.", "Casi sin luz y con niebla densa. Escucha y usa las luces."};
-                    for (int i = 0; i < 3; i++) {
-                        button(c, i, Game.MODE_NAME[i], x, y, bw, bh, i == 0 ? 0xFFB01818 : (i == 1 ? 0xFFD08030 : 0xFF506890));
+                    float y = h * 0.23f;
+                    String[] desc = {"Rondas infinitas en El Cráter. Compra puertas, armas y ventajas.", "Los zombis corren desde el inicio. Empiezas con más puntos.", "Casi sin luz y con niebla densa. Escucha y usa las luces.", "Todo gratis: todas las armas, bebidas, puertas abiertas, sin morir."};
+                    for (int i = 0; i < 4; i++) {
+                        button(c, i, Game.MODE_NAME[i], x, y, bw, bh, i == 0 ? 0xFFB01818 : (i == 1 ? 0xFFD08030 : (i == 2 ? 0xFF506890 : 0xFF3C8C5C)));
                         text(c, desc[i], w / 2f, y + bh + u * 0.04f, u * 0.032f, 0xBBFFFFFF, Paint.Align.CENTER, bold);
-                        y += bh * 1.55f;
+                        y += bh * 1.4f;
                     }
-                    button(c, 3, "Volver", x + bw * 0.25f, y, bw * 0.5f, bh * 0.8f, 0xFF7090A0);
+                    button(c, 4, "Volver", x + bw * 0.25f, y, bw * 0.5f, bh * 0.8f, 0xFF7090A0);
                     break;
                 }
                 case SETTINGS: {
@@ -310,7 +310,7 @@ public class MainActivity extends Activity {
                     break;
                 }
             }
-            text(c, "v1.2  ·  mapa y personajes originales", w / 2f, h - u * 0.025f, u * 0.026f, 0x88FFFFFF, Paint.Align.CENTER, bold);
+            text(c, "v1.3  ·  mapa y personajes originales", w / 2f, h - u * 0.025f, u * 0.026f, 0x88FFFFFF, Paint.Align.CENTER, bold);
         }
 
         @Override
@@ -325,7 +325,7 @@ public class MainActivity extends Activity {
                     if (hit == 0) screen = MODES; else if (hit == 1) screen = SETTINGS; else if (hit == 2) screen = RECORDS; else screen = HELP;
                     break;
                 case MODES:
-                    if (hit < 3) play(hit); else screen = HOME;
+                    if (hit < 4) play(hit); else screen = HOME;
                     break;
                 case SETTINGS:
                     if (hit == 0) Prefs.setQuality((Prefs.quality() + 1) % 3);

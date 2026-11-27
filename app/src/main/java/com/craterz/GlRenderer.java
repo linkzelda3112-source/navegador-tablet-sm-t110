@@ -915,6 +915,28 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
         tex(TexGen.ZOMBIE);
         drawGroup(w, 2, model, 0, 0, 0);
         drawGroup(w, 5, model, 0, 0, back * (w == Weapons.SHOTGUN ? 1f : 0f));
+        if (w == Weapons.STORM) {
+            // luces, arcos eléctricos animados, núcleo de plasma que pulsa y letras
+            tex(TexGen.TEMPEST);
+            drawGroup(w, WeaponModels.G_GLOW, model, 0, 0, 0);
+            drawGroup(w, WeaponModels.G_MAGGLOW, model, 0, drop, 0);
+            drawGroup(w, WeaponModels.G_TEXT, model, 0, 0, 0);
+            float shotK = Math.max(0f, 1f - g.sinceShot * 3f);
+            float pulse = 0.93f + 0.07f * (float) Math.sin(time * 6f) + 0.12f * shotK;
+            System.arraycopy(model, 0, vmTmp, 0, 16);
+            Mat4.translate(vmTmp, 0, 0.058f, -0.1f);
+            Mat4.scale(vmTmp, 1f, pulse, pulse);
+            Mat4.translate(vmTmp, 0, -0.058f, 0.1f);
+            uniM(pMain, "uModel", vmTmp);
+            bindMesh(pMain, wVbo[w][WeaponModels.G_CORE][0]);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, wCnt[w][WeaponModels.G_CORE]);
+            int fr = (int) (time * 24f);
+            int v1 = fr % WeaponModels.N_ARC;
+            float hsh = hash1(fr, 11);
+            boolean on = hsh > 0.18f || g.sinceShot < 0.4f;
+            if (on) drawGroup(w, WeaponModels.G_ARC0 + v1, model, 0, 0, 0);
+            if (g.sinceShot < 0.45f || hsh > 0.7f) drawGroup(w, WeaponModels.G_ARC0 + (v1 + 2 + (fr / 4) % 2) % WeaponModels.N_ARC, model, 0, 0, 0);
+        }
         uniM(pMain, "uModel", model);
         // fogonazo
         if (g.flashT > 0) {
