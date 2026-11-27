@@ -191,8 +191,8 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
     private int[] doorVbo, doorCnt;
     private int[][] zVbo = new int[ZombieModel.NPARTS][1];
     private int[] zCnt = new int[ZombieModel.NPARTS];
-    private final int[][][] wVbo = new int[Weapons.COUNT][3][1];
-    private final int[][] wCnt = new int[Weapons.COUNT][3];
+    private final int[][][] wVbo = new int[Weapons.COUNT][WeaponModels.GROUPS][1];
+    private final int[][] wCnt = new int[Weapons.COUNT][WeaponModels.GROUPS];
     private final boolean[] wBuilt = new boolean[Weapons.COUNT];
     private final int[] puVbo = new int[4], puCnt = new int[4];
     private int partVbo, quadVbo;
@@ -241,8 +241,9 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
 
         for (int i = 0; i < TexGen.COUNT; i++) {
             byte[][] t = TexGen.get(i);
-            diffuse[i] = texture(t[0], TexGen.N, TexGen.N, true, true);
-            normal[i] = texture(t[1], TexGen.N, TexGen.N, true, true);
+            int sz = TexGen.size(i);
+            diffuse[i] = texture(t[0], sz, sz, true, true);
+            normal[i] = texture(t[1], sz, sz, true, true);
         }
         texPart = texture(TexGen.particles(), 128, 128, false, false);
         texCloud = texture(TexGen.clouds(), 256, 256, false, true);
@@ -734,67 +735,106 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
 
     private final float[] hipM = new float[16], torsoM = new float[16], jointM = new float[16], partM = new float[16], sub = new float[16];
 
+    private static float sn(double v) { return (float) Math.sin(v); }
+
     private void drawZombie(Game.Zombie z, int prog) {
         float s = z.scale;
         float ph = z.phase;
+        int gait = z.gait;           // 0 arrastrado, 1 cojo, 2 tambaleo, 3 abalanzado
         float walk = z.state == 1 ? 1f : 0.2f;
-        float swing = (z.tier == 0 ? 26f : (z.tier == 1 ? 40f : 55f)) * walk;
-        float lean = z.tier == 0 ? 8f : (z.tier == 1 ? 18f : 30f);
-        float armBase = z.tier == 2 ? -35f : -78f;
-        float armPump = z.tier == 2 ? 45f : 8f;
-        float y = z.y + 0.97f * s + (float) Math.abs(Math.sin(ph)) * 0.035f * s;
+        float swing = (z.tier == 0 ? 24f : (z.tier == 1 ? 38f : 54f)) * walk;
+        float lean = z.tier == 0 ? 9f : (z.tier == 1 ? 18f : 30f);
+        float armBase = z.tier == 2 ? -38f : (gait == 3 ? -92f : -74f);
+        float armPump = z.tier == 2 ? 42f : 8f;
+        float headRoll = sn(ph * 0.7f + 1f) * 8f + (gait == 1 ? 14f : 6f);
+        float limp = gait == 1 ? 1f : 0f;
+        float stag = z.hitFlash > 0 ? Math.min(1f, z.hitFlash * 4f) : 0f;
+        float y = z.y + 0.97f * s + (float) Math.abs(sn(ph)) * (gait == 2 ? 0.05f : 0.03f) * s;
         float fall = 0;
-        if (z.state == 0) { y -= 2.1f * (1f - z.riseT) * s; lean = 55f * (1f - z.riseT); armBase = -100f; swing = 0; }
+        float riseK = 0;
+        if (z.state == 0) {
+            riseK = 1f - z.riseT;
+            y -= 2.1f * riseK * s;
+            lean = 60f * riseK; armBase = -105f; swing = 0;
+        }
+        float dir = z.seed < 0.5f ? 1f : -1f;
         if (z.state == 2) {
-            fall = Math.min(1f, z.deathT / 0.7f);
+            fall = Math.min(1f, z.deathT / (z.seed < 0.33f ? 0.55f : 0.85f));
             fall = fall * fall * (3 - 2 * fall);
             y = z.y + (0.97f - 0.77f * fall) * s - Math.max(0f, z.deathT - 4.5f) * 0.45f;
             swing = 0;
         }
-        float atk = z.atkT > 0 ? (float) Math.sin(Math.PI * (1f - z.atkT / 0.45f)) : 0f;
+        float atk = z.atkT > 0 ? sn(Math.PI * (1f - z.atkT / 0.45f)) : 0f;
         Mat4.identity(hipM);
         Mat4.translate(hipM, z.x, y, z.z);
         Mat4.rotateY(hipM, 180f - z.yaw);
         Mat4.scale(hipM, s, s, s);
-        if (z.state == 2) { Mat4.rotateX(hipM, -88f * fall); Mat4.translate(hipM, 0, 0, 0); }
+        if (z.state == 2) {
+            // caída variada: de espaldas, de lado o de bruces
+            if (z.seed < 0.33f) Mat4.rotateX(hipM, -88f * fall);
+            else if (z.seed < 0.66f) { Mat4.rotateZ(hipM, 84f * fall * dir); Mat4.rotateX(hipM, -20f * fall); }
+            else Mat4.rotateX(hipM, 86f * fall);
+        } else if (stag > 0) {
+            Mat4.rotateX(hipM, -9f * stag);
+        }
+        boolean coat = z.variant < 2;
+        boolean helmet = z.variant == 0 || z.variant == 3;
+        float hipSway = sn(ph) * (gait == 2 ? 7f : 4f) * walk;
+        Mat4.rotateZ(hipM, hipSway * 0.5f);
         // torso
         System.arraycopy(hipM, 0, torsoM, 0, 16);
-        float sway = (float) Math.sin(ph * 0.5f) * 5f;
-        Mat4.rotateX(torsoM, lean + atk * 28f);
-        Mat4.rotateZ(torsoM, sway);
-        part(prog, ZombieModel.TORSO, torsoM);
+        float sway = sn(ph * 0.5f) * (gait == 2 ? 9f : 5f);
+        Mat4.rotateX(torsoM, lean + atk * 28f - stag * 10f);
+        Mat4.rotateZ(torsoM, sway - limp * 5f);
+        part(prog, coat ? ZombieModel.TORSO_COAT : ZombieModel.TORSO_RAG, torsoM);
         // cabeza
         System.arraycopy(torsoM, 0, jointM, 0, 16);
-        Mat4.translate(jointM, 0, 0.57f, 0);
-        Mat4.rotateZ(jointM, (float) Math.sin(ph * 0.7f + 1f) * 9f + 8f);
-        Mat4.rotateX(jointM, -lean * 0.8f + (float) Math.sin(ph * 0.5f) * 5f);
+        Mat4.translate(jointM, 0, 0.585f, 0);
+        Mat4.rotateZ(jointM, headRoll + stag * 12f);
+        Mat4.rotateX(jointM, -lean * 0.8f + sn(ph * 0.5f) * 5f + stag * 14f);
         part(prog, ZombieModel.HEAD, jointM);
-        if (prog == pMain) part(prog, ZombieModel.EYES, jointM);
+        if (helmet) {
+            System.arraycopy(jointM, 0, sub, 0, 16);
+            Mat4.translate(sub, 0, 0.165f, 0);
+            part(prog, ZombieModel.HELMET, sub);
+        }
+        // mandíbula: abierta al atacar / gruñir, colgando al morir
+        float jawOpen = 10f + 8f * (0.5f + 0.5f * sn(ph * 1.3f)) + atk * 22f + (z.state == 2 ? 24f : 0f) + (z.tier == 2 ? 14f : 0f);
+        System.arraycopy(jointM, 0, sub, 0, 16);
+        Mat4.translate(sub, 0, 0.095f, -0.035f);
+        Mat4.rotateX(sub, jawOpen);
+        Mat4.translate(sub, 0, -0.095f, 0.035f);
+        part(prog, ZombieModel.JAW, sub);
         // brazos
         for (int side = -1; side <= 1; side += 2) {
             System.arraycopy(torsoM, 0, jointM, 0, 16);
             Mat4.translate(jointM, side * 0.31f, 0.48f, 0);
-            float a = armBase + (side > 0 ? 1 : -1) * (float) Math.sin(ph) * armPump - atk * 22f;
+            float a = armBase + (side > 0 ? 1 : -1) * sn(ph) * armPump - atk * 22f + stag * 25f;
+            if (gait == 3) a += (side > 0 ? 6f : -16f);
             if (z.state == 2) a = -20f + side * 18f;
             Mat4.rotateX(jointM, a);
-            Mat4.rotateZ(jointM, side * (-5f - (float) Math.sin(ph * 0.5f + side) * 4f));
-            part(prog, ZombieModel.UARM, jointM);
+            Mat4.rotateZ(jointM, side * (-5f - sn(ph * 0.5f + side) * 4f));
+            part(prog, coat ? ZombieModel.UARM_COAT : ZombieModel.UARM_BARE, jointM);
             System.arraycopy(jointM, 0, sub, 0, 16);
             Mat4.translate(sub, 0, -0.3f, 0);
-            Mat4.rotateX(sub, -22f - (z.tier == 2 ? 50f : 0f) + (float) Math.sin(ph + side) * 6f);
-            part(prog, ZombieModel.FARM, sub);
+            Mat4.rotateX(sub, -22f - (z.tier == 2 ? 50f : 0f) + sn(ph + side) * 6f);
+            part(prog, side < 0 ? ZombieModel.FARM_NEG : ZombieModel.FARM_POS, sub);
         }
         // piernas
         for (int side = -1; side <= 1; side += 2) {
             System.arraycopy(hipM, 0, jointM, 0, 16);
             Mat4.translate(jointM, side * 0.11f, 0, 0);
-            float a = (float) Math.sin(ph + (side > 0 ? 0 : Math.PI)) * swing;
+            float sw = swing * ((limp > 0 && side > 0) ? 0.45f : 1f);
+            float a = sn(ph + (side > 0 ? 0 : Math.PI)) * sw;
+            if (gait == 0) a = a * 0.8f - 6f * walk;
             if (z.state == 2) a = 10f * side;
             Mat4.rotateX(jointM, a);
+            Mat4.rotateZ(jointM, -side * 2f);
             part(prog, ZombieModel.THIGH, jointM);
             System.arraycopy(jointM, 0, sub, 0, 16);
-            Mat4.translate(sub, 0, -0.46f, 0);
-            float bend = Math.max(0f, -(float) Math.sin(ph + (side > 0 ? 0 : Math.PI) + 0.9f)) * swing * 1.4f;
+            Mat4.translate(sub, 0, -0.47f, 0);
+            float bend = Math.max(0f, -sn(ph + (side > 0 ? 0 : Math.PI) + 0.9f)) * sw * 1.4f;
+            if (limp > 0 && side > 0) bend *= 0.5f;
             Mat4.rotateX(sub, -bend);
             part(prog, ZombieModel.SHIN, sub);
         }
@@ -803,11 +843,23 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
     // ------------------------------------------------------------------ arma en primera persona
     private void buildWeapon(int w) {
         float[][] v = WeaponModels.view(w);
-        for (int k = 0; k < 3; k++) {
+        for (int k = 0; k < WeaponModels.GROUPS; k++) {
+            if (v[k].length == 0) { wCnt[w][k] = 0; continue; }
             wVbo[w][k][0] = buffer(v[k], v[k].length);
             wCnt[w][k] = v[k].length / MeshBuilder.STRIDE;
         }
         wBuilt[w] = true;
+    }
+
+    private final float[] vmPart = new float[16], vmTmp = new float[16];
+
+    private void drawGroup(int w, int k, float[] base, float dx, float dy, float dz) {
+        if (wCnt[w][k] == 0) return;
+        System.arraycopy(base, 0, vmTmp, 0, 16);
+        if (dx != 0 || dy != 0 || dz != 0) Mat4.translate(vmTmp, dx, dy, dz);
+        uniM(pMain, "uModel", vmTmp);
+        bindMesh(pMain, wVbo[w][k][0]);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, wCnt[w][k]);
     }
 
     private void drawViewModel(float aspect) {
@@ -851,12 +903,19 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
         uni1(pMain, "uShadowOn", 0f);
         uniM(pMain, "uModel", model);
         uni3(pMain, "uTint", 1, 1, 1);
-        tex(World.M_METAL);
-        bindMesh(pMain, wVbo[w][0][0]); GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, wCnt[w][0]);
-        tex(World.M_WOOD);
-        bindMesh(pMain, wVbo[w][1][0]); GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, wCnt[w][1]);
+        float rp = g.reloadT > 0 ? 1f - g.reloadT / Math.max(0.1f, g.reloadDur) : 0f;
+        float back = g.swapT > 0 ? 0f : WeaponModels.slideBack(w, g.sinceShot, rp);
+        float drop = WeaponModels.magDrop(rp);
+        tex(TexGen.GUNMETAL);
+        drawGroup(w, 0, model, 0, 0, 0);
+        drawGroup(w, 3, model, 0, 0, back);
+        drawGroup(w, 4, model, 0, drop, 0);
+        tex(TexGen.WALNUT);
+        drawGroup(w, 1, model, 0, 0, 0);
         tex(TexGen.ZOMBIE);
-        bindMesh(pMain, wVbo[w][2][0]); GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, wCnt[w][2]);
+        drawGroup(w, 2, model, 0, 0, 0);
+        drawGroup(w, 5, model, 0, 0, back * (w == Weapons.SHOTGUN ? 1f : 0f));
+        uniM(pMain, "uModel", model);
         // fogonazo
         if (g.flashT > 0) {
             float[] mz = WeaponModels.muzzle(w);

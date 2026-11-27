@@ -3,8 +3,11 @@ package com.craterz;
 /** Texturas procedurales (difusa + mapa de normales con brillo en el canal alfa). Todo generado por código. */
 public final class TexGen {
     public static final int N = 256;
-    public static final int MUD = 0, BRICK = 1, WOOD = 2, METAL = 3, CONCRETE = 4, SAND = 5, BARK = 6, ZOMBIE = 7;
-    public static final int COUNT = 8;
+    public static final int MUD = 0, BRICK = 1, WOOD = 2, METAL = 3, CONCRETE = 4, SAND = 5, BARK = 6, ZOMBIE = 7, GUNMETAL = 8, WALNUT = 9;
+    public static final int COUNT = 10;
+    public static final int ZN = 512;
+
+    public static int size(int id) { return id == ZOMBIE ? ZN : N; }
 
     private static final byte[][][] cache = new byte[COUNT][][];
     private static byte[] particleAtlas, cloudTex;
@@ -59,7 +62,7 @@ public final class TexGen {
     }
 
     private static byte[][] build(int id) {
-        Img m = new Img(N, N);
+        Img m = new Img(size(id), size(id));
         float strength;
         switch (id) {
             case MUD: mud(m); strength = 5f; break;
@@ -69,7 +72,9 @@ public final class TexGen {
             case CONCRETE: concrete(m); strength = 5f; break;
             case SAND: sand(m); strength = 5f; break;
             case BARK: bark(m); strength = 6f; break;
-            default: zombie(m); strength = 4f; break;
+            case GUNMETAL: gunmetal(m); strength = 3f; break;
+            case WALNUT: walnut(m); strength = 3f; break;
+            default: zombie(m); strength = 5f; break;
         }
         return finish(m, strength);
     }
@@ -309,43 +314,157 @@ public final class TexGen {
     }
 
     // ------------------------------------------------------------ ZOMBIE
-    /** Atlas: mitad superior = piel putrefacta, mitad inferior = ropa hecha jirones. */
+    /** Atlas 512: A=piel, B=cara, C=tela de uniforme, D=cuero (izq.) y acero de casco (der.). */
     private static void zombie(Img m) {
-        int n = m.w, half = n / 2;
+        int n = m.w, h = n / 2;
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
-                float u = x / (float) n;
-                if (y < half) {
-                    float v = y / (float) half;
-                    float mott = Noise.fbmWrap(u, v, 6, 3, 4, 71);
-                    float cr = mix(0.55f, 0.43f, mott), cg = mix(0.58f, 0.42f, mott), cb = mix(0.50f, 0.34f, mott);
-                    float bruise = ss(0.60f, 0.72f, Noise.fbmWrap(u, v, 5, 3, 4, 74));
-                    cr = mix(cr, 0.34f, bruise * 0.7f); cg = mix(cg, 0.33f, bruise * 0.7f); cb = mix(cb, 0.48f, bruise * 0.7f);
-                    float vr = Math.abs(Noise.fbmWrap(u, v, 8, 4, 3, 72) - 0.5f);
-                    float vein = ss(0.04f, 0.005f, vr);
-                    cr = mix(cr, 0.28f, vein * 0.8f); cg = mix(cg, 0.22f, vein * 0.8f); cb = mix(cb, 0.34f, vein * 0.8f);
-                    float blood = ss(0.64f, 0.70f, Noise.fbmWrap(u, v, 10, 5, 3, 73));
-                    cr = mix(cr, 0.30f, blood * 0.85f); cg = mix(cg, 0.04f, blood * 0.85f); cb = mix(cb, 0.03f, blood * 0.85f);
-                    float dirt = 0.75f + 0.3f * Noise.fbmWrap(u, v, 4, 2, 4, 75);
-                    float pore = Noise.rnd(x, y, 76);
-                    m.set(x, y, cr * dirt, cg * dirt, cb * dirt, mott * 0.3f + pore * 0.1f + vein * 0.25f - blood * 0.1f, 0.35f);
-                } else {
-                    int ly = y - half;
-                    float v = ly / (float) half;
-                    float weave = (float) (Math.sin(x * 1.7f) * Math.sin(ly * 1.7f)) * 0.5f + 0.5f;
-                    float t = Noise.fbmWrap(u, v, 5, 3, 4, 81);
-                    float cr = mix(0.18f, 0.30f, t), cg = mix(0.20f, 0.29f, t), cb = mix(0.14f, 0.2f, t);
-                    float k = 0.7f + 0.3f * weave;
-                    cr *= k; cg *= k; cb *= k;
-                    float stain = ss(0.60f, 0.68f, Noise.fbmWrap(u, v, 7, 4, 3, 82));
-                    cr = mix(cr, 0.28f, stain * 0.8f); cg = mix(cg, 0.05f, stain * 0.8f); cb = mix(cb, 0.04f, stain * 0.8f);
-                    float mud = ss(0.5f, 0.75f, Noise.fbmWrap(u, v, 3, 2, 3, 83));
-                    cr = mix(cr, 0.16f, mud * 0.5f); cg = mix(cg, 0.12f, mud * 0.5f); cb = mix(cb, 0.08f, mud * 0.5f);
-                    float hole = ss(0.70f, 0.78f, Noise.fbmWrap(u, v, 7, 3, 3, 84));
-                    cr *= 1f - hole * 0.8f; cg *= 1f - hole * 0.8f; cb *= 1f - hole * 0.8f;
-                    float seam = (ly == 63 || ly == 64) ? 0.55f : 1f;
-                    m.set(x, y, cr * seam, cg * seam, cb * seam, weave * 0.5f - hole * 0.6f, 0.05f);
-                }
+                int qx = x / h, qy = y / h;
+                float lu = (x % h) / (float) h, lv = (y % h) / (float) h;
+                if (qy == 0) skin(m, x, y, lu, lv, qx == 1);
+                else if (qx == 0) cloth(m, x, y, lu, lv);
+                else leatherMetal(m, x, y, lu, lv);
+            }
+        }
+    }
+
+    private static float g3(float x, float y, float cx, float cy, float sx, float sy) {
+        float dx = (x - cx) / sx, dy = (y - cy) / sy;
+        return (float) Math.exp(-(dx * dx + dy * dy));
+    }
+
+    private static void skin(Img m, int x, int y, float lu, float lv, boolean face) {
+        float mott = Noise.fbmWrap(lu, lv, 5, 5, 5, 71);
+        float liv = ss(0.50f, 0.72f, Noise.fbmWrap(lu, lv, 4, 4, 4, 74));
+        float necro = ss(0.55f, 0.74f, Noise.fbmWrap(lu, lv, 6, 6, 4, 77));
+        float vr = Math.abs(Noise.fbmWrap(lu, lv, 9, 9, 4, 72) - 0.5f);
+        float vein = ss(0.030f, 0.003f, vr);
+        float wn = Noise.fbmWrap(lu, lv, 5, 5, 5, 73);
+        float wound = ss(0.715f, 0.75f, wn);
+        float rim = ss(0.68f, 0.715f, wn) * (1f - wound);
+        float scab = ss(0.63f, 0.66f, Noise.fbmWrap(lu, lv, 12, 12, 3, 78)) * (1f - wound);
+        float pore = Noise.rnd(x, y, 76);
+        float cr = mix(0.50f, 0.64f, mott), cg = mix(0.52f, 0.63f, mott), cb = mix(0.45f, 0.54f, mott);
+        cr = mix(cr, 0.34f, liv * 0.7f); cg = mix(cg, 0.31f, liv * 0.7f); cb = mix(cb, 0.44f, liv * 0.7f);
+        cr = mix(cr, 0.46f, necro * 0.55f); cg = mix(cg, 0.52f, necro * 0.55f); cb = mix(cb, 0.26f, necro * 0.55f);
+        cr = mix(cr, 0.28f, vein * 0.75f); cg = mix(cg, 0.22f, vein * 0.75f); cb = mix(cb, 0.38f, vein * 0.75f);
+        cr = mix(cr, 0.22f, scab * 0.8f); cg = mix(cg, 0.10f, scab * 0.8f); cb = mix(cb, 0.07f, scab * 0.8f);
+        cr = mix(cr, 0.24f, rim * 0.8f); cg = mix(cg, 0.07f, rim * 0.8f); cb = mix(cb, 0.06f, rim * 0.8f);
+        float wm = Noise.fbmWrap(lu, lv, 14, 14, 3, 79);
+        cr = mix(cr, 0.42f + 0.12f * wm, wound); cg = mix(cg, 0.05f + 0.05f * wm, wound); cb = mix(cb, 0.05f, wound);
+        float ht = mott * 0.22f + pore * 0.05f + vein * 0.22f + scab * 0.35f - wound * 0.5f - rim * 0.1f;
+        float sp = 0.26f + wound * 0.55f + vein * 0.06f - scab * 0.2f;
+        if (face) {
+            // ojos hundidos, boca, goteo de sangre, cabello
+            float eyeL = g3(lu, lv, 0.448f, 0.40f, 0.045f, 0.055f), eyeR = g3(lu, lv, 0.552f, 0.40f, 0.045f, 0.055f);
+            float eye = Math.min(1f, eyeL + eyeR);
+            cr = mix(cr, 0.16f, eye * 0.85f); cg = mix(cg, 0.10f, eye * 0.85f); cb = mix(cb, 0.14f, eye * 0.85f);
+            float cheek = Math.max(g3(lu, lv, 0.40f, 0.56f, 0.06f, 0.08f), g3(lu, lv, 0.60f, 0.56f, 0.06f, 0.08f));
+            cr *= 1f - cheek * 0.22f; cg *= 1f - cheek * 0.22f; cb *= 1f - cheek * 0.2f;
+            float mouth = g3(lu, lv, 0.5f, 0.72f, 0.06f, 0.012f);
+            cr = mix(cr, 0.18f, mouth * 0.9f); cg = mix(cg, 0.03f, mouth * 0.9f); cb = mix(cb, 0.04f, mouth * 0.9f);
+            float drip = g3(lu, lv, 0.5f + 0.04f * (Noise.value(lv * 9f, 1f, 5) - 0.5f), 0.88f, 0.03f, 0.14f) * ss(0.7f, 0.76f, lv);
+            cr = mix(cr, 0.28f, drip * 0.85f); cg = mix(cg, 0.02f, drip * 0.85f); cb = mix(cb, 0.02f, drip * 0.85f);
+            sp = mix(sp, 0.6f, drip);
+            float hair = ss(0.16f, 0.06f, lv + 0.12f * Noise.fbmWrap(lu, lv, 8, 8, 3, 80)) + ss(0.28f, 0.12f, lv) * ss(0.78f, 0.9f, Math.abs(lu - 0.5f) * 2f);
+            hair = Math.min(1f, hair) * (Noise.fbmWrap(lu, lv, 24, 24, 2, 81) > 0.38f ? 1f : 0.35f);
+            cr = mix(cr, 0.07f, hair * 0.9f); cg = mix(cg, 0.055f, hair * 0.9f); cb = mix(cb, 0.045f, hair * 0.9f);
+            ht += hair * 0.25f - eye * 0.35f - mouth * 0.15f;
+            sp = mix(sp, 0.08f, hair);
+        }
+        float dirt = 0.7f + 0.3f * Noise.fbmWrap(lu, lv, 4, 4, 4, 75);
+        float grime = 1f - 0.35f * ss(0.55f, 0.95f, lv) * Noise.fbmWrap(lu, lv, 6, 3, 3, 83);
+        float k = dirt * grime;
+        m.set(x, y, cr * k, cg * k, cb * k, ht, Noise.clamp(sp, 0f, 1f));
+    }
+
+    private static void cloth(Img m, int x, int y, float lu, float lv) {
+        float wv = (float) (Math.sin(x * 2.3f) * Math.sin(y * 2.3f)) * 0.5f + 0.5f;
+        float wv2 = (float) (Math.sin(x * 0.55f + y * 0.35f)) * 0.5f + 0.5f;
+        float t = Noise.fbmWrap(lu, lv, 5, 5, 5, 81);
+        float cr = mix(0.20f, 0.34f, t), cg = mix(0.22f, 0.33f, t), cb = mix(0.12f, 0.2f, t);
+        float k = 0.72f + 0.2f * wv + 0.08f * wv2;
+        cr *= k; cg *= k; cb *= k;
+        float stain = ss(0.60f, 0.68f, Noise.fbmWrap(lu, lv, 7, 7, 3, 82));
+        cr = mix(cr, 0.26f, stain * 0.85f); cg = mix(cg, 0.03f, stain * 0.85f); cb = mix(cb, 0.03f, stain * 0.85f);
+        float mud = ss(0.35f, 1.0f, lv) * (0.5f + 0.5f * Noise.fbmWrap(lu, lv, 8, 3, 4, 83));
+        cr = mix(cr, 0.15f, mud * 0.65f); cg = mix(cg, 0.11f, mud * 0.65f); cb = mix(cb, 0.07f, mud * 0.65f);
+        float burn = ss(0.68f, 0.76f, Noise.fbmWrap(lu, lv, 6, 6, 4, 85));
+        cr *= 1f - burn * 0.85f; cg *= 1f - burn * 0.85f; cb *= 1f - burn * 0.85f;
+        float rn = Noise.fbmWrap(lu, lv, 7, 7, 4, 84);
+        float hole = ss(0.715f, 0.745f, rn);
+        float fray = ss(0.69f, 0.715f, rn) * (1f - hole);
+        cr = mix(cr, 0.40f, hole); cg = mix(cg, 0.34f, hole); cb = mix(cb, 0.27f, hole);
+        cr = mix(cr, cr * 1.2f, fray * 0.6f);
+        float seam = (float) Math.exp(-Math.pow((lu - 0.5f) * 90f, 2)) + (float) Math.exp(-Math.pow((lu - 0.02f) * 90f, 2));
+        cr *= 1f - seam * 0.35f; cg *= 1f - seam * 0.35f; cb *= 1f - seam * 0.35f;
+        m.set(x, y, cr, cg, cb, wv * 0.4f + wv2 * 0.1f - hole * 0.6f + fray * 0.2f + seam * -0.3f, 0.05f + stain * 0.3f);
+    }
+
+    private static void leatherMetal(Img m, int x, int y, float lu, float lv) {
+        if (lu < 0.5f) {
+            float u = lu * 2f;
+            float cr = Noise.fbmWrap(u, lv, 6, 6, 5, 91);
+            float crack = ss(0.035f, 0.004f, Math.abs(Noise.fbmWrap(u, lv, 10, 10, 4, 92) - 0.5f));
+            float base = 0.7f + 0.5f * cr;
+            float r = 0.25f * base, g = 0.145f * base, b = 0.085f * base;
+            float wear = ss(0.6f, 0.78f, Noise.fbmWrap(u, lv, 5, 5, 3, 93));
+            r = mix(r, 0.36f, wear * 0.5f); g = mix(g, 0.26f, wear * 0.5f); b = mix(b, 0.17f, wear * 0.5f);
+            r *= 1f - crack * 0.7f; g *= 1f - crack * 0.7f; b *= 1f - crack * 0.7f;
+            float stitch = ((x % 9) < 4 ? 1f : 0f) * (g3(u, lv, 0.5f, 0.08f, 2f, 0.012f) + g3(u, lv, 0.5f, 0.92f, 2f, 0.012f));
+            r = mix(r, 0.5f, Math.min(1f, stitch) * 0.7f); g = mix(g, 0.42f, Math.min(1f, stitch) * 0.7f); b = mix(b, 0.3f, Math.min(1f, stitch) * 0.7f);
+            float mud = ss(0.5f, 1.0f, lv) * Noise.fbmWrap(u, lv, 8, 4, 3, 94);
+            r = mix(r, 0.14f, mud * 0.6f); g = mix(g, 0.1f, mud * 0.6f); b = mix(b, 0.06f, mud * 0.6f);
+            m.set(x, y, r, g, b, cr * 0.5f - crack * 0.5f + stitch * 0.2f, 0.22f + wear * 0.2f);
+        } else {
+            float u = (lu - 0.5f) * 2f;
+            float dent = Noise.fbmWrap(u, lv, 3, 3, 3, 95);
+            float rust = ss(0.55f, 0.75f, Noise.fbmWrap(u, lv, 7, 7, 5, 96));
+            float scr = Noise.fbmWrap(u, lv, 2, 48, 2, 97);
+            float r = 0.30f + 0.05f * dent, g = 0.33f + 0.05f * dent, b = 0.27f + 0.04f * dent;
+            r = mix(r, 0.46f, rust * 0.8f); g = mix(g, 0.21f, rust * 0.8f); b = mix(b, 0.08f, rust * 0.8f);
+            if (scr > 0.66f) { r += 0.1f; g += 0.1f; b += 0.09f; }
+            float spk = Noise.rnd(x, y, 98) > 0.985f ? 0.2f : 0f;
+            r += spk; g += spk * 0.6f; b += spk * 0.3f;
+            m.set(x, y, r, g, b, dent * 0.5f + rust * 0.12f, (1f - rust) * 0.5f + 0.1f);
+        }
+    }
+
+    // ----------------------------------------------------- armas: acero pavonado y nogal
+    private static void gunmetal(Img m) {
+        int n = m.w;
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                float u = x / (float) n, v = y / (float) n;
+                float brushed = Noise.fbmWrap(u, v, 3, 96, 3, 101);
+                float grain = Noise.rnd(x, y, 102);
+                float wear = ss(0.60f, 0.80f, Noise.fbmWrap(u, v, 6, 6, 5, 103));
+                float k = 0.10f + 0.06f * brushed + 0.02f * grain;
+                float r = k * 0.95f, g = k * 1.0f, b = k * 1.12f;
+                r = mix(r, 0.30f, wear * 0.7f); g = mix(g, 0.30f, wear * 0.7f); b = mix(b, 0.31f, wear * 0.7f);
+                float oil = ss(0.55f, 0.8f, Noise.fbmWrap(u, v, 4, 4, 3, 104));
+                r *= 1f - oil * 0.25f; g *= 1f - oil * 0.25f; b *= 1f - oil * 0.2f;
+                float scratch = Noise.fbmWrap(u, v, 40, 2, 2, 105) > 0.7f ? 0.1f : 0f;
+                r += scratch; g += scratch; b += scratch;
+                m.set(x, y, r, g, b, brushed * 0.3f + grain * 0.06f + wear * 0.05f, 0.55f + wear * 0.15f + oil * 0.2f);
+            }
+        }
+    }
+
+    private static void walnut(Img m) {
+        int n = m.w;
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                float u = x / (float) n, v = y / (float) n;
+                float gr = Noise.fbmWrap(u, v, 3, 40, 4, 111);
+                float ring = (float) Math.sin(v * 6.2831853f * 14f + gr * 9f) * 0.5f + 0.5f;
+                float fig = Noise.fbmWrap(u, v, 6, 6, 3, 112);
+                float k = 0.6f + 0.4f * ring * gr + 0.15f * fig;
+                float r = 0.32f * k, g = 0.19f * k, b = 0.10f * k;
+                float dark = ss(0.55f, 0.75f, Noise.fbmWrap(u, v, 5, 5, 3, 113));
+                r = mix(r, 0.12f, dark * 0.5f); g = mix(g, 0.07f, dark * 0.5f); b = mix(b, 0.04f, dark * 0.5f);
+                float scuff = Noise.fbmWrap(u, v, 20, 20, 2, 114) > 0.72f ? 0.06f : 0f;
+                m.set(x, y, r + scuff, g + scuff, b + scuff * 0.6f, ring * 0.25f + gr * 0.2f - scuff * 2f, 0.38f);
             }
         }
     }

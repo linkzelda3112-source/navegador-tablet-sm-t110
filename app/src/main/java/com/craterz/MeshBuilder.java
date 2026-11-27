@@ -249,6 +249,103 @@ public final class MeshBuilder {
         }
     }
 
+    // ------------------------------------------------------------------ superficies orgánicas
+    private final float[] sp0 = new float[9], sn0 = new float[9], st0 = new float[9], su0 = new float[6];
+
+    /**
+     * Superficie suave a partir de una rejilla de posiciones [filas i][columnas j][xyz].
+     * Si closed, la última columna se une con la primera. Normales por diferencias finitas.
+     * u de u0 a u1 a lo largo de j, v de v0 a v1 a lo largo de i. outward: sentido de la normal (+1 / -1).
+     */
+    public void surface(float[][][] g, boolean closed, float u0, float u1, float v0, float v1, float outward) {
+        int rows = g.length, cols = g[0].length;
+        int cj = closed ? cols : cols - 1;
+        float[][][] n = new float[rows][cols][3], tg = new float[rows][cols][3];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int j0 = closed ? (j - 1 + cols) % cols : Math.max(0, j - 1), j1 = closed ? (j + 1) % cols : Math.min(cols - 1, j + 1);
+                int i0 = Math.max(0, i - 1), i1 = Math.min(rows - 1, i + 1);
+                float ax = g[i][j1][0] - g[i][j0][0], ay = g[i][j1][1] - g[i][j0][1], az = g[i][j1][2] - g[i][j0][2];
+                float bx = g[i1][j][0] - g[i0][j][0], by = g[i1][j][1] - g[i0][j][1], bz = g[i1][j][2] - g[i0][j][2];
+                float nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+                float l = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+                if (l < 1e-9f) { nx = 0; ny = 1; nz = 0; l = 1; }
+                n[i][j][0] = nx / l * outward; n[i][j][1] = ny / l * outward; n[i][j][2] = nz / l * outward;
+                float al = (float) Math.sqrt(ax * ax + ay * ay + az * az) + 1e-9f;
+                tg[i][j][0] = ax / al; tg[i][j][1] = ay / al; tg[i][j][2] = az / al;
+            }
+        }
+        for (int i = 0; i < rows - 1; i++) {
+            for (int j = 0; j < cj; j++) {
+                int jn = (j + 1) % cols;
+                int[][] c = {{i, j}, {i, jn}, {i + 1, jn}, {i + 1, j}};
+                float[] uu = {u0 + (u1 - u0) * j / cj, u0 + (u1 - u0) * (j + 1) / cj};
+                float va = v0 + (v1 - v0) * i / (rows - 1), vb = v0 + (v1 - v0) * (i + 1) / (rows - 1);
+                float[] uvs = {uu[0], va, uu[1], va, uu[1], vb, uu[0], vb};
+                for (int t = 0; t < 2; t++) {
+                    int[] id = t == 0 ? new int[]{0, 1, 2} : new int[]{0, 2, 3};
+                    for (int k = 0; k < 3; k++) {
+                        int[] q = c[id[k]];
+                        sp0[k * 3] = g[q[0]][q[1]][0]; sp0[k * 3 + 1] = g[q[0]][q[1]][1]; sp0[k * 3 + 2] = g[q[0]][q[1]][2];
+                        sn0[k * 3] = n[q[0]][q[1]][0]; sn0[k * 3 + 1] = n[q[0]][q[1]][1]; sn0[k * 3 + 2] = n[q[0]][q[1]][2];
+                        st0[k * 3] = tg[q[0]][q[1]][0]; st0[k * 3 + 1] = tg[q[0]][q[1]][1]; st0[k * 3 + 2] = tg[q[0]][q[1]][2];
+                        su0[k * 2] = uvs[id[k] * 2]; su0[k * 2 + 1] = uvs[id[k] * 2 + 1];
+                    }
+                    tri(sp0, sn0, st0, su0, 0, 1, 2);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sólido de revolución a lo largo de +Y con sección elíptica por anillo.
+     * ys, rx, rz: un valor por anillo (de abajo a arriba). jag: irregularidad del borde inferior (ropa rasgada).
+     * Ángulo 0 = +Z (frente), crece hacia +X.
+     */
+    public void lathe(float[] ys, float[] rx, float[] rz, int segs, float u0, float u1, float v0, float v1, float jag, int seed, boolean capTop, boolean capBottom) {
+        latheEx(ys, rx, rz, segs, u0, u1, v0, v1, jag, 0f, seed, capTop, capBottom);
+    }
+
+    public void latheEx(float[] ys, float[] rx, float[] rz, int segs, float u0, float u1, float v0, float v1, float jag, float jagTop, int seed, boolean capTop, boolean capBottom) {
+        int rows = ys.length;
+        float[][][] g = new float[rows][segs + 1][3];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j <= segs; j++) {
+                float a = (float) (2 * Math.PI * (j % segs) / segs + Math.PI);
+                float y = ys[i];
+                if (i == 0 && jag > 0) y += (Noise.rnd(j % segs, seed, 5) - 0.35f) * jag;
+                if (i == 1 && jag > 0) y += (Noise.rnd(j % segs, seed, 6) - 0.5f) * jag * 0.3f;
+                if (i == rows - 1 && jagTop > 0) y -= (Noise.rnd(j % segs, seed, 7) - 0.2f) * jagTop;
+                if (i == rows - 2 && jagTop > 0) y -= (Noise.rnd(j % segs, seed, 8) - 0.5f) * jagTop * 0.3f;
+                g[i][j][0] = (float) Math.sin(a) * rx[i];
+                g[i][j][1] = y;
+                g[i][j][2] = (float) Math.cos(a) * rz[i];
+            }
+        }
+        surface(g, true, u0, u1, v0, v1, 1f);
+        if (capTop) cap(ys[rows - 1], rx[rows - 1], rz[rows - 1], segs, 1f, u0, u1, v0, v1);
+        if (capBottom) cap(ys[0], rx[0], rz[0], segs, -1f, u0, u1, v0, v1);
+    }
+
+    public void cap(float y, float rx, float rz, int segs, float dir, float u0, float u1, float v0, float v1) {
+        for (int j = 0; j < segs; j++) {
+            float a0 = (float) (2 * Math.PI * j / segs), a1 = (float) (2 * Math.PI * (j + 1) / segs);
+            sv(0, 0, y, 0, 0, dir, 0, 1, 0, 0, (u0 + u1) * 0.5f, (v0 + v1) * 0.5f);
+            sv(1, (float) Math.sin(a0) * rx, y, (float) Math.cos(a0) * rz, 0, dir, 0, 1, 0, 0, u0, v0);
+            sv(2, (float) Math.sin(a1) * rx, y, (float) Math.cos(a1) * rz, 0, dir, 0, 1, 0, 0, u1, v0);
+            tri(cp, cn, ct, cu, 0, 1, 2);
+        }
+    }
+
+    /** Miembro que cuelga hacia -Y con perfil suave (hinchazón muscular) y sección elíptica. */
+    public void limb(float len, float[] prof, float depthRatio, int segs, float u0, float u1, float v0, float v1, float jag, int seed) {
+        int n = prof.length;
+        // de abajo (y=-len) hacia arriba (y=0)
+        float[] ys2 = new float[n], rx2 = new float[n], rz2 = new float[n];
+        for (int i = 0; i < n; i++) { ys2[i] = -len + len * i / (n - 1); rx2[i] = prof[i] * 0.5f; rz2[i] = prof[i] * 0.5f * depthRatio; }
+        lathe(ys2, rx2, rz2, segs, u0, u1, v0, v1, jag, seed, true, true);
+    }
+
     private final float[] fp = new float[9], fn = new float[9], ft = new float[9], fu = new float[6];
 
     /** Triángulo con sombreado plano; uv por proyección planar. */

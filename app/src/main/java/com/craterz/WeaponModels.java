@@ -1,34 +1,70 @@
 package com.craterz;
 
-/** Modelos de armas en primera persona (con manos y mangas) y siluetas de tiza para las paredes. */
+/**
+ * Modelos de armas en primera persona (diseños originales inspirados en armas reales de época),
+ * con manos de dedos y mangas, y piezas móviles: corredera/cerrojo/bombeo y cargador.
+ * Grupos: 0 metal, 1 madera, 2 brazos, 3 corredera (móvil), 4 cargador (móvil), 5 mano de bombeo (móvil).
+ */
 public final class WeaponModels {
     private WeaponModels() {}
+    public static final int GROUPS = 6;
+    private static final float SK0 = 0.02f, SK1 = 0.48f, CL1 = 0.52f, CL2 = 0.98f;
 
-    /** Devuelve {metal, madera, brazos} ya como arreglos de vértices. */
     public static float[][] view(int w) {
-        MeshBuilder metal = new MeshBuilder(), wood = new MeshBuilder(), arms = new MeshBuilder();
+        MeshBuilder[] b = new MeshBuilder[GROUPS];
+        for (int i = 0; i < GROUPS; i++) b[i] = new MeshBuilder();
         switch (w) {
-            case Weapons.PISTOL: pistol(metal, wood, arms); break;
-            case Weapons.SHOTGUN: shotgun(metal, wood, arms); break;
-            case Weapons.RIFLE: rifle(metal, wood, arms); break;
-            case Weapons.SMG: smg(metal, wood, arms); break;
-            default: storm(metal, wood, arms); break;
+            case Weapons.PISTOL: pistol(b); break;
+            case Weapons.SHOTGUN: shotgun(b); break;
+            case Weapons.RIFLE: rifle(b); break;
+            case Weapons.SMG: smg(b); break;
+            default: storm(b); break;
         }
-        return new float[][]{metal.toArray(), wood.toArray(), arms.toArray()};
+        float[][] r = new float[GROUPS][];
+        for (int i = 0; i < GROUPS; i++) r[i] = b[i].toArray();
+        return r;
     }
 
-    /** Posición de la boca del arma en el espacio de la cámara. */
+    /** Desplazamiento hacia atrás (+Z) de la corredera/cerrojo/bombeo según el tiempo desde el disparo. */
+    public static float slideBack(int w, float t, float reloadP) {
+        float v = 0;
+        switch (w) {
+            case Weapons.PISTOL: v = 0.045f * (float) Math.exp(-t * 26f); break;
+            case Weapons.SMG: v = 0.04f * (float) Math.exp(-t * 30f); break;
+            case Weapons.RIFLE: v = t < 0.5f ? 0.07f * (t < 0.08f ? t / 0.08f : (float) Math.exp(-(t - 0.08f) * 7f)) : 0f; break;
+            case Weapons.SHOTGUN: {
+                float q = t - 0.28f;
+                v = q > 0 && q < 0.5f ? 0.095f * (float) Math.sin(Math.PI * q / 0.5f) : 0f;
+                break;
+            }
+            default: v = 0;
+        }
+        if (reloadP > 0.8f && reloadP < 0.97f && w != Weapons.SHOTGUN && w != Weapons.STORM)
+            v = Math.max(v, 0.05f * (float) Math.sin(Math.PI * (reloadP - 0.8f) / 0.17f));
+        return v;
+    }
+
+    /** Desplazamiento vertical del cargador durante la recarga (p de 0 a 1). */
+    public static float magDrop(float p) {
+        if (p <= 0) return 0;
+        float k;
+        if (p < 0.25f) k = p / 0.25f;
+        else if (p < 0.55f) k = 1f;
+        else if (p < 0.78f) k = 1f - (p - 0.55f) / 0.23f;
+        else k = 0f;
+        return -0.2f * k * k * (3 - 2 * k);
+    }
+
     public static float[] muzzle(int w) {
         switch (w) {
-            case Weapons.PISTOL: return new float[]{0.0f, 0.035f, -0.31f};
-            case Weapons.SHOTGUN: return new float[]{0.0f, 0.03f, -0.82f};
-            case Weapons.RIFLE: return new float[]{0.0f, 0.03f, -0.78f};
-            case Weapons.SMG: return new float[]{0.0f, 0.02f, -0.62f};
-            default: return new float[]{0.0f, 0.03f, -0.4f};
+            case Weapons.PISTOL: return new float[]{0.0f, 0.04f, -0.32f};
+            case Weapons.SHOTGUN: return new float[]{0.0f, 0.04f, -0.84f};
+            case Weapons.RIFLE: return new float[]{0.0f, 0.035f, -0.84f};
+            case Weapons.SMG: return new float[]{0.0f, 0.025f, -0.7f};
+            default: return new float[]{0.0f, 0.03f, -0.42f};
         }
     }
 
-    /** Offset de la cadera por arma: dónde se sostiene respecto a la cámara. */
     public static float[] hip(int w) {
         switch (w) {
             case Weapons.PISTOL: return new float[]{0.15f, -0.16f, -0.28f};
@@ -39,113 +75,314 @@ public final class WeaponModels {
         }
     }
 
+    // ------------------------------------------------------------ utilidades
     private static void limb(MeshBuilder b, float fx, float fy, float fz, float tx, float ty, float tz, float w0, float w1) {
         b.push();
         float dx = tx - fx, dy = ty - fy, dz = tz - fz;
         float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
         b.aim(fx, fy, fz, dx, dy, dz);
-        b.taper(len, w0, w0, w1, w1, 1f);
+        b.taper(len, w0, w0 * 0.9f, w1, w1 * 0.9f, 1f);
         b.pop();
     }
 
-    private static void hand(MeshBuilder a, float x, float y, float z, float fx, float fy, float fz) {
-        a.uvRect(0.02f, 0.02f, 0.5f, 0.48f);
-        a.color(0.55f, 0.45f, 0.38f);
-        a.push(); a.translate(x, y, z); a.box(0, 0, 0, 0.026f, 0.03f, 0.04f, 1f); a.pop();
-        a.uvRect(0.02f, 0.52f, 0.5f, 0.98f);
-        a.color(0.8f, 0.85f, 0.7f);
-        limb(a, x, y + 0.01f, z + 0.03f, fx, fy, fz, 0.052f, 0.075f);
+    /** Cilindro a lo largo de -Z que empieza en (x,y,z). */
+    private static void bar(MeshBuilder b, float x, float y, float z, float len, float r0, float r1, int segs) {
+        b.push(); b.translate(x, y, z); b.rotX(-90); b.cylinder(r0, r1, len, segs, true, true, 0.6f); b.pop();
     }
 
-    private static void pistol(MeshBuilder m, MeshBuilder wd, MeshBuilder a) {
-        m.color(0.55f, 0.55f, 0.58f);
-        m.box(0, 0.035f, -0.17f, 0.017f, 0.021f, 0.125f, 0.5f);
-        m.color(0.35f, 0.35f, 0.38f);
-        m.box(0, 0.005f, -0.14f, 0.016f, 0.016f, 0.1f, 0.5f);
-        m.box(0, 0.065f, -0.285f, 0.004f, 0.01f, 0.004f, 0.5f);
-        m.box(0, 0.065f, -0.06f, 0.012f, 0.008f, 0.008f, 0.5f);
-        m.push(); m.translate(0, -0.075f, -0.045f); m.rotX(-14);
-        m.color(0.3f, 0.3f, 0.32f);
-        m.box(0, 0, 0, 0.017f, 0.052f, 0.026f, 0.5f);
-        m.pop();
-        m.box(0, -0.02f, -0.095f, 0.003f, 0.012f, 0.03f, 0.5f);
-        wd.color(0.8f, 0.7f, 0.6f);
-        wd.push(); wd.translate(0, -0.075f, -0.045f); wd.rotX(-14);
-        wd.box(0.0175f, 0, 0, 0.003f, 0.048f, 0.022f, 0.5f);
-        wd.box(-0.0175f, 0, 0, 0.003f, 0.048f, 0.022f, 0.5f);
-        wd.pop();
-        hand(a, 0.0f, -0.07f, -0.03f, 0.14f, -0.28f, 0.25f);
-        hand(a, -0.012f, -0.1f, -0.045f, -0.12f, -0.3f, 0.25f);
+    private static void sleeve(MeshBuilder a, float wx, float wy, float wz, float fx, float fy, float fz) {
+        a.uvRect(SK0, CL1, SK1, CL2);
+        a.color(0.62f, 0.66f, 0.5f);
+        limb(a, wx, wy, wz, fx, fy, fz, 0.044f, 0.066f);
+        // puño con dobladillo
+        a.color(0.5f, 0.54f, 0.4f);
+        float dx = fx - wx, dy = fy - wy, dz = fz - wz, l = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        limb(a, wx + dx / l * 0.002f, wy + dy / l * 0.002f, wz + dz / l * 0.002f, wx + dx / l * 0.03f, wy + dy / l * 0.03f, wz + dz / l * 0.03f, 0.05f, 0.052f);
     }
 
-    private static void shotgun(MeshBuilder m, MeshBuilder wd, MeshBuilder a) {
-        m.color(0.28f, 0.28f, 0.3f);
-        m.push(); m.translate(0, 0.035f, -0.1f); m.rotX(-90); m.cylinder(0.014f, 0.014f, 0.7f, 8, true, true, 0.6f); m.pop();
-        m.color(0.22f, 0.22f, 0.24f);
-        m.push(); m.translate(0, 0.0f, -0.1f); m.rotX(-90); m.cylinder(0.013f, 0.013f, 0.5f, 8, true, true, 0.6f); m.pop();
-        m.color(0.4f, 0.4f, 0.42f);
-        m.box(0, 0.015f, -0.02f, 0.021f, 0.035f, 0.13f, 0.5f);
-        m.box(0, 0.052f, -0.74f, 0.004f, 0.008f, 0.004f, 0.5f);
-        wd.color(0.9f, 0.75f, 0.6f);
-        wd.box(0, -0.006f, -0.36f, 0.028f, 0.024f, 0.1f, 0.5f);
-        wd.push(); wd.translate(0, -0.04f, 0.3f); wd.rotX(6);
-        wd.box(0, 0, 0, 0.021f, 0.05f, 0.17f, 0.5f);
-        wd.pop();
-        wd.push(); wd.translate(0, -0.06f, 0.06f); wd.rotX(-16); wd.box(0, 0, 0, 0.02f, 0.05f, 0.025f, 0.5f); wd.pop();
-        hand(a, 0.0f, -0.07f, 0.06f, 0.14f, -0.28f, 0.3f);
-        hand(a, 0.0f, -0.03f, -0.36f, -0.2f, -0.2f, -0.02f);
-    }
-
-    private static void rifle(MeshBuilder m, MeshBuilder wd, MeshBuilder a) {
-        m.color(0.3f, 0.3f, 0.33f);
-        m.box(0, 0.02f, -0.1f, 0.02f, 0.034f, 0.2f, 0.5f);
-        m.push(); m.translate(0, 0.03f, -0.3f); m.rotX(-90); m.cylinder(0.011f, 0.011f, 0.52f, 8, true, true, 0.6f); m.pop();
-        m.color(0.22f, 0.22f, 0.25f);
-        m.push(); m.translate(0, -0.1f, -0.13f); m.rotX(-12); m.box(0, 0, 0, 0.014f, 0.065f, 0.026f, 0.5f); m.pop();
-        m.color(0.45f, 0.45f, 0.48f);
-        m.box(0, 0.062f, -0.02f, 0.006f, 0.014f, 0.006f, 0.5f);
-        m.box(0, 0.06f, -0.72f, 0.004f, 0.012f, 0.004f, 0.5f);
-        m.box(0, 0.06f, 0.1f, 0.012f, 0.008f, 0.012f, 0.5f);
-        wd.color(0.85f, 0.7f, 0.55f);
-        wd.box(0, 0.012f, -0.46f, 0.026f, 0.028f, 0.15f, 0.5f);
-        wd.push(); wd.translate(0, -0.02f, 0.3f); wd.rotX(5); wd.box(0, 0, 0, 0.022f, 0.052f, 0.17f, 0.5f); wd.pop();
-        wd.push(); wd.translate(0, -0.06f, 0.06f); wd.rotX(-16); wd.box(0, 0, 0, 0.02f, 0.05f, 0.024f, 0.5f); wd.pop();
-        hand(a, 0.0f, -0.07f, 0.06f, 0.14f, -0.28f, 0.3f);
-        hand(a, 0.0f, -0.0f, -0.42f, -0.22f, -0.22f, -0.05f);
-    }
-
-    private static void smg(MeshBuilder m, MeshBuilder wd, MeshBuilder a) {
-        m.color(0.28f, 0.29f, 0.3f);
-        m.box(0, 0.015f, -0.1f, 0.026f, 0.035f, 0.17f, 0.5f);
-        m.push(); m.translate(0, 0.02f, -0.27f); m.rotX(-90); m.cylinder(0.02f, 0.02f, 0.3f, 8, true, true, 0.6f); m.pop();
-        m.color(0.12f, 0.12f, 0.13f);
-        for (int i = 0; i < 4; i++) m.box(0, 0.04f, -0.32f - i * 0.065f, 0.021f, 0.002f, 0.012f, 0.5f);
-        m.color(0.35f, 0.35f, 0.38f);
-        m.push(); m.translate(0, -0.08f, -0.1f); m.rotZ(90); m.cylinder(0.062f, 0.062f, 0.06f, 12, true, true, 0.5f); m.translate(-0.0f, -0.03f, 0); m.pop();
-        m.box(0, 0.058f, -0.02f, 0.006f, 0.012f, 0.006f, 0.5f);
-        wd.color(0.85f, 0.7f, 0.55f);
-        wd.push(); wd.translate(0, -0.03f, 0.2f); wd.box(0, 0, 0, 0.017f, 0.035f, 0.12f, 0.5f); wd.pop();
-        wd.push(); wd.translate(0, -0.07f, 0.04f); wd.rotX(-12); wd.box(0, 0, 0, 0.018f, 0.045f, 0.022f, 0.5f); wd.pop();
-        hand(a, 0.0f, -0.075f, 0.045f, 0.14f, -0.28f, 0.3f);
-        hand(a, 0.0f, -0.075f, -0.27f, -0.2f, -0.22f, 0.05f);
-    }
-
-    private static void storm(MeshBuilder m, MeshBuilder wd, MeshBuilder a) {
-        m.color(0.28f, 0.3f, 0.34f);
-        m.box(0, 0.02f, -0.12f, 0.022f, 0.032f, 0.13f, 0.5f);
-        m.push(); m.translate(0, -0.075f, -0.05f); m.rotX(-14); m.box(0, 0, 0, 0.018f, 0.052f, 0.026f, 0.5f); m.pop();
-        m.color(0.4f, 1.2f, 1.7f);
-        m.push(); m.translate(0, 0.03f, -0.2f); m.rotX(-90); m.cylinder(0.012f, 0.012f, 0.2f, 8, true, true, 0.5f); m.pop();
-        for (int i = 0; i < 4; i++) {
-            m.color(1.2f, 1.9f, 2.2f);
-            m.push(); m.translate(0, 0.03f, -0.22f - i * 0.045f); m.rotX(-90); m.cylinder(0.03f, 0.03f, 0.012f, 10, true, true, 0.5f); m.pop();
+    /** Mano derecha agarrando una empuñadura inclinada: (x,y,z) = centro de la empuñadura, tilt en grados. */
+    private static void gripHand(MeshBuilder a, float x, float y, float z, float tilt, float armX, float armY, float armZ) {
+        a.uvRect(SK0, SK0, SK1, SK1);
+        a.color(0.66f, 0.52f, 0.44f);
+        a.push(); a.translate(x, y, z); a.rotX(tilt);
+        a.box(0.016f, 0.0f, 0.026f, 0.014f, 0.036f, 0.017f, 1f);          // palma
+        for (int i = 0; i < 4; i++) {                                      // dedos enrollados al frente
+            float fy = 0.026f - i * 0.0185f;
+            a.box(0.002f, fy, -0.016f, 0.0105f, 0.0085f, 0.012f, 1f);
+            a.box(-0.012f, fy, -0.012f, 0.0085f, 0.0078f, 0.0145f, 1f);
         }
+        a.push(); a.translate(-0.028f, 0.028f, 0.0f); a.rotY(-14);        // pulgar
+        a.box(0, 0, -0.02f, 0.008f, 0.009f, 0.028f, 1f);
+        a.box(0, -0.004f, -0.05f, 0.0065f, 0.007f, 0.012f, 1f);
+        a.pop();
+        a.pop();
+        sleeve(a, x + 0.02f, y - 0.025f, z + 0.05f, armX, armY, armZ);
+    }
+
+    /** Mano izquierda de apoyo: palma sobre el costado y dedos curvados por debajo del guardamanos. */
+    private static void supportHand(MeshBuilder a, float x, float y, float z, float armX, float armY, float armZ) {
+        a.uvRect(SK0, SK0, SK1, SK1);
+        a.color(0.66f, 0.52f, 0.44f);
+        a.push(); a.translate(x, y, z);
+        a.box(0.016f, 0.004f, 0.0f, 0.007f, 0.025f, 0.032f, 1f);          // palma lateral
+        for (int i = 0; i < 4; i++) {
+            float fz = 0.026f - i * 0.0175f;
+            a.box(0.006f, -0.032f, fz, 0.017f, 0.0075f, 0.0078f, 1f);      // dedos bajo la pieza
+            a.box(-0.009f, -0.026f, fz, 0.0075f, 0.012f, 0.0072f, 1f);
+        }
+        a.push(); a.translate(-0.012f, 0.024f, 0.03f); a.rotX(12);        // pulgar encima
+        a.box(0, 0, -0.016f, 0.008f, 0.008f, 0.026f, 1f);
+        a.pop();
+        a.pop();
+        sleeve(a, x + 0.055f, y - 0.03f, z + 0.04f, armX, armY, armZ);
+    }
+
+    private static void sights(MeshBuilder m, float rz, float fz, float y, boolean dot) {
+        m.color(0.12f, 0.12f, 0.13f);
+        m.box(-0.011f, y, rz, 0.004f, 0.009f, 0.007f, 0.5f);
+        m.box(0.011f, y, rz, 0.004f, 0.009f, 0.007f, 0.5f);
+        m.box(0, y - 0.0035f, rz, 0.008f, 0.005f, 0.007f, 0.5f);
+        m.box(0, y, fz, 0.0028f, 0.011f, 0.004f, 0.5f);
+        if (dot) {
+            m.color(1.25f, 1.4f, 1.1f);
+            m.box(0, y + 0.004f, fz - 0.0042f, 0.0014f, 0.0016f, 0.0005f, 0.5f);
+            m.box(-0.011f, y + 0.002f, rz - 0.0072f, 0.0013f, 0.0016f, 0.0005f, 0.5f);
+            m.box(0.011f, y + 0.002f, rz - 0.0072f, 0.0013f, 0.0016f, 0.0005f, 0.5f);
+        }
+    }
+
+    private static void screw(MeshBuilder m, float x, float y, float z, float dir) {
+        m.color(0.1f, 0.1f, 0.1f);
+        m.box(x, y, z, 0.0025f * Math.abs(dir) + 0.001f, 0.004f, 0.004f, 0.4f);
+    }
+
+    // ------------------------------------------------------------ pistola (tipo 1911)
+    private static void pistol(MeshBuilder[] g) {
+        MeshBuilder m = g[0], wd = g[1], a = g[2], sl = g[3], mg = g[4];
+        // armazón
+        m.color(0.5f, 0.5f, 0.52f);
+        m.box(0, 0.006f, -0.13f, 0.0145f, 0.012f, 0.095f, 0.5f);
+        m.push(); m.translate(0, -0.014f, -0.035f); m.rotX(-14); m.box(0, -0.02f, 0, 0.0145f, 0.05f, 0.023f, 0.5f); m.pop(); // cuerpo de empuñadura
+        // guardamonte
+        m.box(0, -0.016f, -0.115f, 0.004f, 0.004f, 0.045f, 0.5f);
+        m.box(0, -0.0105f, -0.16f, 0.004f, 0.01f, 0.005f, 0.5f);
+        m.color(0.15f, 0.15f, 0.16f);
+        m.box(0, -0.0035f, -0.088f, 0.0025f, 0.013f, 0.004f, 0.5f);       // gatillo
+        m.push(); m.translate(0, -0.003f, -0.03f); m.rotX(-14); m.box(0, 0.002f, 0.021f, 0.0125f, 0.05f, 0.004f, 0.5f); m.pop(); // tapa trasera
+        m.color(0.18f, 0.18f, 0.2f);
+        m.box(0.0155f, 0.015f, -0.06f, 0.002f, 0.004f, 0.018f, 0.5f);     // seguro
+        m.box(0.0155f, 0.012f, -0.1f, 0.0018f, 0.005f, 0.01f, 0.5f);      // retén de corredera
+        m.box(0, 0.052f, -0.025f, 0.0045f, 0.012f, 0.012f, 0.5f);         // martillo
+        m.color(0.35f, 0.35f, 0.37f);
+        bar(m, 0, 0.034f, -0.285f, 0.025f, 0.0075f, 0.0075f, 10);         // buje del cañón
+        // corredera (móvil)
+        sl.color(0.42f, 0.42f, 0.45f);
+        sl.box(0, 0.038f, -0.165f, 0.0155f, 0.0175f, 0.125f, 0.5f);
+        sl.color(0.1f, 0.1f, 0.11f);
+        sl.box(0.0158f, 0.04f, -0.14f, 0.0008f, 0.0065f, 0.026f, 0.4f);   // ventana de expulsión
+        sl.box(-0.0158f, 0.04f, -0.14f, 0.0008f, 0.0065f, 0.026f, 0.4f);
+        for (int i = 0; i < 6; i++) {                                      // estrías de agarre
+            sl.box(0.0158f, 0.038f, -0.063f - i * 0.0085f, 0.0007f, 0.0145f, 0.0017f, 0.4f);
+            sl.box(-0.0158f, 0.038f, -0.063f - i * 0.0085f, 0.0007f, 0.0145f, 0.0017f, 0.4f);
+        }
+        sights(sl, -0.052f, -0.285f, 0.062f, true);
+        // empuñadura de nogal con 2 tornillos
+        wd.color(0.9f, 0.72f, 0.58f);
+        wd.push(); wd.translate(0, -0.014f, -0.035f); wd.rotX(-14);
+        wd.box(0.0155f, -0.02f, 0, 0.0025f, 0.047f, 0.02f, 0.5f);
+        wd.box(-0.0155f, -0.02f, 0, 0.0025f, 0.047f, 0.02f, 0.5f);
+        wd.pop();
+        screw(m, 0.0185f, -0.04f, -0.045f, 1); screw(m, -0.0185f, -0.04f, -0.045f, 1);
+        // cargador (móvil)
+        mg.color(0.22f, 0.22f, 0.24f);
+        mg.push(); mg.translate(0, -0.014f, -0.035f); mg.rotX(-14);
+        mg.box(0, -0.058f, 0, 0.0135f, 0.045f, 0.0195f, 0.5f);
+        mg.color(0.3f, 0.3f, 0.32f);
+        mg.box(0, -0.106f, 0.002f, 0.0165f, 0.005f, 0.0225f, 0.5f);       // base
+        mg.pop();
+        // brazos
+        gripHand(a, 0.0f, -0.058f, -0.04f, -14f, 0.14f, -0.28f, 0.25f);
+        supportHand(a, -0.026f, -0.09f, -0.07f, -0.16f, -0.3f, 0.22f);
+    }
+
+    // ------------------------------------------------------------ escopeta de bombeo
+    private static void shotgun(MeshBuilder[] g) {
+        MeshBuilder m = g[0], wd = g[1], a = g[2], sl = g[3], mg = g[4], pa = g[5];
+        m.color(0.24f, 0.24f, 0.26f);
+        bar(m, 0, 0.04f, -0.12f, 0.72f, 0.0125f, 0.0125f, 12);            // cañón
+        m.color(0.2f, 0.2f, 0.22f);
+        bar(m, 0, 0.004f, -0.12f, 0.52f, 0.0115f, 0.0115f, 12);           // tubo del cargador
+        m.color(0.32f, 0.32f, 0.34f);
+        bar(m, 0, 0.004f, -0.64f, 0.012f, 0.0145f, 0.0145f, 12);          // tapa del tubo
+        m.color(0.18f, 0.18f, 0.19f);
+        m.box(0, 0.058f, -0.45f, 0.004f, 0.0018f, 0.3f, 0.4f);            // cinta ventilada
+        m.color(0.4f, 0.4f, 0.42f);
+        m.box(0, 0.024f, -0.02f, 0.0215f, 0.036f, 0.12f, 0.5f);           // receptor
+        m.color(0.1f, 0.1f, 0.11f);
+        m.box(0.0218f, 0.032f, -0.04f, 0.0008f, 0.012f, 0.04f, 0.4f);     // ventana de expulsión
+        m.color(0.3f, 0.3f, 0.32f);
+        m.box(0, -0.008f, 0.0f, 0.014f, 0.005f, 0.07f, 0.5f);
+        m.box(0, -0.028f, -0.08f, 0.004f, 0.004f, 0.04f, 0.5f);           // guardamonte
+        m.box(0, -0.0165f, -0.12f, 0.004f, 0.012f, 0.005f, 0.5f);
+        m.box(0, -0.016f, -0.05f, 0.004f, 0.012f, 0.005f, 0.5f);
+        m.color(0.12f, 0.12f, 0.13f);
+        m.box(0, -0.014f, -0.075f, 0.0025f, 0.012f, 0.004f, 0.5f);        // gatillo
+        m.color(1.3f, 1.2f, 0.9f);
+        m.box(0, 0.0565f, -0.8f, 0.003f, 0.004f, 0.003f, 0.4f);           // mira de cuenta
+        // bombeo (móvil)
+        sl.color(0.27f, 0.25f, 0.24f);
+        sl.box(0, 0.002f, -0.4f, 0.0245f, 0.0245f, 0.085f, 0.5f);
+        sl.color(0.14f, 0.14f, 0.14f);
+        for (int i = 0; i < 9; i++) sl.box(0, -0.0225f, -0.325f - i * 0.0185f, 0.019f, 0.0025f, 0.0045f, 0.4f);
+        // madera
+        wd.color(0.85f, 0.68f, 0.52f);
+        wd.push(); wd.translate(0, -0.012f, 0.27f); wd.rotX(7);
+        wd.box(0, 0, 0, 0.0215f, 0.05f, 0.19f, 0.5f);
+        wd.pop();
+        wd.push(); wd.translate(0, -0.052f, 0.07f); wd.rotX(-20); wd.box(0, 0, 0, 0.0185f, 0.042f, 0.021f, 0.5f); wd.pop();
+        wd.color(0.15f, 0.15f, 0.16f);
+        wd.push(); wd.translate(0, -0.026f, 0.46f); wd.rotX(7); wd.box(0, 0, 0, 0.0225f, 0.06f, 0.006f, 0.4f); wd.pop();
+        // brazos
+        gripHand(a, 0.0f, -0.052f, 0.07f, -20f, 0.14f, -0.28f, 0.3f);
+        supportHand(pa, -0.02f, -0.0f, -0.4f, -0.2f, -0.22f, -0.02f);
+    }
+
+    // ------------------------------------------------------------ fusil de cerrojo (tipo Mk3)
+    private static void rifle(MeshBuilder[] g) {
+        MeshBuilder m = g[0], wd = g[1], a = g[2], sl = g[3], mg = g[4];
+        m.color(0.27f, 0.27f, 0.3f);
+        m.box(0, 0.026f, -0.08f, 0.0215f, 0.034f, 0.17f, 0.5f);           // receptor
+        bar(m, 0, 0.032f, -0.25f, 0.6f, 0.0105f, 0.0095f, 12);            // cañón
+        m.color(0.2f, 0.2f, 0.22f);
+        bar(m, 0, 0.032f, -0.83f, 0.014f, 0.0125f, 0.0125f, 12);          // freno de boca
+        m.color(0.35f, 0.35f, 0.37f);
+        m.box(0, -0.012f, -0.1f, 0.012f, 0.004f, 0.09f, 0.5f);
+        m.box(0, -0.032f, -0.07f, 0.004f, 0.004f, 0.045f, 0.5f);          // guardamonte
+        m.box(0, -0.02f, -0.115f, 0.004f, 0.012f, 0.005f, 0.5f);
+        m.color(0.12f, 0.12f, 0.13f);
+        m.box(0, -0.017f, -0.07f, 0.0025f, 0.012f, 0.004f, 0.5f);
+        sights(m, 0.06f, -0.79f, 0.072f, false);
+        m.color(0.4f, 0.4f, 0.43f);
+        m.box(0, 0.077f, 0.0f, 0.007f, 0.003f, 0.02f, 0.5f);              // alza de tangente
+        m.color(0.28f, 0.28f, 0.3f);
+        m.box(0.0225f, 0.022f, 0.0f, 0.0015f, 0.012f, 0.1f, 0.4f);        // riel del cerrojo
+        // cerrojo (móvil): cuerpo y palanca con bola
+        sl.color(0.45f, 0.45f, 0.48f);
+        sl.box(0, 0.04f, -0.01f, 0.012f, 0.012f, 0.08f, 0.5f);
+        sl.push(); sl.translate(0.022f, 0.036f, 0.025f); sl.rotZ(-50);
+        sl.box(0.02f, 0, 0, 0.022f, 0.004f, 0.004f, 0.5f);
+        sl.translate(0.046f, 0, 0); sl.sphere(0.0085f, 8, 6, 0.5f);
+        sl.pop();
+        // cargador (móvil), curvo
+        mg.color(0.2f, 0.2f, 0.22f);
+        mg.push(); mg.translate(0, -0.012f, -0.1f); mg.rotX(-6);
+        mg.box(0, -0.05f, 0, 0.0135f, 0.055f, 0.026f, 0.5f);
+        mg.color(0.3f, 0.3f, 0.32f);
+        mg.box(0, -0.108f, 0.003f, 0.0155f, 0.004f, 0.029f, 0.5f);
+        mg.pop();
+        // madera: culata, mango, guardamanos largo
+        wd.color(0.84f, 0.68f, 0.52f);
+        wd.push(); wd.translate(0, -0.012f, 0.3f); wd.rotX(6); wd.box(0, 0, 0, 0.0215f, 0.055f, 0.18f, 0.5f); wd.pop();
+        wd.push(); wd.translate(0, 0.0f, 0.15f); wd.rotX(2); wd.box(0, 0.03f, 0, 0.0185f, 0.022f, 0.06f, 0.5f); wd.pop();
+        wd.push(); wd.translate(0, -0.052f, 0.06f); wd.rotX(-18); wd.box(0, 0, 0, 0.0185f, 0.045f, 0.02f, 0.5f); wd.pop();
+        wd.box(0, 0.014f, -0.5f, 0.0245f, 0.028f, 0.2f, 0.5f);            // guardamanos
+        wd.box(0, 0.05f, -0.5f, 0.015f, 0.004f, 0.2f, 0.5f);
+        wd.color(0.15f, 0.15f, 0.16f);
+        wd.push(); wd.translate(0, -0.027f, 0.485f); wd.rotX(6); wd.box(0, 0, 0, 0.0225f, 0.06f, 0.006f, 0.4f); wd.pop();
+        gripHand(a, 0.0f, -0.052f, 0.06f, -18f, 0.14f, -0.28f, 0.3f);
+        supportHand(a, -0.026f, -0.005f, -0.45f, -0.22f, -0.22f, -0.05f);
+    }
+
+    // ------------------------------------------------------------ subfusil (tipo MP18 con camisa perforada)
+    private static void smg(MeshBuilder[] g) {
+        MeshBuilder m = g[0], wd = g[1], a = g[2], sl = g[3], mg = g[4];
+        m.color(0.26f, 0.27f, 0.29f);
+        m.box(0, 0.02f, -0.06f, 0.0245f, 0.03f, 0.12f, 0.5f);             // receptor
+        bar(m, 0, 0.026f, -0.18f, 0.5f, 0.0235f, 0.0235f, 14);            // camisa del cañón
+        m.color(0.07f, 0.07f, 0.08f);
+        for (int r = 0; r < 3; r++)                                        // perforaciones
+            for (int i = 0; i < 9; i++) {
+                float ang = (r - 1) * 55f;
+                m.push(); m.translate(0, 0.026f, 0); m.rotZ(ang);
+                m.box(0, 0.0238f, -0.2f - i * 0.05f, 0.005f, 0.0012f, 0.011f, 0.4f);
+                m.pop();
+            }
+        m.color(0.34f, 0.34f, 0.36f);
+        bar(m, 0, 0.026f, -0.68f, 0.03f, 0.011f, 0.011f, 12);             // boca
+        m.box(0, -0.014f, -0.06f, 0.014f, 0.004f, 0.08f, 0.5f);
+        m.box(0, -0.03f, -0.055f, 0.004f, 0.004f, 0.05f, 0.5f);           // guardamonte
+        m.color(0.12f, 0.12f, 0.13f);
+        m.box(0, -0.017f, -0.06f, 0.0025f, 0.012f, 0.004f, 0.5f);
+        sights(m, 0.015f, -0.66f, 0.06f, false);
+        m.color(0.3f, 0.3f, 0.32f);
+        m.box(0, 0.052f, -0.06f, 0.016f, 0.003f, 0.08f, 0.5f);            // tapa superior
+        // palanca de armado (móvil) en el lado derecho
+        sl.color(0.42f, 0.42f, 0.45f);
+        sl.box(0.028f, 0.026f, -0.02f, 0.004f, 0.005f, 0.02f, 0.5f);
+        sl.box(0.034f, 0.026f, -0.0f, 0.007f, 0.007f, 0.007f, 0.5f);
+        // cargador tipo caracol a la izquierda, bajo el cañón (móvil)
+        mg.color(0.3f, 0.31f, 0.33f);
+        mg.push(); mg.translate(-0.05f, -0.032f, -0.09f); mg.rotZ(90);
+        mg.cylinder(0.064f, 0.064f, 0.034f, 18, true, true, 0.5f);
+        mg.color(0.18f, 0.18f, 0.2f);
+        mg.translate(0, 0.034f, 0); mg.cylinder(0.04f, 0.04f, 0.004f, 14, true, true, 0.5f);
+        mg.pop();
+        mg.color(0.24f, 0.25f, 0.27f);
+        mg.box(-0.032f, 0.004f, -0.09f, 0.014f, 0.022f, 0.02f, 0.5f);     // cuello al receptor
+        // madera
+        wd.color(0.84f, 0.68f, 0.52f);
+        wd.push(); wd.translate(0, -0.01f, 0.24f); wd.rotX(5); wd.box(0, 0, 0, 0.0185f, 0.043f, 0.14f, 0.5f); wd.pop();
+        wd.push(); wd.translate(0, -0.012f, 0.09f); wd.box(0, 0.015f, 0, 0.0185f, 0.03f, 0.04f, 0.5f); wd.pop();
+        wd.push(); wd.translate(0, -0.05f, 0.04f); wd.rotX(-16); wd.box(0, 0, 0, 0.0175f, 0.04f, 0.02f, 0.5f); wd.pop();
+        wd.color(0.15f, 0.15f, 0.16f);
+        wd.push(); wd.translate(0, -0.012f, 0.385f); wd.rotX(5); wd.box(0, 0, 0, 0.0195f, 0.045f, 0.005f, 0.4f); wd.pop();
+        gripHand(a, 0.0f, -0.05f, 0.04f, -16f, 0.14f, -0.28f, 0.3f);
+        supportHand(a, -0.018f, -0.01f, -0.3f, -0.2f, -0.22f, 0.05f);
+    }
+
+    // ------------------------------------------------------------ "Tormenta" (original, ciencia ficción)
+    private static void storm(MeshBuilder[] g) {
+        MeshBuilder m = g[0], wd = g[1], a = g[2], sl = g[3], mg = g[4];
+        m.color(0.24f, 0.26f, 0.3f);
+        m.box(0, 0.026f, -0.12f, 0.023f, 0.034f, 0.14f, 0.5f);
+        m.box(0, 0.05f, -0.05f, 0.015f, 0.012f, 0.07f, 0.5f);
+        m.color(0.15f, 0.16f, 0.19f);
+        m.box(0, -0.008f, -0.14f, 0.014f, 0.006f, 0.1f, 0.5f);
+        m.color(0.35f, 0.37f, 0.42f);
+        m.box(0, -0.02f, -0.12f, 0.004f, 0.004f, 0.04f, 0.5f);
+        m.color(0.1f, 0.1f, 0.12f);
+        m.box(0, -0.01f, -0.1f, 0.0025f, 0.012f, 0.004f, 0.5f);
+        m.color(0.12f, 0.12f, 0.15f);
+        bar(m, 0, 0.032f, -0.2f, 0.22f, 0.013f, 0.011f, 12);
+        for (int i = 0; i < 5; i++) {                                      // bobinas brillantes
+            m.color(0.8f, 1.8f, 2.4f);
+            m.push(); m.translate(0, 0.032f, -0.215f - i * 0.04f); m.rotX(-90); m.cylinder(0.03f, 0.03f, 0.011f, 14, true, true, 0.5f); m.pop();
+            m.color(0.16f, 0.18f, 0.22f);
+            m.push(); m.translate(0, 0.032f, -0.2f - i * 0.04f); m.rotX(-90); m.cylinder(0.034f, 0.034f, 0.005f, 14, true, true, 0.5f); m.pop();
+        }
+        m.color(1.0f, 2.0f, 2.5f);
+        m.box(0, 0.032f, -0.42f, 0.006f, 0.006f, 0.006f, 0.4f);
+        m.box(0.0236f, 0.03f, -0.12f, 0.0008f, 0.008f, 0.09f, 0.4f);      // vetas de energía
+        m.box(-0.0236f, 0.03f, -0.12f, 0.0008f, 0.008f, 0.09f, 0.4f);
+        m.color(0.4f, 0.45f, 0.5f);
+        m.box(0, 0.064f, -0.1f, 0.005f, 0.01f, 0.012f, 0.5f);
         m.color(1.3f, 2.0f, 2.3f);
-        m.box(0, 0.056f, -0.07f, 0.01f, 0.01f, 0.03f, 0.5f);
-        wd.color(0.5f, 0.45f, 0.4f);
-        wd.push(); wd.translate(0, -0.075f, -0.05f); wd.rotX(-14); wd.box(0.0185f, 0, 0, 0.003f, 0.046f, 0.022f, 0.5f); wd.pop();
-        hand(a, 0.0f, -0.07f, -0.03f, 0.14f, -0.28f, 0.25f);
-        hand(a, -0.012f, -0.1f, -0.045f, -0.12f, -0.3f, 0.25f);
+        m.box(0, 0.075f, -0.1f, 0.0025f, 0.0025f, 0.004f, 0.4f);
+        // aletas dorsales (móviles: retroceden un poco)
+        sl.color(0.3f, 0.33f, 0.38f);
+        sl.box(0, 0.045f, 0.03f, 0.012f, 0.008f, 0.03f, 0.5f);
+        // celda de energía (cargador)
+        mg.color(0.2f, 0.22f, 0.26f);
+        mg.push(); mg.translate(0, -0.015f, -0.06f); mg.rotX(-14);
+        mg.box(0, -0.055f, 0, 0.0185f, 0.045f, 0.0265f, 0.5f);
+        mg.color(0.7f, 1.7f, 2.2f);
+        mg.box(0.0187f, -0.055f, 0, 0.0008f, 0.035f, 0.009f, 0.4f);
+        mg.box(-0.0187f, -0.055f, 0, 0.0008f, 0.035f, 0.009f, 0.4f);
+        mg.pop();
+        wd.color(0.45f, 0.43f, 0.42f);
+        wd.push(); wd.translate(0, -0.015f, -0.06f); wd.rotX(-14); wd.box(0.0165f, 0f, 0, 0.003f, 0.05f, 0.022f, 0.5f); wd.box(-0.0165f, 0f, 0, 0.003f, 0.05f, 0.022f, 0.5f); wd.pop();
+        gripHand(a, 0.0f, -0.062f, -0.055f, -14f, 0.14f, -0.28f, 0.25f);
+        supportHand(a, -0.028f, -0.09f, -0.085f, -0.17f, -0.3f, 0.22f);
     }
 
     /** Silueta de tiza (plano, en el plano XY, mirando a +Z) para comprar en la pared. */

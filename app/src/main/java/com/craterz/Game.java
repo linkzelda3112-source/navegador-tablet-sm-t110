@@ -13,6 +13,8 @@ public final class Game {
         public int state; // 0 surgiendo, 1 persiguiendo, 2 muerto
         public int tier;  // 0 camina, 1 trota, 2 corre
         public boolean brute;
+        public int variant, gait; // aspecto (0 casco+abrigo,1 abrigo,2 andrajos,3 andrajos+casco) y forma de andar
+        public float seed;
         public float lx, lz;
     }
 
@@ -40,7 +42,7 @@ public final class Game {
     public final int[] slotW = {Weapons.PISTOL, -1};
     public final int[][] ammo = new int[2][2]; // [slot][mag, reserve]
     public int cur;
-    public float cd, reloadT, reloadDur, swapT, recoil, flashT, adsT, kick;
+    public float sinceShot = 9f, cd, reloadT, reloadDur, swapT, recoil, flashT, adsT, kick;
     public boolean adsOn, prevFire;
     public String prompt = "";
     public int promptCost;
@@ -158,7 +160,7 @@ public final class Game {
     private void swapWeapon() {
         if (slotW[1] < 0 || swapT > 0) return;
         cur = 1 - cur;
-        swapT = 0.5f; reloadT = 0; adsOn = false;
+        swapT = 0.5f; sfx.play(Sfx.SWITCH, 0.4f); reloadT = 0; adsOn = false;
     }
 
     private void startReload() {
@@ -168,7 +170,35 @@ public final class Game {
         reloadDur = Weapons.RELOAD[w] * (hasPerk(World.PERK_REFLEJOS) ? 0.55f : 1f);
         reloadT = reloadDur;
         adsOn = false;
-        sfx.play(Sfx.RELOAD, 0.6f);
+        sfx.play(Sfx.RELOAD, 0.5f);
+        reloadEv = 0;
+        shellPlayed = true;
+    }
+
+    private int reloadEv;
+    private boolean shellPlayed = true, pumpPlayed = true;
+
+    private void weaponSfx(int w) {
+        if (reloadT > 0) {
+            float p = 1f - reloadT / Math.max(0.1f, reloadDur);
+            if (w == Weapons.SHOTGUN) {
+                if (reloadEv == 0 && p > 0.25f) { reloadEv = 1; sfx.play(Sfx.MAG_IN, 0.45f); }
+                if (reloadEv == 1 && p > 0.5f) { reloadEv = 2; sfx.play(Sfx.MAG_IN, 0.45f); }
+                if (reloadEv == 2 && p > 0.88f) { reloadEv = 3; sfx.play(Sfx.PUMP, 0.6f); }
+            } else {
+                if (reloadEv == 0 && p > 0.18f) { reloadEv = 1; sfx.play(Sfx.MAG_OUT, 0.6f); }
+                if (reloadEv == 1 && p > 0.58f) { reloadEv = 2; sfx.play(Sfx.MAG_IN, 0.7f); }
+                if (reloadEv == 2 && p > 0.82f) { reloadEv = 3; sfx.play(w == Weapons.STORM ? Sfx.SWITCH : Sfx.BOLT, 0.6f); }
+            }
+        }
+        if (!shellPlayed && sinceShot > 0.3f) {
+            shellPlayed = true;
+            if (w != Weapons.SHOTGUN && w != Weapons.STORM) sfx.play(Sfx.SHELL, 0.35f, 0.3f);
+        }
+        if (!pumpPlayed && sinceShot > 0.3f) {
+            pumpPlayed = true;
+            if (w == Weapons.SHOTGUN && ammo[cur][0] > 0) { sfx.play(Sfx.PUMP, 0.55f); sfx.play(Sfx.SHELL, 0.3f, 0.3f); }
+        }
     }
 
     private void updateWeapon(float dt) {
@@ -176,6 +206,8 @@ public final class Game {
         if (cd > 0) cd -= dt;
         if (swapT > 0) swapT -= dt;
         if (flashT > 0) flashT -= dt;
+        sinceShot += dt;
+        weaponSfx(w);
         recoil += (0f - recoil) * Math.min(1f, dt * 9f);
         if (reloadT > 0) {
             reloadT -= dt;
@@ -203,6 +235,7 @@ public final class Game {
         ammo[cur][0]--;
         float rate = hasPerk(World.PERK_RAFAGA) ? 1.0f / 1.38f : 1f;
         cd = Weapons.INTERVAL[w] * rate;
+        sinceShot = 0f; shellPlayed = false; pumpPlayed = false;
         recoil = Math.min(1.6f, recoil + Weapons.KICK[w] * 0.18f);
         pitch += Weapons.KICK[w] * (adsOn ? 0.14f : 0.22f) * (0.6f + rnd() * 0.8f);
         yaw += (rnd() - 0.5f) * Weapons.KICK[w] * 0.18f;
@@ -298,7 +331,7 @@ public final class Game {
         hitMarker = 0.18f;
         if (head) headMarker = 0.22f;
         ps.blood(hx, hy, hz, dx, dy, dz, head ? 9 : 6);
-        sfx.play(Sfx.HIT, 0.5f, 0f);
+        sfx.play(head ? Sfx.HEADSHOT : Sfx.FLESH, head ? 0.65f : 0.5f, 0f);
         // empujón
         z.x += dx * 0.06f; z.z += dz * 0.06f;
         if (z.hp <= 0) {
@@ -407,6 +440,9 @@ public final class Game {
         float t = 0.75f + rnd() * 0.5f;
         z.tr = t * (0.9f + rnd() * 0.2f); z.tg = t; z.tb = t * (0.85f + rnd() * 0.3f);
         z.phase = rnd() * 6f;
+        z.seed = rnd();
+        { float vr = rnd(); z.variant = vr < 0.3f ? 0 : vr < 0.55f ? 1 : vr < 0.85f ? 2 : 3; }
+        { float gr = rnd(); z.gait = gr < 0.35f ? 0 : gr < 0.55f ? 1 : gr < 0.8f ? 2 : 3; }
         z.grT = 1f + rnd() * 3f;
         z.side = rnd() < 0.5f ? 1 : -1;
         zs.add(z);
@@ -476,7 +512,11 @@ public final class Game {
             z.grT -= dt;
             if (z.grT <= 0) {
                 z.grT = 2.5f + rnd() * 5f;
-                if (d < 38f) sfx.play(Sfx.GROAN1 + (int) (rnd() * 3), Math.max(0.08f, 0.55f - d / 70f) * (z.brute ? 1.2f : 1f), pan(z.x, z.z));
+                if (d < 38f) {
+                    float vv = Math.max(0.08f, 0.55f - d / 70f) * (z.brute ? 1.2f : 1f);
+                    int snd = z.tier == 2 ? (rnd() < 0.5f ? Sfx.SCREAM : Sfx.SNARL) : (z.tier == 1 && rnd() < 0.35f ? Sfx.SNARL : Sfx.GROAN1 + (int) (rnd() * 3));
+                    sfx.play(snd, vv, pan(z.x, z.z));
+                }
             }
         }
     }
@@ -600,7 +640,7 @@ public final class Game {
         int slot = slotW[1] < 0 ? 1 : cur;
         slotW[slot] = w;
         ammo[slot][0] = Weapons.MAG[w]; ammo[slot][1] = Weapons.RESERVE[w];
-        cur = slot; swapT = 0.5f; reloadT = 0; adsOn = false;
+        cur = slot; swapT = 0.5f; sfx.play(Sfx.SWITCH, 0.4f); reloadT = 0; adsOn = false;
     }
 
     private void openDoor(int id) {
