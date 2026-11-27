@@ -9,7 +9,8 @@ public final class Game {
 
     public static final class Zombie {
         public float x, y, z, yaw, hp, maxHp, speed, scale = 1f, phase, hitFlash, deathT, riseT, atkT, atkCd, grT, stuckT, side, sideT;
-        public float tr = 1, tg = 1, tb = 1;
+        public float tr = 1, tg = 1, tb = 1, losT, slot;
+        public boolean los = true;
         public int state; // 0 surgiendo, 1 persiguiendo, 2 muerto
         public int tier;  // 0 camina, 1 trota, 2 corre
         public boolean brute;
@@ -67,6 +68,7 @@ public final class Game {
         this.sfx = sfx;
         this.in = in;
         world = new World();
+        nav = new Nav(world);
         px = world.startX; pz = world.startZ;
         py = world.ground(px, pz) + 1.65f;
         zoneOpen[0] = true;
@@ -441,6 +443,7 @@ public final class Game {
         z.tr = t * (0.9f + rnd() * 0.2f); z.tg = t; z.tb = t * (0.85f + rnd() * 0.3f);
         z.phase = rnd() * 6f;
         z.seed = rnd();
+        z.slot = (rnd() - 0.5f) * 0.9f;
         { float vr = rnd(); z.variant = vr < 0.3f ? 0 : vr < 0.55f ? 1 : vr < 0.85f ? 2 : 3; }
         { float gr = rnd(); z.gait = gr < 0.35f ? 0 : gr < 0.55f ? 1 : gr < 0.8f ? 2 : 3; }
         z.grT = 1f + rnd() * 3f;
@@ -449,7 +452,11 @@ public final class Game {
         ps.dust(sx, z.y + 0.1f, sz, 0, 1, 0, 8, 0.25f, 0.2f, 0.14f);
     }
 
+    private Nav nav;
+    private final float[] ndir = new float[2];
+
     private void updateZombies(float dt) {
+        nav.update(dt, px, pz);
         for (int i = zs.size() - 1; i >= 0; i--) {
             Zombie z = zs.get(i);
             if (z.hitFlash > 0) z.hitFlash -= dt;
@@ -472,12 +479,35 @@ public final class Game {
             float diff = want - z.yaw;
             while (diff > 180) diff -= 360;
             while (diff < -180) diff += 360;
-            z.yaw += Noise.clamp(diff, -360f * dt, 360f * dt);
+            if (z.los) z.yaw += Noise.clamp(diff, -360f * dt, 360f * dt);
             z.phase += dt * z.speed * 1.9f;
             if (z.atkT > 0) z.atkT -= dt;
             if (z.atkCd > 0) z.atkCd -= dt;
             if (d > 1.05f * z.scale) {
                 float mvx = dx / d, mvz = dz / d;
+                // inteligencia colectiva: ¿ve al jugador? si no, sigue el campo de flujo compartido
+                z.losT -= dt;
+                if (z.losT <= 0) {
+                    z.losT = 0.2f + rnd() * 0.15f;
+                    z.los = d < 2.5f || world.rayBlock(z.x, 0.3f, z.z, dx / d, 0f, dz / d, d) > 1.5f;
+                }
+                if (z.los && d > 2.8f && d < 11f && z.tier < 2) {
+                    // rodean: cada zombi apunta a una posición distinta alrededor del jugador
+                    float sa = z.seed * 6.2832f + z.slot;
+                    float tx = px + (float) Math.sin(sa) * 1.6f - z.x, tz = pz + (float) Math.cos(sa) * 1.6f - z.z;
+                    float tl = (float) Math.sqrt(tx * tx + tz * tz);
+                    if (tl > 0.01f) { mvx = tx / tl; mvz = tz / tl; }
+                } else if (!z.los && nav.dir(z.x, z.z, z.seed, ndir)) {
+                    mvx = ndir[0]; mvz = ndir[1];
+                }
+                // gira hacia donde camina, no hacia el jugador, cuando rodea obstáculos
+                if (!z.los) {
+                    float wy = (float) Math.toDegrees(Math.atan2(mvx, -mvz));
+                    float df = wy - z.yaw;
+                    while (df > 180) df -= 360;
+                    while (df < -180) df += 360;
+                    z.yaw += Noise.clamp(df, -300f * dt, 300f * dt);
+                }
                 if (z.sideT > 0) {
                     z.sideT -= dt;
                     float c = (float) Math.cos(Math.toRadians(70 * z.side)), s = (float) Math.sin(Math.toRadians(70 * z.side));
