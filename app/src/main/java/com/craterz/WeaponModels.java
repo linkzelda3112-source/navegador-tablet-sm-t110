@@ -368,14 +368,14 @@ public final class WeaponModels {
         final float Y = 0.045f; // eje del cañón
         // ---- freno de boca con ranuras y aro de bronce
         m.color(0.84f, 0.89f, 0.94f);
-        bar(m, 0, Y, -0.71f, 0.125f, 0.034f, 0.034f, 18);
+        bar(m, 0, Y, -0.71f, 0.125f, 0.034f, 0.034f, 24);
         m.color(BRONZE[0], BRONZE[1], BRONZE[2]);
-        bar(m, 0, Y, -0.715f, 0.012f, 0.0365f, 0.0365f, 18);
+        bar(m, 0, Y, -0.715f, 0.012f, 0.0365f, 0.0365f, 24);
         m.color(0.03f, 0.03f, 0.03f);
         bar(m, 0, Y, -0.7165f, 0.003f, 0.021f, 0.021f, 14);               // ánima
         for (int i = 0; i < 3; i++)                                         // ranuras laterales del freno
-            for (int s = -1; s <= 1; s += 2) m.box(s * 0.0335f, Y, -0.665f + i * 0.026f, 0.003f, 0.019f, 0.0075f, 0.4f);
-        for (int s = -1; s <= 1; s += 2) m.box(0, Y + s * 0.0335f, -0.652f, 0.012f, 0.003f, 0.036f, 0.4f);
+            for (int s = -1; s <= 1; s += 2) m.bbox(s * 0.0335f, Y, -0.665f + i * 0.026f, 0.003f, 0.019f, 0.0075f, 0.4f);
+        for (int s = -1; s <= 1; s += 2) m.bbox(0, Y + s * 0.0335f, -0.652f, 0.012f, 0.003f, 0.036f, 0.4f);
         // ---- cuello acanalado
         m.color(0.46f, 0.5f, 0.57f);
         bar(m, 0, Y, -0.585f, 0.09f, 0.0225f, 0.0225f, 12);
@@ -389,44 +389,44 @@ public final class WeaponModels {
         bar(m, 0, Y, -0.375f, 0.007f, 0.0665f, 0.0665f, 6);
         // ---- cuerpo principal
         m.color(0.78f, 0.86f, 0.97f);
-        m.box(0, 0.052f, -0.115f, 0.0385f, 0.052f, 0.255f, 0.5f);
+        m.bbox(0, 0.052f, -0.115f, 0.0385f, 0.052f, 0.255f, 0.5f);
         m.color(0.62f, 0.68f, 0.77f);
-        m.box(0, 0.108f, -0.115f, 0.03f, 0.006f, 0.255f, 0.5f);           // tapa superior
+        m.bbox(0, 0.108f, -0.115f, 0.03f, 0.006f, 0.255f, 0.5f);           // tapa superior
         m.color(0.41f, 0.45f, 0.51f);
         for (int s = -1; s <= 1; s += 2) {
-            m.box(s * 0.0392f, 0.052f, -0.3f, 0.0012f, 0.048f, 0.075f, 0.5f);   // placas en relieve
-            m.box(s * 0.0392f, 0.095f, -0.04f, 0.0012f, 0.01f, 0.1f, 0.5f);
-            m.box(s * 0.0392f, 0.021f, 0.03f, 0.0012f, 0.012f, 0.1f, 0.5f);
+            m.bbox(s * 0.0392f, 0.052f, -0.3f, 0.0012f, 0.048f, 0.075f, 0.5f);   // placas en relieve
+            m.bbox(s * 0.0392f, 0.095f, -0.04f, 0.0012f, 0.01f, 0.1f, 0.5f);
+            m.bbox(s * 0.0392f, 0.021f, 0.03f, 0.0012f, 0.012f, 0.1f, 0.5f);
         }
         // marco del núcleo de plasma
         m.color(0.27f, 0.3f, 0.35f);
         for (int s = -1; s <= 1; s += 2) {
-            m.box(s * 0.0388f, 0.092f, -0.1f, 0.0016f, 0.004f, 0.105f, 0.4f);
-            m.box(s * 0.0388f, 0.024f, -0.1f, 0.0016f, 0.004f, 0.105f, 0.4f);
-            m.box(s * 0.0388f, 0.058f, -0.2f, 0.0016f, 0.034f, 0.004f, 0.4f);
-            m.box(s * 0.0388f, 0.058f, 0.0f, 0.0016f, 0.034f, 0.004f, 0.4f);
+            m.bbox(s * 0.0388f, 0.092f, -0.1f, 0.0016f, 0.004f, 0.105f, 0.4f);
+            m.bbox(s * 0.0388f, 0.024f, -0.1f, 0.0016f, 0.004f, 0.105f, 0.4f);
+            m.bbox(s * 0.0388f, 0.058f, -0.2f, 0.0016f, 0.034f, 0.004f, 0.4f);
+            m.bbox(s * 0.0388f, 0.058f, 0.0f, 0.0016f, 0.034f, 0.004f, 0.4f);
         }
         // riel superior con dientes
         m.color(0.43f, 0.47f, 0.54f);
-        m.box(0, 0.118f, -0.1f, 0.019f, 0.004f, 0.255f, 0.5f);
+        m.bbox(0, 0.118f, -0.1f, 0.019f, 0.004f, 0.255f, 0.5f);
         m.color(0.16f, 0.18f, 0.2f);
-        for (int i = 0; i < 20; i++) m.box(0, 0.1215f, -0.33f + i * 0.0245f, 0.0175f, 0.0025f, 0.0075f, 0.4f);
+        for (int i = 0; i < 20; i++) m.bbox(0, 0.1215f, -0.33f + i * 0.0245f, 0.0175f, 0.0025f, 0.0075f, 0.4f);
         // ---- mira holográfica
         m.color(0.7f, 0.78f, 0.89f);
-        m.box(0, 0.131f, -0.075f, 0.03f, 0.01f, 0.068f, 0.5f);            // base
+        m.bbox(0, 0.131f, -0.075f, 0.03f, 0.01f, 0.068f, 0.5f);            // base
         m.color(0.84f, 0.92f, 1.0f);
-        m.box(0, 0.188f, -0.075f, 0.034f, 0.008f, 0.07f, 0.5f);           // visera
-        m.box(0, 0.168f, -0.138f, 0.034f, 0.026f, 0.006f, 0.5f);          // marco frontal
-        m.box(-0.0285f, 0.158f, -0.075f, 0.0055f, 0.03f, 0.07f, 0.5f);    // costados
-        m.box(0.0285f, 0.158f, -0.075f, 0.0055f, 0.03f, 0.07f, 0.5f);
+        m.bbox(0, 0.188f, -0.075f, 0.034f, 0.008f, 0.07f, 0.5f);           // visera
+        m.bbox(0, 0.168f, -0.138f, 0.034f, 0.026f, 0.006f, 0.5f);          // marco frontal
+        m.bbox(-0.0285f, 0.158f, -0.075f, 0.0055f, 0.03f, 0.07f, 0.5f);    // costados
+        m.bbox(0.0285f, 0.158f, -0.075f, 0.0055f, 0.03f, 0.07f, 0.5f);
         m.color(0.41f, 0.45f, 0.51f);
-        m.box(0, 0.138f, -0.01f, 0.034f, 0.007f, 0.005f, 0.5f);           // marco inferior trasero
-        m.box(-0.0295f, 0.162f, -0.01f, 0.005f, 0.03f, 0.005f, 0.5f);
-        m.box(0.0295f, 0.162f, -0.01f, 0.005f, 0.03f, 0.005f, 0.5f);
-        m.box(0, 0.19f, -0.01f, 0.034f, 0.005f, 0.005f, 0.5f);
+        m.bbox(0, 0.138f, -0.01f, 0.034f, 0.007f, 0.005f, 0.5f);           // marco inferior trasero
+        m.bbox(-0.0295f, 0.162f, -0.01f, 0.005f, 0.03f, 0.005f, 0.5f);
+        m.bbox(0.0295f, 0.162f, -0.01f, 0.005f, 0.03f, 0.005f, 0.5f);
+        m.bbox(0, 0.19f, -0.01f, 0.034f, 0.005f, 0.005f, 0.5f);
         m.color(0.2f, 0.22f, 0.24f);
-        m.box(0, 0.128f, 0.075f, 0.007f, 0.012f, 0.006f, 0.4f);           // alza de emergencia
-        m.box(0, 0.126f, -0.34f, 0.0035f, 0.014f, 0.006f, 0.4f);          // punto de mira
+        m.bbox(0, 0.128f, 0.075f, 0.007f, 0.012f, 0.006f, 0.4f);           // alza de emergencia
+        m.bbox(0, 0.126f, -0.34f, 0.0035f, 0.014f, 0.006f, 0.4f);          // punto de mira
         // luces de la mira + retícula
         gl.color(CY_LAMP[0], CY_LAMP[1], CY_LAMP[2]);
         for (int s = -1; s <= 1; s += 2) gl.box(s * 0.0343f, 0.158f, -0.075f, 0.0008f, 0.0035f, 0.028f, 0.4f);
@@ -468,55 +468,55 @@ public final class WeaponModels {
         }
         // ---- guardamanos inferior de goma con estrías y vivos de bronce
         m.color(0.38f, 0.39f, 0.43f);
-        m.box(0, -0.032f, -0.34f, 0.032f, 0.03f, 0.145f, 0.5f);
-        m.box(0, -0.028f, -0.5f, 0.028f, 0.024f, 0.02f, 0.5f);
+        m.bbox(0, -0.032f, -0.34f, 0.032f, 0.03f, 0.145f, 0.5f);
+        m.bbox(0, -0.028f, -0.5f, 0.028f, 0.024f, 0.02f, 0.5f);
         m.color(0.16f, 0.16f, 0.19f);
-        for (int i = 0; i < 7; i++) m.box(0, -0.0625f, -0.22f - i * 0.036f, 0.027f, 0.0025f, 0.009f, 0.4f);
+        for (int i = 0; i < 7; i++) m.bbox(0, -0.0625f, -0.22f - i * 0.036f, 0.027f, 0.0025f, 0.009f, 0.4f);
         m.color(BRONZE[0], BRONZE[1], BRONZE[2]);
-        m.box(0, -0.032f, -0.488f, 0.033f, 0.031f, 0.004f, 0.4f);
-        m.box(0, -0.0035f, -0.34f, 0.033f, 0.0015f, 0.143f, 0.4f);
+        m.bbox(0, -0.032f, -0.488f, 0.033f, 0.031f, 0.004f, 0.4f);
+        m.bbox(0, -0.0035f, -0.34f, 0.033f, 0.0015f, 0.143f, 0.4f);
         // cable de energía hacia el guardamanos
         m.color(0.09f, 0.09f, 0.11f);
         limb(m, -0.03f, -0.012f, -0.11f, -0.037f, -0.03f, -0.2f, 0.011f, 0.011f);
         limb(m, -0.037f, -0.03f, -0.2f, -0.034f, -0.035f, -0.25f, 0.011f, 0.011f);
         // ---- receptor inferior, guardamonte y empuñadura
         m.color(0.46f, 0.5f, 0.57f);
-        m.box(0, -0.035f, 0.02f, 0.034f, 0.035f, 0.12f, 0.5f);
+        m.bbox(0, -0.035f, 0.02f, 0.034f, 0.035f, 0.12f, 0.5f);
         m.color(0.27f, 0.3f, 0.34f);
-        m.box(0, -0.062f, 0.075f, 0.01f, 0.004f, 0.045f, 0.5f);
-        m.box(0, -0.082f, 0.108f, 0.006f, 0.02f, 0.004f, 0.5f);
+        m.bbox(0, -0.062f, 0.075f, 0.01f, 0.004f, 0.045f, 0.5f);
+        m.bbox(0, -0.082f, 0.108f, 0.006f, 0.02f, 0.004f, 0.5f);
         m.color(0.09f, 0.09f, 0.11f);
-        m.box(0, -0.062f, 0.034f, 0.0025f, 0.012f, 0.004f, 0.5f);          // gatillo
+        m.bbox(0, -0.062f, 0.034f, 0.0025f, 0.012f, 0.004f, 0.5f);          // gatillo
         m.color(0.16f, 0.16f, 0.19f);
         m.push(); m.translate(0, -0.06f, 0.1f); m.rotX(-20);
-        m.box(0, -0.052f, 0, 0.0225f, 0.058f, 0.0235f, 0.5f);              // empuñadura
-        for (int i = 0; i < 5; i++) m.box(0, -0.035f - i * 0.019f, -0.0245f, 0.021f, 0.0045f, 0.0012f, 0.4f);
+        m.bbox(0, -0.052f, 0, 0.0225f, 0.058f, 0.0235f, 0.5f);              // empuñadura
+        for (int i = 0; i < 5; i++) m.bbox(0, -0.035f - i * 0.019f, -0.0245f, 0.021f, 0.0045f, 0.0012f, 0.4f);
         m.pop();
         m.color(BRONZE[0], BRONZE[1], BRONZE[2]);
-        m.box(0, -0.065f, 0.08f, 0.0062f, 0.0045f, 0.0045f, 0.4f);
+        m.bbox(0, -0.065f, 0.08f, 0.0062f, 0.0045f, 0.0045f, 0.4f);
         // ---- culata esquelética angular
         m.color(0.46f, 0.5f, 0.57f);
-        m.box(0, 0.062f, 0.235f, 0.0285f, 0.04f, 0.11f, 0.5f);             // carrillera superior
+        m.bbox(0, 0.062f, 0.235f, 0.0285f, 0.04f, 0.11f, 0.5f);             // carrillera superior
         m.color(0.62f, 0.68f, 0.76f);
-        m.box(0, 0.104f, 0.23f, 0.0235f, 0.004f, 0.1f, 0.5f);
+        m.bbox(0, 0.104f, 0.23f, 0.0235f, 0.004f, 0.1f, 0.5f);
         m.color(0.38f, 0.41f, 0.46f);
-        m.push(); m.translate(0, 0.045f, 0.35f); m.rotX(-6); m.box(0, -0.04f, 0, 0.029f, 0.085f, 0.0125f, 0.5f); m.pop(); // placa trasera
+        m.push(); m.translate(0, 0.045f, 0.35f); m.rotX(-6); m.bbox(0, -0.04f, 0, 0.029f, 0.085f, 0.0125f, 0.5f); m.pop(); // placa trasera
         limb(m, 0, -0.015f, 0.145f, 0, -0.068f, 0.345f, 0.03f, 0.036f);    // puntal inferior
         m.color(BRONZE[0], BRONZE[1], BRONZE[2]);
-        m.box(0, -0.036f, 0.358f, 0.03f, 0.0065f, 0.0048f, 0.4f);
-        m.box(0, 0.046f, 0.355f, 0.03f, 0.004f, 0.005f, 0.4f);
+        m.bbox(0, -0.036f, 0.358f, 0.03f, 0.0065f, 0.0048f, 0.4f);
+        m.bbox(0, 0.046f, 0.355f, 0.03f, 0.004f, 0.005f, 0.4f);
         // ---- manija de carga (móvil) a la derecha del receptor
         sl.color(0.7f, 0.74f, 0.8f);
-        sl.box(0.0455f, 0.082f, 0.03f, 0.0075f, 0.007f, 0.022f, 0.5f);
+        sl.bbox(0.0455f, 0.082f, 0.03f, 0.0075f, 0.007f, 0.022f, 0.5f);
         sl.color(0.2f, 0.22f, 0.25f);
-        for (int i = 0; i < 4; i++) sl.box(0.0535f, 0.082f, 0.012f + i * 0.012f, 0.0012f, 0.006f, 0.004f, 0.4f);
+        for (int i = 0; i < 4; i++) sl.bbox(0.0535f, 0.082f, 0.012f + i * 0.012f, 0.0012f, 0.006f, 0.004f, 0.4f);
         // ---- cargador (móvil), vertical, con franjas luminosas
         mg.color(0.36f, 0.4f, 0.45f);
-        mg.box(0, -0.133f, -0.05f, 0.0235f, 0.065f, 0.04f, 0.5f);
+        mg.bbox(0, -0.133f, -0.05f, 0.0235f, 0.065f, 0.04f, 0.5f);
         mg.color(0.2f, 0.22f, 0.25f);
-        mg.box(0, -0.2f, -0.05f, 0.0275f, 0.008f, 0.0445f, 0.5f);
+        mg.bbox(0, -0.2f, -0.05f, 0.0275f, 0.008f, 0.0445f, 0.5f);
         mg.color(BRONZE[0], BRONZE[1], BRONZE[2]);
-        mg.box(0, -0.2085f, -0.05f, 0.028f, 0.0015f, 0.045f, 0.4f);
+        mg.bbox(0, -0.2085f, -0.05f, 0.028f, 0.0015f, 0.045f, 0.4f);
         mgl.color(CY_LAMP[0], CY_LAMP[1], CY_LAMP[2]);
         for (int s = -1; s <= 1; s += 2) mgl.box(s * 0.0239f, -0.135f, -0.045f, 0.0008f, 0.055f, 0.0065f, 0.4f);
         // ---- arcos eléctricos (cuatro variantes que se alternan)

@@ -916,7 +916,7 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
         float rp = g.reloadT > 0 ? 1f - g.reloadT / Math.max(0.1f, g.reloadDur) : 0f;
         float back = g.swapT > 0 ? 0f : WeaponModels.slideBack(w, g.sinceShot, rp);
         float drop = WeaponModels.magDrop(rp);
-        tex(TexGen.GUNMETAL);
+        tex(w == Weapons.STORM ? TexGen.SCIFI : TexGen.GUNMETAL);
         drawGroup(w, 0, model, 0, 0, 0);
         drawGroup(w, 3, model, 0, 0, back);
         drawGroup(w, 4, model, 0, drop, 0);

@@ -167,6 +167,82 @@ public final class MeshBuilder {
         boxCorners(bc, s);
     }
 
+
+    // ------------------------------------------------------------ caja biselada
+    private void outQuad(float[] a, float[] b, float[] c, float[] d, float hx, float hy, float hz, float s) {
+        float ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = d[0] - a[0], vy = d[1] - a[1], vz = d[2] - a[2];
+        float nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        if (nx * hx + ny * hy + nz * hz >= 0) quad(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2], s);
+        else quad(a[0], a[1], a[2], d[0], d[1], d[2], c[0], c[1], c[2], b[0], b[1], b[2], s);
+    }
+
+    private void outTri(float[] a, float[] b, float[] c, float hx, float hy, float hz, float s) {
+        float ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+        float nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (nl < 1e-12f) return;
+        nx /= nl; ny /= nl; nz /= nl;
+        if (nx * hx + ny * hy + nz * hz < 0) { nx = -nx; ny = -ny; nz = -nz; }
+        float ul = (float) Math.sqrt(ux * ux + uy * uy + uz * uz) + 1e-9f;
+        float[] P = {a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]};
+        for (int k = 0; k < 3; k++) {
+            qp[k * 3] = P[k * 3]; qp[k * 3 + 1] = P[k * 3 + 1]; qp[k * 3 + 2] = P[k * 3 + 2];
+            qn[k * 3] = nx; qn[k * 3 + 1] = ny; qn[k * 3 + 2] = nz;
+            qt[k * 3] = ux / ul; qt[k * 3 + 1] = uy / ul; qt[k * 3 + 2] = uz / ul;
+        }
+        qu[0] = 0; qu[1] = 0; qu[2] = ul * s; qu[3] = 0; qu[4] = 0; qu[5] = ul * s;
+        tri(qp, qn, qt, qu, 0, 1, 2);
+    }
+
+    /** Caja con aristas achaflanadas (brillos en los bordes, mucho menos "de bloques"). */
+    public void bbox(float cx, float cy, float cz, float hx, float hy, float hz, float s) {
+        float mn = Math.min(hx, Math.min(hy, hz));
+        if (mn < 0.0065f) { box(cx, cy, cz, hx, hy, hz, s); return; }
+        float b = Math.min(0.0042f, mn * 0.45f);
+        float[] h = {hx, hy, hz}, c0 = {cx, cy, cz};
+        // caras: eje a con signo sa, ejes tangentes t1,t2
+        for (int ax = 0; ax < 3; ax++)
+            for (int sg = -1; sg <= 1; sg += 2) {
+                int t1 = (ax + 1) % 3, t2 = (ax + 2) % 3;
+                float[][] q = new float[4][3];
+                int[][] sc = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+                for (int k = 0; k < 4; k++) {
+                    q[k][ax] = c0[ax] + sg * h[ax];
+                    q[k][t1] = c0[t1] + sc[k][0] * (h[t1] - b);
+                    q[k][t2] = c0[t2] + sc[k][1] * (h[t2] - b);
+                }
+                float[] hint = new float[3]; hint[ax] = sg;
+                outQuad(q[0], q[1], q[2], q[3], hint[0], hint[1], hint[2], s);
+            }
+        // aristas (12): dos ejes con signo, el tercero recorre
+        for (int ex = 0; ex < 3; ex++) {
+            int a1 = (ex + 1) % 3, a2 = (ex + 2) % 3;
+            for (int s1 = -1; s1 <= 1; s1 += 2)
+                for (int s2 = -1; s2 <= 1; s2 += 2) {
+                    float[][] q = new float[4][3];
+                    // extremo en cara a1
+                    for (int k = 0; k < 4; k++) {
+                        float run = (k == 0 || k == 3) ? -1 : 1;
+                        q[k][ex] = c0[ex] + run * (h[ex] - b);
+                        if (k < 2) { q[k][a1] = c0[a1] + s1 * h[a1]; q[k][a2] = c0[a2] + s2 * (h[a2] - b); }
+                        else { q[k][a2] = c0[a2] + s2 * h[a2]; q[k][a1] = c0[a1] + s1 * (h[a1] - b); }
+                    }
+                    float[] hint = new float[3]; hint[a1] = s1; hint[a2] = s2;
+                    outQuad(q[0], q[1], q[2], q[3], hint[0], hint[1], hint[2], s);
+                }
+        }
+        // esquinas (8)
+        for (int sx = -1; sx <= 1; sx += 2)
+            for (int sy = -1; sy <= 1; sy += 2)
+                for (int sz = -1; sz <= 1; sz += 2) {
+                    float[] sgn = {sx, sy, sz};
+                    float[][] q = new float[3][3];
+                    for (int k = 0; k < 3; k++)
+                        for (int a = 0; a < 3; a++) q[k][a] = c0[a] + sgn[a] * (a == k ? h[a] : h[a] - b);
+                    outTri(q[0], q[1], q[2], sx, sy, sz, s);
+                }
+    }
+
     /** Caja que cuelga desde el origen hacia -Y (miembros del zombi): arriba w1×d1, abajo w0×d0. */
     public void taper(float len, float w0, float d0, float w1, float d1, float s) {
         for (int k = 0; k < 8; k++) {

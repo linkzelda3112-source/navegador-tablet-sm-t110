@@ -3,8 +3,8 @@ package com.craterz;
 /** Texturas procedurales (difusa + mapa de normales con brillo en el canal alfa). Todo generado por código. */
 public final class TexGen {
     public static final int N = 256;
-    public static final int MUD = 0, BRICK = 1, WOOD = 2, METAL = 3, CONCRETE = 4, SAND = 5, BARK = 6, ZOMBIE = 7, GUNMETAL = 8, WALNUT = 9, TEMPEST = 10;
-    public static final int COUNT = 11;
+    public static final int MUD = 0, BRICK = 1, WOOD = 2, METAL = 3, CONCRETE = 4, SAND = 5, BARK = 6, ZOMBIE = 7, GUNMETAL = 8, WALNUT = 9, TEMPEST = 10, SCIFI = 11;
+    public static final int COUNT = 12;
     public static final int ZN = 512;
 
     public static int size(int id) { return id == ZOMBIE ? ZN : N; }
@@ -75,6 +75,7 @@ public final class TexGen {
             case GUNMETAL: gunmetal(m); strength = 3f; break;
             case WALNUT: walnut(m); strength = 3f; break;
             case TEMPEST: tempest(m); strength = 2f; break;
+            case SCIFI: scifi(m); strength = 4f; break;
             default: zombie(m); strength = 5f; break;
         }
         return finish(m, strength);
@@ -473,6 +474,46 @@ public final class TexGen {
         drawText(m, "TR-74 TEMPEST", 12, 8, 3);
         drawText(m, "TORMENTA", 32, 42, 4);
         for (int y = 0; y < 24; y++) for (int x = 232; x < 256; x++) m.set(x, y, 1f, 1f, 1f, 0f, 0.1f);
+    }
+
+    /** Blindaje de ciencia ficción: paneles azul acero con juntas, remaches, rayones y detalles de bronce. */
+    private static void scifi(Img m) {
+        int n = m.w;
+        int gx = 4, gy = 3;
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                float u = x / (float) n, v = y / (float) n;
+                // paneles irregulares: rejilla con desplazamiento por fila
+                float rowH = n / (float) gy;
+                int row = (int) (y / rowH);
+                float off = Noise.rnd(row, 3, 311) * n / gx;
+                float px = (x + off) % (n / (float) gx), py = y % rowH;
+                float ex = Math.min(px, n / (float) gx - px), ey = Math.min(py, rowH - py);
+                float edge = Math.min(ex, ey);
+                float seam = 1f - ss(0f, 2.6f, edge);              // junta oscura
+                float bevel = ss(2f, 7f, edge);                    // altura del panel
+                int pid = row * 17 + (int) ((x + off) / (n / (float) gx));
+                float tone = 0.9f + 0.2f * Noise.rnd(pid, 5, 312);
+                float brushed = Noise.fbmWrap(u, v, 128, 3, 3, 313);
+                float cloud = Noise.fbmWrap(u, v, 4, 4, 4, 314);
+                float k = (0.30f + 0.07f * brushed + 0.05f * cloud) * tone;
+                float r = k * 0.88f, g = k * 1.02f, b = k * 1.22f;
+                // desgaste en los bordes y rayones
+                float wear = ss(0.35f, 0.9f, Noise.fbmWrap(u, v, 10, 10, 4, 315)) * (1f - ss(2f, 9f, edge)) * 0.8f;
+                float scr = Noise.fbmWrap(u, v, 60, 2, 2, 316) > 0.74f ? 0.18f : 0f;
+                r = mix(r, 0.62f, wear) + scr; g = mix(g, 0.64f, wear) + scr; b = mix(b, 0.68f, wear) + scr;
+                // parches de bronce
+                float bz = ss(0.72f, 0.82f, Noise.fbmWrap(u, v, 5, 5, 3, 317));
+                r = mix(r, 0.66f, bz * 0.85f); g = mix(g, 0.42f, bz * 0.85f); b = mix(b, 0.22f, bz * 0.85f);
+                // remaches en las esquinas de cada panel
+                float rx = Math.abs(px - 7f), ry = Math.abs(py - 7f);
+                float rivet = ss(3.2f, 1.2f, (float) Math.sqrt(rx * rx + ry * ry));
+                r += rivet * 0.12f; g += rivet * 0.12f; b += rivet * 0.14f;
+                float sm = 1f - seam * 0.8f;
+                float height = bevel * 0.7f + rivet * 0.5f + brushed * 0.08f;
+                m.set(x, y, r * sm, g * sm, b * sm, height, 0.55f + wear * 0.2f + bz * 0.15f);
+            }
+        }
     }
 
     private static void gunmetal(Img m) {

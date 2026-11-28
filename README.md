@@ -30,3 +30,6 @@ Rama: `zombies-origins`. El APK se compila con GitHub Actions y se publica en Re
 
 ## v1.5 — hambre y furia
 - Los zombis tienen hambre que crece con el tiempo (más rápidos; los lentos acaban trotando), se enfurecen y rugen al verte, se vuelven más veloces si tienes poca vida, se lanzan de un salto al estar cerca y muerden más rápido cuanta más hambre tengan.
+
+## v1.6 — Tormenta más fiel a la foto
+- Cajas con aristas achaflanadas (brillos en los bordes) en lugar de bloques duros, y una textura nueva de blindaje azul acero con paneles, juntas, remaches, desgaste y parches de bronce.
