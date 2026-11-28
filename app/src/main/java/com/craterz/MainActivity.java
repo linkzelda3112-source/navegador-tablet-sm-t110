@@ -310,7 +310,7 @@ public class MainActivity extends Activity {
                     break;
                 }
             }
-            text(c, "v1.4  ·  mapa y personajes originales", w / 2f, h - u * 0.025f, u * 0.026f, 0x88FFFFFF, Paint.Align.CENTER, bold);
+            text(c, "v1.5  ·  mapa y personajes originales", w / 2f, h - u * 0.025f, u * 0.026f, 0x88FFFFFF, Paint.Align.CENTER, bold);
         }
 
         @Override

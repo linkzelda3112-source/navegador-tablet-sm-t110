@@ -9,7 +9,8 @@ public final class Game {
 
     public static final class Zombie {
         public float x, y, z, yaw, hp, maxHp, speed, scale = 1f, phase, hitFlash, deathT, riseT, atkT, atkCd, grT, stuckT, side, sideT;
-        public float tr = 1, tg = 1, tb = 1, losT, slot, stunT, stunFx;
+        public float tr = 1, tg = 1, tb = 1, losT, slot, stunT, stunFx, hunger, enrageT, lungeT, lungeCd;
+        public boolean spotted;
         public boolean los = true;
         public int state; // 0 surgiendo, 1 persiguiendo, 2 muerto
         public int tier;  // 0 camina, 1 trota, 2 corre
@@ -563,6 +564,7 @@ public final class Game {
         z.tr = t * (0.9f + rnd() * 0.2f); z.tg = t; z.tb = t * (0.85f + rnd() * 0.3f);
         z.phase = rnd() * 6f;
         z.seed = rnd();
+        z.hunger = rnd() * 0.3f;
         z.slot = (rnd() - 0.5f) * 0.9f;
         { float vr = rnd(); z.variant = vr < 0.3f ? 0 : vr < 0.55f ? 1 : vr < 0.85f ? 2 : 3; }
         { float gr = rnd(); z.gait = gr < 0.35f ? 0 : gr < 0.55f ? 1 : gr < 0.8f ? 2 : 3; }
@@ -605,7 +607,18 @@ public final class Game {
             while (diff > 180) diff -= 360;
             while (diff < -180) diff += 360;
             if (z.los) z.yaw += Noise.clamp(diff, -360f * dt, 360f * dt);
-            z.phase += dt * z.speed * 1.9f;
+            // hambre: crece mientras no comen; con sangre cerca y al verte se enfurecen
+            z.hunger = Math.min(1f, z.hunger + dt / 45f);
+            if (z.enrageT > 0) z.enrageT -= dt;
+            if (z.lungeT > 0) z.lungeT -= dt;
+            if (z.lungeCd > 0) z.lungeCd -= dt;
+            float frenzy = 1f + 0.32f * z.hunger + (health < 0.4f * maxHealth ? 0.12f : 0f) + (z.enrageT > 0 ? 0.4f : 0f);
+            if (z.hunger >= 1f && z.tier == 0) { z.tier = 1; z.speed *= 1.35f; }
+            if (!z.spotted && z.los && d < 32f) {
+                z.spotted = true; z.enrageT = 2.2f;
+                sfx.play(rnd() < 0.5f ? Sfx.SCREAM : Sfx.SNARL, Math.max(0.15f, 0.6f - d / 60f), pan(z.x, z.z));
+            }
+            z.phase += dt * z.speed * frenzy * 1.9f;
             if (z.atkT > 0) z.atkT -= dt;
             if (z.atkCd > 0) z.atkCd -= dt;
             if (d > 1.05f * z.scale) {
@@ -639,7 +652,9 @@ public final class Game {
                     float nx = mvx * c - mvz * s, nz = mvx * s + mvz * c;
                     mvx = nx; mvz = nz;
                 }
-                float spd = z.speed * (z.atkT > 0 ? 0.3f : 1f);
+                if (z.los && d < 2.8f * z.scale && z.lungeT <= 0 && z.lungeCd <= 0 && z.atkT <= 0 && z.stunT <= 0) { z.lungeT = 0.25f; z.lungeCd = 2.4f - 1.2f * z.hunger; z.atkT = 0.45f; }
+                float spd = z.speed * frenzy * (z.atkT > 0 ? 0.3f : 1f);
+                if (z.lungeT > 0) spd = 7.5f;
                 tmp[0] = z.x + mvx * spd * dt; tmp[1] = z.z + mvz * spd * dt;
                         world.resolve(tmp, 0.38f * z.scale);
                 float moved = (float) Math.hypot(tmp[0] - z.x, tmp[1] - z.z);
@@ -649,7 +664,8 @@ public final class Game {
                 } else z.stuckT = Math.max(0, z.stuckT - dt);
                 z.x = tmp[0]; z.z = tmp[1];
             } else if (z.atkCd <= 0) {
-                z.atkCd = 1.05f; z.atkT = 0.45f;
+                z.atkCd = 1.05f - 0.3f * z.hunger; z.atkT = 0.45f;
+                z.hunger *= 0.5f;   // muerde: calma un poco el hambre
                 sfx.play(Sfx.SWIPE, 0.4f, pan(z.x, z.z));
                 hurtPlayer(z.brute ? 55f : 34f);
             }

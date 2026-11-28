@@ -771,6 +771,7 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
             swing = 0;
         }
         float atk = z.atkT > 0 ? sn(Math.PI * (1f - z.atkT / 0.45f)) : 0f;
+        if (z.lungeT > 0) atk = 1f;
         boolean stun = z.stunT > 0 && z.state != 2;
         if (stun) { stag = 0.7f; swing = 0; }
         Mat4.identity(hipM);
@@ -808,7 +809,7 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
             part(prog, ZombieModel.HELMET, sub);
         }
         // mandíbula: abierta al atacar / gruñir, colgando al morir
-        float jawOpen = 10f + 8f * (0.5f + 0.5f * sn(ph * 1.3f)) + atk * 22f + (z.state == 2 ? 24f : 0f) + (z.tier == 2 ? 14f : 0f);
+        float jawOpen = 10f + 8f * (0.5f + 0.5f * sn(ph * 1.3f)) + atk * 22f + z.hunger * 12f + (z.state == 2 ? 24f : 0f) + (z.tier == 2 ? 14f : 0f);
         System.arraycopy(jointM, 0, sub, 0, 16);
         Mat4.translate(sub, 0, 0.095f, -0.035f);
         Mat4.rotateX(sub, jawOpen);

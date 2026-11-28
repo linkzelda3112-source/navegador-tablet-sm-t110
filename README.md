@@ -27,3 +27,6 @@ Rama: `zombies-origins`. El APK se compila con GitHub Actions y se publica en Re
 - 1.er disparo: **rayo** que paraliza (5 s) y hace daño brutal; salta a hasta 6 zombis cercanos.
 - Tras el rayo, la Tormenta dispara **normal** mientras el rayo se recarga (8 s; barra "RAYO LISTO" en el HUD). El arma brilla, pulsa y echa más arcos cuando el rayo está listo.
 - Zombis paralizados: tiemblan, se tiñen de azul y sueltan chispas.
+
+## v1.5 — hambre y furia
+- Los zombis tienen hambre que crece con el tiempo (más rápidos; los lentos acaban trotando), se enfurecen y rugen al verte, se vuelven más veloces si tienes poca vida, se lanzan de un salto al estar cerca y muerden más rápido cuanta más hambre tengan.
