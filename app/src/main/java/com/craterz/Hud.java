@@ -313,6 +313,19 @@ public final class Hud extends View {
         String am = g.reloadT > 0 ? "recargando…" : g.ammo[g.cur][0] + " / " + g.ammo[g.cur][1];
         text(c, am, bx, by - u * 0.02f, u * 0.06f, g.ammo[g.cur][0] == 0 && g.reloadT <= 0 ? 0xFFFF5040 : 0xFFFFFFFF, Paint.Align.CENTER, bold);
         text(c, Weapons.NAME[wp], bx, by - u * 0.075f - bh * 1.4f - u * 0.012f, u * 0.032f, 0xCCFFFFFF, Paint.Align.CENTER, bold);
+        if (wp == Weapons.STORM) {
+            float cw = u * 0.34f, ch = u * 0.013f, cy = by - u * 0.1f - bh - u * 0.03f;
+            rf.set(bx - cw / 2, cy, bx + cw / 2, cy + ch);
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0x88000000);
+            c.drawRoundRect(rf, ch, ch, p);
+            boolean ready = g.stormBolt;
+            float k = ready ? 1f : g.stormCharge;
+            rf.set(bx - cw / 2, cy, bx - cw / 2 + cw * k, cy + ch);
+            p.setColor(ready ? (((int) (g.time * 8) % 2 == 0) ? 0xFF9AF0FF : 0xFF40C8F0) : 0xFF2880A8);
+            c.drawRoundRect(rf, ch, ch, p);
+            text(c, ready ? "RAYO LISTO" : "recargando rayo", bx, cy - u * 0.008f, u * 0.026f, ready ? 0xFF9AF0FF : 0xAA7ABCD8, Paint.Align.CENTER, bold);
+        }
         // ventajas
         float px0 = bx - bw / 2;
         float r = u * 0.022f;

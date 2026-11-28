@@ -714,8 +714,14 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
             if (d > maxD) continue;
             if (!shadow && !visible(z.x, z.y + 1f, z.z, 2.4f)) continue;
             if (!shadow) {
-                uni3(pMain, "uTint", z.tr, z.tg, z.tb);
-                uni1(pMain, "uHit", z.hitFlash > 0 ? 1f : 0f);
+                if (z.stunT > 0 && z.state != 2) {
+                    float fl = 0.5f + 0.5f * (float) Math.sin(time * 40f);
+                    uni3(pMain, "uTint", 0.5f + 0.2f * fl, 0.85f + 0.3f * fl, 1.7f + 0.6f * fl);
+                    uni1(pMain, "uHit", fl > 0.85f ? 1f : 0f);
+                } else {
+                    uni3(pMain, "uTint", z.tr, z.tg, z.tb);
+                    uni1(pMain, "uHit", z.hitFlash > 0 ? 1f : 0f);
+                }
             }
             drawZombie(z, prog);
         }
@@ -765,6 +771,8 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
             swing = 0;
         }
         float atk = z.atkT > 0 ? sn(Math.PI * (1f - z.atkT / 0.45f)) : 0f;
+        boolean stun = z.stunT > 0 && z.state != 2;
+        if (stun) { stag = 0.7f; swing = 0; }
         Mat4.identity(hipM);
         Mat4.translate(hipM, z.x, y, z.z);
         Mat4.rotateY(hipM, 180f - z.yaw);
@@ -781,6 +789,7 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
         boolean helmet = z.variant == 0 || z.variant == 3;
         float hipSway = sn(ph) * (gait == 2 ? 7f : 4f) * walk;
         Mat4.rotateZ(hipM, hipSway * 0.5f);
+        if (stun) { Mat4.rotateZ(hipM, sn(time * 75f) * 6f); Mat4.rotateX(hipM, sn(time * 63f + 1f) * 4f); }
         // torso
         System.arraycopy(hipM, 0, torsoM, 0, 16);
         float sway = sn(ph * 0.5f) * (gait == 2 ? 9f : 5f);
@@ -922,7 +931,8 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
             drawGroup(w, WeaponModels.G_MAGGLOW, model, 0, drop, 0);
             drawGroup(w, WeaponModels.G_TEXT, model, 0, 0, 0);
             float shotK = Math.max(0f, 1f - g.sinceShot * 3f);
-            float pulse = 0.93f + 0.07f * (float) Math.sin(time * 6f) + 0.12f * shotK;
+            boolean rdy = g.stormBolt;
+            float pulse = (rdy ? 1.0f : 0.86f) + (rdy ? 0.1f : 0.05f) * (float) Math.sin(time * (rdy ? 10f : 3f)) + 0.14f * shotK;
             System.arraycopy(model, 0, vmTmp, 0, 16);
             Mat4.translate(vmTmp, 0, 0.058f, -0.1f);
             Mat4.scale(vmTmp, 1f, pulse, pulse);
@@ -933,11 +943,24 @@ public final class GlRenderer implements GLSurfaceView.Renderer {
             int fr = (int) (time * 24f);
             int v1 = fr % WeaponModels.N_ARC;
             float hsh = hash1(fr, 11);
-            boolean on = hsh > 0.18f || g.sinceShot < 0.4f;
+            boolean on = hsh > (rdy ? 0.1f : 0.5f) || g.sinceShot < 0.4f;
             if (on) drawGroup(w, WeaponModels.G_ARC0 + v1, model, 0, 0, 0);
-            if (g.sinceShot < 0.45f || hsh > 0.7f) drawGroup(w, WeaponModels.G_ARC0 + (v1 + 2 + (fr / 4) % 2) % WeaponModels.N_ARC, model, 0, 0, 0);
+            if (g.sinceShot < 0.45f || hsh > (rdy ? 0.45f : 0.9f)) drawGroup(w, WeaponModels.G_ARC0 + (v1 + 2 + (fr / 4) % 2) % WeaponModels.N_ARC, model, 0, 0, 0);
         }
         uniM(pMain, "uModel", model);
+        if (w == Weapons.STORM) {
+            // resplandor (bloom) de las luces y del núcleo
+            float[] p = new float[3];
+            float rd = g.stormBolt ? 1f : 0.45f;
+            float pl = 0.75f + 0.25f * (float) Math.sin(time * (g.stormBolt ? 10f : 3f));
+            beginParticles();
+            float[][] glows = {{0f, 0.058f, -0.1f, 0.2f}, {0f, 0.158f, -0.03f, 0.1f}, {0f, -0.135f, -0.05f, 0.11f}, {0f, 0.05f, -0.36f, 0.13f}, {0f, 0.05f, -0.71f, 0.1f}};
+            for (int i = 0; i < glows.length; i++) {
+                Mat4.point(model, glows[i][0], glows[i][1], glows[i][2], p);
+                quad(p[0], p[1], p[2], glows[i][3] * (0.9f + 0.2f * pl), 1, 0.25f, 0.7f, 1.0f, 0.5f * rd * pl + 0.25f * Math.max(0f, 1f - g.sinceShot * 4f), 0f, true, true);
+            }
+            flushParticlesViewModel();
+        }
         // fogonazo
         if (g.flashT > 0) {
             float[] mz = WeaponModels.muzzle(w);

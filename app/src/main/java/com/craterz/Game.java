@@ -9,7 +9,7 @@ public final class Game {
 
     public static final class Zombie {
         public float x, y, z, yaw, hp, maxHp, speed, scale = 1f, phase, hitFlash, deathT, riseT, atkT, atkCd, grT, stuckT, side, sideT;
-        public float tr = 1, tg = 1, tb = 1, losT, slot;
+        public float tr = 1, tg = 1, tb = 1, losT, slot, stunT, stunFx;
         public boolean los = true;
         public int state; // 0 surgiendo, 1 persiguiendo, 2 muerto
         public int tier;  // 0 camina, 1 trota, 2 corre
@@ -224,6 +224,7 @@ public final class Game {
         if (swapT > 0) swapT -= dt;
         if (flashT > 0) flashT -= dt;
         sinceShot += dt;
+        updateStorm(dt);
         weaponSfx(w);
         recoil += (0f - recoil) * Math.min(1f, dt * 9f);
         if (reloadT > 0) {
@@ -248,6 +249,94 @@ public final class Game {
 
     private boolean prevEmptyClick;
 
+    /** Tormenta: primer disparo = rayo que paraliza y hace daño brutal; después dispara normal mientras el rayo se recarga. */
+    public boolean stormBolt = true;
+    public float stormCharge = 1f;
+    public static final float STORM_RECHARGE = 8f;
+    public float boltFlash;
+
+    private void updateStorm(float dt) {
+        if (boltFlash > 0) boltFlash -= dt;
+        if (!stormBolt) {
+            stormCharge += dt / (mode == MODE_TEST ? 2f : STORM_RECHARGE);
+            if (stormCharge >= 1f) {
+                stormCharge = 1f; stormBolt = true;
+                sfx.play(Sfx.POWER, 0.5f);
+                say("¡Rayo de la Tormenta listo!");
+            }
+        }
+    }
+
+    private void zigzag(float x0, float y0, float z0, float x1, float y1, float z1, float amp) {
+        float dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
+        float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        int n = Math.max(3, Math.min(10, (int) (len / 1.2f)));
+        float px0 = x0, py0 = y0, pz0 = z0;
+        for (int i = 1; i <= n; i++) {
+            float u = i / (float) n;
+            float nx = x0 + dx * u, ny = y0 + dy * u, nz = z0 + dz * u;
+            if (i < n) { nx += (rnd() - 0.5f) * amp; ny += (rnd() - 0.5f) * amp; nz += (rnd() - 0.5f) * amp; }
+            ps.tracer(px0, py0, pz0, nx, ny, nz, 0.35f, 0.8f, 1.8f, 0.075f);
+            ps.tracer(px0, py0, pz0, nx, ny, nz, 1f, 1f, 1f, 0.026f);
+            px0 = nx; py0 = ny; pz0 = nz;
+        }
+    }
+
+    private void lightningShot(float mx, float my, float mz) {
+        float ox = px, oy = py, oz = pz, dx = fwdX(), dy = fwdY(), dz = fwdZ();
+        // objetivo principal: el zombi que tengas en la mira (o el más cercano a la línea de tiro, con ayuda de puntería)
+        Zombie tgt = null; float bestT = 60f, bestPerp = 2.6f;
+        for (int i = 0; i < zs.size(); i++) {
+            Zombie z = zs.get(i);
+            if (z.state == 2) continue;
+            float vx = z.x - ox, vy = z.y + 1.1f * z.scale - oy, vz = z.z - oz;
+            float t = vx * dx + vy * dy + vz * dz;
+            if (t < 0.5f || t > 60f) continue;
+            float cx = vx - dx * t, cy = vy - dy * t, cz = vz - dz * t;
+            float perp = (float) Math.sqrt(cx * cx + cy * cy + cz * cz);
+            if (perp < bestPerp && t < bestT + 8f && world.rayBlock(ox, oy, oz, vx, vy, vz, 1f) > 1.5f) { bestPerp = perp; tgt = z; bestT = t; }
+        }
+        float ex = ox + dx * 40f, ey = oy + dy * 40f, ez = oz + dz * 40f;
+        float wl = world.rayBlock(ox, oy, oz, dx, dy, dz, 40f);
+        if (wl <= 1f) { ex = ox + dx * 40f * wl; ey = oy + dy * 40f * wl; ez = oz + dz * 40f * wl; }
+        sfx.play(Sfx.CRACK, 1f); sfx.play(Sfx.STORM, 1f); sfx.play(Sfx.THUNDER, 0.5f);
+        lightning = Math.max(lightning, 0.7f); boltFlash = 0.35f;
+        recoil = Math.min(1.6f, recoil + 0.6f);
+        if (tgt == null) {
+            zigzag(mx, my, mz, ex, ey, ez, 0.7f);
+            ps.sparks(ex, ey, ez, 0, 1, 0, 14, 0.5f, 1f, 1.8f);
+            ps.flash(ex, ey, ez, 1.4f, 0.4f, 0.9f, 1.8f, 0.2f);
+            return;
+        }
+        ArrayList<Zombie> chain = new ArrayList<Zombie>();
+        chain.add(tgt);
+        Zombie cur = tgt;
+        for (int hop = 0; hop < 6; hop++) {
+            Zombie next = null; float bd = 8.5f;
+            for (int i = 0; i < zs.size(); i++) {
+                Zombie z = zs.get(i);
+                if (z.state == 2 || chain.contains(z)) continue;
+                float d = (float) Math.hypot(z.x - cur.x, z.z - cur.z);
+                if (d < bd) { bd = d; next = z; }
+            }
+            if (next == null) break;
+            chain.add(next); cur = next;
+        }
+        float lx = mx, ly = my, lz = mz;
+        for (int i = 0; i < chain.size(); i++) {
+            Zombie z = chain.get(i);
+            float hx = z.x, hy = z.y + 1.2f * z.scale, hz = z.z;
+            zigzag(lx, ly, lz, hx, hy, hz, 0.6f);
+            ps.flash(hx, hy, hz, 1.6f, 0.4f, 0.9f, 1.9f, 0.22f);
+            ps.ring(hx, z.y + 0.1f, hz, 2.2f, 0.4f, 0.9f, 1.8f, 0.35f);
+            ps.sparks(hx, hy, hz, 0, 1, 0, 16, 0.5f, 1f, 1.9f);
+            float ddx = hx - lx, ddz = hz - lz, dl = (float) Math.sqrt(ddx * ddx + ddz * ddz) + 1e-4f;
+            damageZombie(z, i == 0 ? 1400f : 900f, false, hx, hy, hz, ddx / dl, 0f, ddz / dl);
+            z.stunT = 5f;   // paralizado
+            lx = hx; ly = hy; lz = hz;
+        }
+    }
+
     private void shoot(int w) {
         ammo[cur][0]--;
         float rate = hasPerk(World.PERK_RAFAGA) ? 1.0f / 1.38f : 1f;
@@ -258,6 +347,15 @@ public final class Game {
         yaw += (rnd() - 0.5f) * Weapons.KICK[w] * 0.18f;
         flashT = 0.07f;
         int snd = w == Weapons.PISTOL ? Sfx.PISTOL : w == Weapons.SHOTGUN ? Sfx.SHOTGUN : w == Weapons.RIFLE ? Sfx.RIFLE : w == Weapons.SMG ? Sfx.SMG : Sfx.STORM;
+        if (w == Weapons.STORM && stormBolt) {
+            // primer disparo: rayo paralizante; deja la Tormenta en modo normal mientras se recarga
+            stormBolt = false; stormCharge = 0f;
+            if (Prefs.vibrate()) vibrateReq = true;
+            float[] mm = WeaponModels.muzzle(w);
+            float rx0 = (float) Math.cos(Math.toRadians(yaw)), rz0 = (float) Math.sin(Math.toRadians(yaw));
+            lightningShot(px + rx0 * (mm[0] + 0.12f * (1 - adsT)) + fwdX() * -mm[2], py + (mm[1] - 0.1f * (1 - adsT)) + fwdY() * -mm[2], pz + rz0 * (mm[0] + 0.12f * (1 - adsT)) + fwdZ() * -mm[2]);
+            return;
+        }
         sfx.play(snd, w == Weapons.SMG ? 0.5f : 0.7f);
         if (Prefs.vibrate() && w != Weapons.SMG) vibrateReq = true;
 
@@ -493,6 +591,11 @@ public final class Game {
                 z.riseT += dt / 1.5f;
                 if (z.riseT >= 1f) { z.riseT = 1f; z.state = 1; }
                 if (((int) (z.riseT * 20)) % 5 == 0 && rnd() < 0.2f) ps.dust(z.x, z.y + 0.1f, z.z, 0, 1, 0, 1, 0.25f, 0.2f, 0.14f);
+                continue;
+            }
+            if (z.stunT > 0) {
+                z.stunT -= dt; z.stunFx -= dt;
+                if (z.stunFx <= 0) { z.stunFx = 0.1f; ps.sparks(z.x + (rnd() - 0.5f) * 0.5f, z.y + rnd() * 1.8f * z.scale, z.z + (rnd() - 0.5f) * 0.5f, 0, 1, 0, 2, 0.5f, 1f, 1.9f); }
                 continue;
             }
             float dx = px - z.x, dz = pz - z.z;

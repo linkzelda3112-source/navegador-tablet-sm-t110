@@ -22,3 +22,8 @@ Rama: `zombies-origins`. El APK se compila con GitHub Actions y se publica en Re
 ## v1.3
 - **Zona de pruebas** (4.º modo del hub): todo gratis y abierto, vida y munición infinitas, zombis de todos los tipos; el botón CAMBIAR recorre las 5 armas y las máquinas de ventajas, la caja y las paredes funcionan sin coste.
 - **TR-74 "Tempest" (Tormenta)** rediseñada a partir de la imagen de referencia: freno de boca ranurado con bronce, carcasa hexagonal, mira holográfica, núcleo de plasma que pulsa, rótulos "TR-74 TEMPEST / TORMENTA", cargador con franjas luminosas y arcos eléctricos animados que se intensifican al disparar.
+
+## v1.4 — Tormenta de dos disparos
+- 1.er disparo: **rayo** que paraliza (5 s) y hace daño brutal; salta a hasta 6 zombis cercanos.
+- Tras el rayo, la Tormenta dispara **normal** mientras el rayo se recarga (8 s; barra "RAYO LISTO" en el HUD). El arma brilla, pulsa y echa más arcos cuando el rayo está listo.
+- Zombis paralizados: tiemblan, se tiñen de azul y sueltan chispas.
